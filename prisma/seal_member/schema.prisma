@@ -1,0 +1,9 @@
+generator client {
+  provider = "prisma-client-js"
+  output          = "../../node_modules/@prisma-seal-member"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("SEAL_MEMBER_DB_URL")
+}
