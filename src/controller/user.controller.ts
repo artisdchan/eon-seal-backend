@@ -17,6 +17,13 @@ export default class UserController {
                 return next(null);
             }
 
+            const dbUtils = new DBUtils();
+            const tableName = await dbUtils.getIdTable(request.username);
+
+            const user = await SealMemberDataSource.manager.query(`SELECT * FROM ${tableName} WHERE id = '${request.username}' AND email = '${request.email}'`) as idtable1[]
+            if (user) {
+                return res.status(400).json({ message: 'User is duplicate.' });
+            }
             const value = {
                 id: request.username,
                 passwd: () => `OLD_PASSWORD('${request.password}')`,
@@ -37,8 +44,7 @@ export default class UserController {
                 pass: '',
                 reg_date: new Date()
             }
-            const dbUtils = new DBUtils();
-            const tableName = await dbUtils.getIdTable(request.username);
+
             if (String(tableName) == 'idtable1') {
                 await SealMemberDataSource.createQueryBuilder().insert().into(idtable1).values(value).execute();
             } else if (String(tableName) == 'idtable2') {
