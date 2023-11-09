@@ -1,19 +1,25 @@
 import { DataSource } from "typeorm";
 import { idtable1, idtable2, idtable3, idtable4, idtable5 } from "./entity/idtable.entity";
+import { usermsgex } from "./entity/usermsgex.entity";
+import { SEAL_DB_HOST, SEAL_DB_PASS, SEAL_DB_PORT, SEAL_DB_USER } from "./utils/secret.utils";
 
 export const SealMemberDataSource = new DataSource({
     type: "mysql",
-    host: "102.129.138.72",
-    port: 3306,
-    username: "root",
-    password: "1001xx",
+    host: SEAL_DB_HOST,
+    port: Number(SEAL_DB_PORT),
+    username: SEAL_DB_USER,
+    password: SEAL_DB_PASS,
     database: "seal_member",
     synchronize: false,
     logging: true,
-    entities: [idtable1,idtable2,idtable3,idtable4,idtable5],
+    entities: [
+        idtable1,idtable2,idtable3,idtable4,idtable5, 
+        usermsgex
+    ],
     subscribers: [],
     migrations: [],
 })
+
 export const initializeSealMember = SealMemberDataSource.initialize()
     .then(() => {
         console.log("seal_member Data Source has been initialized!")

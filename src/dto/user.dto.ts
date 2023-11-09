@@ -12,3 +12,8 @@ export interface ResetPasswordDTO {
 export interface HashPasswordDTO {
     "hash_password": string
 }
+
+export interface TopupCashRequestDTO {
+    email: string
+    cashAmount: number;
+}

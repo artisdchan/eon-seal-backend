@@ -13,6 +13,7 @@ class UserRoutes {
     intializeRoutes() {
         this.router.post("/register", this.controller.register);
         this.router.post("/reset", passport.authenticate('jwt'), this.controller.resetPassword);
+        this.router.post('/topup', this.controller.topupCash);
     }
 
 }
