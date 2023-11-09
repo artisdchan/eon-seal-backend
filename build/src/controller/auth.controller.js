@@ -19,6 +19,7 @@ class AuthController {
         this.login = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
             const token = jsonwebtoken_1.default.sign({ user: req.user }, secret_utils_1.JWT_SECRET, { expiresIn: "1h" });
             res.cookie("token", token, { expires: new Date(Date.now() + 86400 * 1000), httpOnly: true });
+            res.sendStatus(200);
         });
     }
 }

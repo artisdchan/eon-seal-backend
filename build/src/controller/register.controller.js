@@ -8,15 +8,23 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const data_source_1 = require("../data-source");
 const idtable_entity_1 = require("../entity/idtable.entity");
+const eonhub_service_1 = __importDefault(require("../service/eonhub.service"));
 class RegisterController {
     constructor() {
         this.register = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
             try {
                 const request = req.body;
-                const aaa = {
+                const eonhubService = new eonhub_service_1.default();
+                if (!eonhubService.isUserExist(request.email)) {
+                    res.json({ status: 400, message: 'The email not exists in EON-HUB.' });
+                }
+                const value = {
                     id: request.username,
                     passwd: () => `OLD_PASSWORD('${request.password}')`,
                     email: request.email,
@@ -36,7 +44,7 @@ class RegisterController {
                     pass: '',
                     reg_date: new Date()
                 };
-                yield data_source_1.SealMemberDataSource.createQueryBuilder().insert().into(idtable_entity_1.idtable1).values(aaa).execute();
+                yield data_source_1.SealMemberDataSource.createQueryBuilder().insert().into(idtable_entity_1.idtable1).values(value).execute();
                 res.status(201);
                 return next();
             }

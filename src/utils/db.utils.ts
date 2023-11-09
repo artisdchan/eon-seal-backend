@@ -1,5 +1,5 @@
 export default class DBUtils {
-    public getIdTable = async (username:string) : Promise<string> => {
+    public getIdTable = async (username:string): Promise<String> => {
         
         const id = Array.from(username)[0];
         const table1 = ['a', 'b', 'c', 'd']

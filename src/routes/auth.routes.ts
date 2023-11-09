@@ -1,4 +1,5 @@
 import { Router } from "express";
+import passport from "passport";
 import AuthController from "../controller/auth.controller";
 
 class AuthRoutes {
@@ -10,7 +11,7 @@ class AuthRoutes {
     }
 
     intializeRoutes() {
-        this.router.post("/login", this.controller.login);
+        this.router.post("/login", passport.authenticate("password"), this.controller.login);
     }
 
 }

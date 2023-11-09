@@ -1,9 +1,9 @@
 import express, { Application } from "express";
 import cors, { CorsOptions } from "cors";
-// import passport from "passport";
+import passport from "passport";
 import Routes from "./routes";
 import session from "express-session";
-// import "./service/passport.service";
+import "./service/passport.service";
 import "reflect-metadata"
 import { SealMemberDataSource } from "./data-source";
 
@@ -28,17 +28,17 @@ export default class Server {
     // app.use(cookieParser());
 
     // Adding required middlewares
-    // app.use(
-    //   session({
-    //     secret: "askduhakdnkbiygvhbad7a6s*&^*S^D8asdbk",
-    //     resave: false,
-    //     saveUninitialized: false,
-    //   })
-    // );
+    app.use(
+      session({
+        secret: "askduhakdnkbiygvhbad7a6s*&^*S^D8asdbk",
+        resave: false,
+        saveUninitialized: false,
+      })
+    );
 
-    // app.use(passport.authenticate("session"));
-    // app.use(passport.initialize());
-    // app.use(passport.session());
+    app.use(passport.authenticate("session"));
+    app.use(passport.initialize());
+    app.use(passport.session());
     // app.use(express.static('public'));
 
   }

@@ -8,3 +8,5 @@ if (fs.existsSync(".env")) {
 }
 
 export const JWT_SECRET = process.env.JWT_SECRET as string;
+export const EONHUB_BACKEND_URL = process.env.EONHUB_BACKEND_URL as string;
+export const EONHUB_API_KEY = process.env.EONHUB_API_KEY as string;

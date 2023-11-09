@@ -5,6 +5,8 @@ import { AuthenUser } from "../dto/authen.dto";
 import { SealMemberDataSource } from "../data-source";
 import { idtable1 } from "../entity/idtable.entity";
 import DBUtils from "../utils/db.utils";
+import { HashPasswordDTO } from "../dto/user.dto";
+import { JWT_SECRET } from "../utils/secret.utils";
 
 const JwtStrategy = passportJwt.Strategy;
 const ExtractJwt = passportJwt.ExtractJwt;
@@ -17,9 +19,11 @@ passport.serializeUser((user: AuthenUser, done) => {
 passport.deserializeUser(async (id: AuthenUser, done) => {
     try {
 
-        let user;
-        user = await SealMemberDataSource.manager.createQueryBuilder()
-        .select().from(idtable1, 'idtable1').where('idtable1.id = :id', { id: id.username }).getOne();
+        const dbUtils = new DBUtils();
+
+        let tblName = await dbUtils.getIdTable(id.username);
+
+        let user = await SealMemberDataSource.manager.query(`SELECT * FROM ${tblName} WHERE id = '${id.username}'`) as idtable1
 
         if (user == null) {
             console.error("user not found", id.username);
@@ -48,23 +52,50 @@ passport.use('password', new LocalStrategy(
 
         const dbUtils = new DBUtils();
 
-        const hashedPass = await SealMemberDataSource.manager.query(`SELECT OLD_PASSWORD('${password}')`) as string
+        const hashedPass = await SealMemberDataSource.manager.query(`SELECT OLD_PASSWORD('${password}') AS hash_password`) as HashPasswordDTO[]
         let tblName = await dbUtils.getIdTable(username);
 
-        let user = await SealMemberDataSource.manager.query(`SELECT * FROM ${tblName} WHERE id = ${username}`) as idtable1
+        let user = await SealMemberDataSource.manager.query(`SELECT * FROM ${tblName} WHERE id = '${username}'`) as idtable1[]
         if (!user) {
             return done(null, false, { message: 'Invalid username or password.' });
         }
-        if (!user.passwd) {
+        if (!user[0].passwd) {
             return done(null, false, { message: 'Invalid username or password.' });
         }
-        if (hashedPass.toLowerCase != user.passwd.toLowerCase) {
+        if (hashedPass[0].hash_password.toLowerCase() != user[0].passwd.toLowerCase()) {
             return done(null, false, { message: 'Invalid username or password.' });
         }
 
         done(null, {
-            username: user.id,
-            email: user.email!
+            username: user[0].id,
+            email: user[0].email!
         });
     }
 ))
+
+passport.use(new JwtStrategy({
+    jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+    secretOrKey: JWT_SECRET
+},
+    async (jwtPayload, done) => {
+        try {
+
+            const dbUtils = new DBUtils();
+            let tblName = await dbUtils.getIdTable(jwtPayload.user.username);
+            const user = await SealMemberDataSource.manager.query(`SELECT * FROM ${tblName} WHERE id = '${jwtPayload.user.username}'`) as idtable1[]
+
+            if (user == null) {
+                console.error("user not found", jwtPayload.userId);
+                return done(null, false);
+            }
+
+            done(null, {
+                username: user[0].id,
+                email: user[0].email!
+            });
+
+        } catch (error) {
+            return done(null, false);
+        }
+    }
+));
