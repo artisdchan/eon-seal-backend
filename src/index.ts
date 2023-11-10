@@ -12,13 +12,13 @@ export default class Server {
   constructor(app: Application) {
     this.config(app);
     new Routes(app);
-    SealMemberDataSource.initialize()
-    .then(() => {
-        console.log("seal_member Data Source has been initialized!")
-    })
-    .catch((err) => {
-        console.error("Error during Data Source initialization", err)
-    })
+    // SealMemberDataSource.initialize()
+    // .then(() => {
+    //     console.log("seal_member Data Source has been initialized!")
+    // })
+    // .catch((err) => {
+    //     console.error("Error during Data Source initialization", err)
+    // })
   }
 
   private config(app: Application): void {

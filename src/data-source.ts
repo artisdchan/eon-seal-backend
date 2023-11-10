@@ -19,10 +19,10 @@ export const SealMemberDataSource = new DataSource({
     connectTimeout: 2000
 })
 
-// export const initializeSealMember = SealMemberDataSource.initialize()
-//     .then(() => {
-//         console.log("seal_member Data Source has been initialized!")
-//     })
-//     .catch((err) => {
-//         console.error("Error during Data Source initialization", err)
-//     })
+export const initializeSealMember = SealMemberDataSource.initialize()
+    .then(() => {
+        console.log("seal_member Data Source has been initialized!")
+    })
+    .catch((err) => {
+        console.error("Error during Data Source initialization", err)
+    })
