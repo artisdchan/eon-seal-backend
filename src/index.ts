@@ -6,6 +6,7 @@ import session from "express-session";
 import "./service/passport.service";
 import "reflect-metadata"
 import { SealMemberDataSource } from "./data-source";
+import cookieParser from "cookie-parser";
 
 export default class Server {
 
@@ -25,7 +26,7 @@ export default class Server {
     app.use(cors(corsOptions));
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
-    // app.use(cookieParser());
+    app.use(cookieParser());
 
     // Adding required middlewares
     app.use(
@@ -36,7 +37,7 @@ export default class Server {
       })
     );
 
-    app.use(passport.authenticate("session"));
+    // app.use(passport.authenticate("session"));
     app.use(passport.initialize());
     app.use(passport.session());
     // app.use(express.static('public'));
