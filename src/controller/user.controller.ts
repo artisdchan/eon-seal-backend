@@ -47,18 +47,19 @@ export default class UserController {
                 delete_flag: 0,
                 pay_flag: 0,
                 update_date: new Date(),
-                nick_name: '',
+                nick_name: request.username,
                 lovekey: '',
                 loveauth: '',
                 pass: '',
-                reg_date: new Date()
+                reg_date: new Date(),
+                Status: 1,
             }
 
             const userModel = new usermsgex();
             userModel.userId = request.username;
             userModel.email = request.email;
             userModel.gold = 0;
-            userModel.nickName = '';
+            userModel.nickName = request.username;
             userModel.oneTimeChangePwd = '';
             userModel.isGiftsReferrerGold = 'N';
             userModel.Referrer = '';

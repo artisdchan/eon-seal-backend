@@ -51,7 +51,7 @@ passport.use('password', new LocalStrategy(
     async (username, password, done) => {
 
         const dbUtils = new DBUtils();
-
+        SealMemberDataSource.initialize()
         const hashedPass = await SealMemberDataSource.manager.query(`SELECT OLD_PASSWORD('${password}') AS hash_password`) as HashPasswordDTO[]
         let tblName = await dbUtils.getIdTable(username);
 
