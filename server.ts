@@ -1,6 +1,7 @@
 import express, { Application } from "express";
 import Server from "./src/index";
 import * as dotenv from "dotenv";
+import "reflect-metadata"
 
 dotenv.config();
 const app: Application = express();

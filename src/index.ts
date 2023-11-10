@@ -4,7 +4,6 @@ import passport from "passport";
 import Routes from "./routes";
 import session from "express-session";
 import "./service/passport.service";
-import "reflect-metadata"
 import { SealMemberDataSource } from "./data-source";
 import cookieParser from "cookie-parser";
 

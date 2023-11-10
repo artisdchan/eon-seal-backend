@@ -4,7 +4,7 @@ import { usermsgex } from "./entity/usermsgex.entity";
 import { SEAL_DB_HOST, SEAL_DB_PASS, SEAL_DB_PORT, SEAL_DB_USER } from "./utils/secret.utils";
 
 export const SealMemberDataSource = new DataSource({
-    type: "mysql",
+    type: "mariadb",
     host: SEAL_DB_HOST,
     port: Number(SEAL_DB_PORT),
     username: SEAL_DB_USER,
