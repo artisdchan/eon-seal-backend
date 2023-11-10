@@ -11,7 +11,7 @@ export const SealMemberDataSource = new DataSource({
     password: SEAL_DB_PASS,
     database: "seal_member",
     synchronize: false,
-    logging: true,
+    logging: false,
     entities: [
         idtable1,idtable2,idtable3,idtable4,idtable5, 
         usermsgex

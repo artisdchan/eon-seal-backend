@@ -23,7 +23,7 @@ export default class UserController {
             const tableName = await dbUtils.getIdTable(request.username);
 
             const user = await SealMemberDataSource.manager.query(`SELECT * FROM ${tableName} WHERE id = '${request.username}' AND email = '${request.email}'`) as idtable1[]
-            const userMsgExEntity = await SealMemberDataSource.createQueryBuilder()
+            const userMsgExEntity = await SealMemberDataSource.manager.createQueryBuilder()
                 .select('usermsgex')
                 .from(usermsgex, 'usermsgex')
                 .where('usermsgex.email = :email', { email: request.email })
