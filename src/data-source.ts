@@ -16,8 +16,7 @@ export const SealMemberDataSource = new DataSource({
         idtable1,idtable2,idtable3,idtable4,idtable5, 
         usermsgex
     ],
-    connectTimeout: 2000,
-    acquireTimeout: 2000
+    connectTimeout: 2000
 })
 
 // export const initializeSealMember = SealMemberDataSource.initialize()
