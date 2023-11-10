@@ -29,7 +29,7 @@ export default class UserController {
                 .where('usermsgex.email = :email', { email: request.email })
                 .getOne();
 
-            if (user || userMsgExEntity != null) {
+            if (user.length > 0 || userMsgExEntity != null) {
                 return res.status(400).json({ message: 'User is duplicate.' });
             }
 
