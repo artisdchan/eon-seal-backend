@@ -50,11 +50,15 @@ passport.use('password', new LocalStrategy(
     },
     async (username, password, done) => {
 
-        const dbUtils = new DBUtils();
-        const hashedPass = await SealMemberDataSource.manager.connection.query(`SELECT OLD_PASSWORD('${password}') AS hash_password`) as HashPasswordDTO[]
+        const queryRunner = SealMemberDataSource.createQueryRunner()
+        try {
+            const dbUtils = new DBUtils();
+        await queryRunner.connect()
+        await queryRunner.startTransaction()
+        const hashedPass = await queryRunner.query(`SELECT OLD_PASSWORD('${password}') AS hash_password`) as HashPasswordDTO[]
         let tblName = await dbUtils.getIdTable(username);
 
-        let user = await SealMemberDataSource.manager.connection.query(`SELECT * FROM ${tblName} WHERE id = '${username}'`) as idtable1[]
+        let user = await queryRunner.query(`SELECT * FROM ${tblName} WHERE id = '${username}'`) as idtable1[]
         if (!user) {
             return done(null, false, { message: 'Invalid username or password.' });
         }
@@ -69,6 +73,12 @@ passport.use('password', new LocalStrategy(
             username: user[0].id,
             email: user[0].email!
         });
+        } catch (error) {
+            console.error(error)
+            await queryRunner.rollbackTransaction();
+        } finally {
+            await queryRunner.release();
+        }
     }
 ))
 
