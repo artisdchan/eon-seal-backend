@@ -85,7 +85,7 @@ export default class UserController {
             userModel.day = 0;
 
             const queryRunner = SealMemberDataSource.createQueryRunner();
-            await queryRunner.connect()
+            // await queryRunner.connect()
             await queryRunner.startTransaction()
 
             try {
@@ -141,7 +141,7 @@ export default class UserController {
             const hashedNewPass = await SealMemberDataSource.manager.query(`SELECT OLD_PASSWORD('${request.newPassword}') AS hash_password`) as HashPasswordDTO[]
 
             const queryRunner = SealMemberDataSource.createQueryRunner();
-            await queryRunner.connect()
+            // await queryRunner.connect()
             await queryRunner.startTransaction()
 
             try {
