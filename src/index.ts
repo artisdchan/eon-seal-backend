@@ -12,7 +12,7 @@ export default class Server {
   constructor(app: Application) {
     this.config(app);
     new Routes(app);
-    // SealMemberDataSource.initialize()
+    SealMemberDataSource.initialize()
   }
 
   private config(app: Application): void {
