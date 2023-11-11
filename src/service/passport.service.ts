@@ -54,27 +54,27 @@ passport.use('password', new LocalStrategy(
     async (username, password, done) => {
 
         const dbUtils = new DBUtils();
-            if (!SealMemberDataSource.isInitialized) {
-                await SealMemberDataSource.initialize();
-            }
-            const hashedPass = await SealMemberDataSource.manager.query(`SELECT OLD_PASSWORD('${password}') AS hash_password`) as HashPasswordDTO[]
-            let tblName = await dbUtils.getIdTable(username);
+        if (!SealMemberDataSource.isInitialized) {
+            await SealMemberDataSource.initialize();
+        }
+        const hashedPass = await SealMemberDataSource.manager.query(`SELECT OLD_PASSWORD('${password}') AS hash_password`) as HashPasswordDTO[]
+        let tblName = await dbUtils.getIdTable(username);
 
-            let user = await SealMemberDataSource.manager.query(`SELECT * FROM ${tblName} WHERE id = '${username}'`) as idtable1[]
-            if (!user) {
-                return done(null, false, { message: 'Invalid username or password.' });
-            }
-            if (!user[0].passwd) {
-                return done(null, false, { message: 'Invalid username or password.' });
-            }
-            if (hashedPass[0].hash_password.toLowerCase() != user[0].passwd.toLowerCase()) {
-                return done(null, false, { message: 'Invalid username or password.' });
-            }
+        let user = await SealMemberDataSource.manager.query(`SELECT * FROM ${tblName} WHERE id = '${username}'`) as idtable1[]
+        if (!user) {
+            return done(null, false, { message: 'Invalid username or password.' });
+        }
+        if (!user[0].passwd) {
+            return done(null, false, { message: 'Invalid username or password.' });
+        }
+        if (hashedPass[0].hash_password.toLowerCase() != user[0].passwd.toLowerCase()) {
+            return done(null, false, { message: 'Invalid username or password.' });
+        }
 
-            done(null, {
-                username: user[0].id,
-                email: user[0].email!
-            });
+        done(null, {
+            username: user[0].id,
+            email: user[0].email!
+        });
     }
 ))
 

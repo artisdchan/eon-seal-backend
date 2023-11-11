@@ -12,7 +12,10 @@ export const SealMemberDataSource = new DataSource({
     database: "seal_member",
     synchronize: false,
     logging: true,
-    entities: ["build/**/**.entity{.ts,.js}"],
+    entities: [
+        idtable1, idtable2, idtable3, idtable4, idtable5,
+        usermsgex
+    ],
     connectTimeout: 2000
 })
 

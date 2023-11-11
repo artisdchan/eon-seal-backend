@@ -26,11 +26,11 @@ export default class UserController {
             const tableName = await dbUtils.getIdTable(request.username);
 
             const user = await SealMemberDataSource.manager.query(`SELECT * FROM ${tableName} WHERE id = '${request.username}' AND email = '${request.email}'`) as idtable1[]
-            const userMsgExEntity = await SealMemberDataSource.manager.createQueryBuilder()
-                .select('usermsgex')
-                .from(usermsgex, 'usermsgex')
-                .where('usermsgex.email = :email', { email: request.email })
-                .getOne();
+            const userMsgExEntity = await SealMemberDataSource.manager.findOneBy(usermsgex, { email: request.email })
+                // .select()
+                // .from(usermsgex, 'usermsgex')
+                // .where('usermsgex.email = :email', { email: request.email })
+                // .getOne();
 
             if (user.length > 0 || userMsgExEntity != null) {
                 return res.status(400).json({ message: 'User is duplicate.' });
