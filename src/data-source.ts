@@ -16,7 +16,7 @@ export const SealMemberDataSource = new DataSource({
     connectTimeout: 2000
 })
 
-export const initializeSealMember = SealMemberDataSource.initialize()
+SealMemberDataSource.initialize()
     .then(() => {
         console.log("seal_member Data Source has been initialized!")
     })
