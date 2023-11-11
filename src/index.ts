@@ -39,6 +39,7 @@ export default class Server {
         secret: "askduhakdnkbiygvhbad7a6s*&^*S^D8asdbk",
         resave: false,
         saveUninitialized: false,
+        cookie: { secure: true }
       })
     );
 

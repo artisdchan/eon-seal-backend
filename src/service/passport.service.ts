@@ -61,10 +61,7 @@ passport.use('password', new LocalStrategy(
         let tblName = await dbUtils.getIdTable(username);
 
         let user = await SealMemberDataSource.manager.query(`SELECT * FROM ${tblName} WHERE id = '${username}'`) as idtable1[]
-        if (!user) {
-            return done(null, false, { message: 'Invalid username or password.' });
-        }
-        if (!user[0].passwd) {
+        if (user.length <= 0) {
             return done(null, false, { message: 'Invalid username or password.' });
         }
         if (hashedPass[0].hash_password.toLowerCase() != user[0].passwd.toLowerCase()) {
