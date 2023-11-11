@@ -7,7 +7,7 @@ export default class AuthController {
     public login = async (req: Request, res: Response, next: NextFunction) => {
         const token = jwt.sign({ user: req.user }, JWT_SECRET, { expiresIn: "1h" });
         res.cookie("token", token, {expires: new Date(Date.now() + 86400 * 1000), httpOnly: true});
-        res.sendStatus(200);
+        res.status(200).json({token});
         next();
     }
 
