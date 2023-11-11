@@ -20,6 +20,9 @@ export default class UserController {
             }
 
             const dbUtils = new DBUtils();
+            if (!SealMemberDataSource.isInitialized) {
+                await SealMemberDataSource.initialize();
+            }
             const tableName = await dbUtils.getIdTable(request.username);
 
             const user = await SealMemberDataSource.manager.query(`SELECT * FROM ${tableName} WHERE id = '${request.username}' AND email = '${request.email}'`) as idtable1[]
@@ -131,6 +134,9 @@ export default class UserController {
             const request = req.body as ResetPasswordDTO;
             const dbUtils = new DBUtils();
             const tableName = await dbUtils.getIdTable(currentUser?.username!);
+            if (!SealMemberDataSource.isInitialized) {
+                await SealMemberDataSource.initialize();
+            }
 
             const hashedOldPass = await SealMemberDataSource.manager.query(`SELECT OLD_PASSWORD('${request.currentPassword}') AS hash_password`) as HashPasswordDTO[]
             const user = await SealMemberDataSource.manager.query(`SELECT * FROM ${tableName} WHERE id = '${currentUser?.username}'`) as idtable1[]
@@ -187,6 +193,9 @@ export default class UserController {
             const dbUtils = new DBUtils();
             const request = req.body as TopupCashRequestDTO;
             const tableName = await dbUtils.getIdTable(request.email);
+            if (!SealMemberDataSource.isInitialized) {
+                await SealMemberDataSource.initialize();
+            }
 
             const userEntity = await SealMemberDataSource.manager.query(`SELECT * FROM ${tableName} WHERE email = '${request.email}'`) as idtable1[]
             const userMsgExEntity = await SealMemberDataSource.createQueryBuilder()

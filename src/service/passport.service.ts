@@ -22,30 +22,20 @@ passport.deserializeUser(async (id: AuthenUser, done) => {
         const dbUtils = new DBUtils();
 
         let tblName = await dbUtils.getIdTable(id.username);
-        const queryRunner = SealMemberDataSource.createQueryRunner()
 
-        try {
-            if (!SealMemberDataSource.isInitialized) {
-                await SealMemberDataSource.initialize();
-            }
-            await queryRunner.connect()
-            await queryRunner.startTransaction()
-            let user = await queryRunner.query(`SELECT * FROM ${tblName} WHERE id = '${id.username}'`) as idtable1
+        if (!SealMemberDataSource.isInitialized) {
+            await SealMemberDataSource.initialize();
+        }
+        let user = await SealMemberDataSource.manager.query(`SELECT * FROM ${tblName} WHERE id = '${id.username}'`) as idtable1
 
-            if (user == null) {
-                console.error("user not found", id.username);
-                return done(null, false);
-            } else {
-                done(null, {
-                    username: user.id,
-                    email: user.email!
-                });
-            }
-        } catch (error) {
-            console.error(error)
-            await queryRunner.rollbackTransaction();
-        } finally {
-            await queryRunner.release();
+        if (user == null) {
+            console.error("user not found", id.username);
+            return done(null, false);
+        } else {
+            done(null, {
+                username: user.id,
+                email: user.email!
+            });
         }
 
     } catch (e) {
@@ -63,18 +53,14 @@ passport.use('password', new LocalStrategy(
     },
     async (username, password, done) => {
 
-        const queryRunner = SealMemberDataSource.createQueryRunner()
-        try {
-            const dbUtils = new DBUtils();
+        const dbUtils = new DBUtils();
             if (!SealMemberDataSource.isInitialized) {
                 await SealMemberDataSource.initialize();
             }
-            await queryRunner.connect()
-            await queryRunner.startTransaction()
-            const hashedPass = await queryRunner.query(`SELECT OLD_PASSWORD('${password}') AS hash_password`) as HashPasswordDTO[]
+            const hashedPass = await SealMemberDataSource.manager.query(`SELECT OLD_PASSWORD('${password}') AS hash_password`) as HashPasswordDTO[]
             let tblName = await dbUtils.getIdTable(username);
 
-            let user = await queryRunner.query(`SELECT * FROM ${tblName} WHERE id = '${username}'`) as idtable1[]
+            let user = await SealMemberDataSource.manager.query(`SELECT * FROM ${tblName} WHERE id = '${username}'`) as idtable1[]
             if (!user) {
                 return done(null, false, { message: 'Invalid username or password.' });
             }
@@ -89,12 +75,6 @@ passport.use('password', new LocalStrategy(
                 username: user[0].id,
                 email: user[0].email!
             });
-        } catch (error) {
-            console.error(error)
-            await queryRunner.rollbackTransaction();
-        } finally {
-            await queryRunner.release();
-        }
     }
 ))
 
@@ -106,6 +86,9 @@ passport.use(new JwtStrategy({
         try {
 
             const dbUtils = new DBUtils();
+            if (!SealMemberDataSource.isInitialized) {
+                await SealMemberDataSource.initialize();
+            }
             let tblName = await dbUtils.getIdTable(jwtPayload.user.username);
             const user = await SealMemberDataSource.manager.query(`SELECT * FROM ${tblName} WHERE id = '${jwtPayload.user.username}'`) as idtable1[]
 
