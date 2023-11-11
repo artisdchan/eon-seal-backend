@@ -22,17 +22,30 @@ passport.deserializeUser(async (id: AuthenUser, done) => {
         const dbUtils = new DBUtils();
 
         let tblName = await dbUtils.getIdTable(id.username);
+        const queryRunner = SealMemberDataSource.createQueryRunner()
 
-        let user = await SealMemberDataSource.manager.query(`SELECT * FROM ${tblName} WHERE id = '${id.username}'`) as idtable1
+        try {
+            if (!SealMemberDataSource.isInitialized) {
+                await SealMemberDataSource.initialize();
+            }
+            await queryRunner.connect()
+            await queryRunner.startTransaction()
+            let user = await queryRunner.query(`SELECT * FROM ${tblName} WHERE id = '${id.username}'`) as idtable1
 
-        if (user == null) {
-            console.error("user not found", id.username);
-            return done(null, false);
-        } else {
-            done(null, {
-                username: user.id,
-                email: user.email!
-            });
+            if (user == null) {
+                console.error("user not found", id.username);
+                return done(null, false);
+            } else {
+                done(null, {
+                    username: user.id,
+                    email: user.email!
+                });
+            }
+        } catch (error) {
+            console.error(error)
+            await queryRunner.rollbackTransaction();
+        } finally {
+            await queryRunner.release();
         }
 
     } catch (e) {
@@ -53,7 +66,10 @@ passport.use('password', new LocalStrategy(
         const queryRunner = SealMemberDataSource.createQueryRunner()
         try {
             const dbUtils = new DBUtils();
-            // await queryRunner.connect()
+            if (!SealMemberDataSource.isInitialized) {
+                await SealMemberDataSource.initialize();
+            }
+            await queryRunner.connect()
             await queryRunner.startTransaction()
             const hashedPass = await queryRunner.query(`SELECT OLD_PASSWORD('${password}') AS hash_password`) as HashPasswordDTO[]
             let tblName = await dbUtils.getIdTable(username);
