@@ -17,3 +17,8 @@ export interface TopupCashRequestDTO {
     email: string
     cashAmount: number;
 }
+
+export type CharacterNameResponseDTO = {
+    characterName: string;
+    isCharacterOnline: boolean;
+}

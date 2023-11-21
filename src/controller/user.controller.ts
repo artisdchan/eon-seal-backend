@@ -1,7 +1,9 @@
 import { Request, Response, NextFunction } from "express"
-import { SealMemberDataSource } from "../data-source";
-import { HashPasswordDTO, RegisterRequestDTO, ResetPasswordDTO, TopupCashRequestDTO } from "../dto/user.dto";
+import { GDB0101DataSource, SealMemberDataSource } from "../data-source";
+import { AuthenUser } from "../dto/authen.dto";
+import { CharacterNameResponseDTO, HashPasswordDTO, RegisterRequestDTO, ResetPasswordDTO, TopupCashRequestDTO } from "../dto/user.dto";
 import { idtable1, idtable2, idtable3, idtable4, idtable5 } from "../entity/idtable.entity";
+import { pc } from "../entity/pc.entity";
 import { usermsgex } from "../entity/usermsgex.entity";
 import EonHubService from '../service/eonhub.service'
 import DBUtils from "../utils/db.utils";
@@ -218,6 +220,38 @@ export default class UserController {
             //     .execute();
 
             return res.status(200).json({ status: 200, message: 'Success' });
+
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ status: 500, message: 'internal server error' });
+        }
+    }
+
+    public getAllCharacterName = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const currentUser = req.user as AuthenUser;
+
+            if (!GDB0101DataSource.isInitialized) {
+                await GDB0101DataSource.initialize();
+            }
+
+            const pcEntity = await GDB0101DataSource.manager.findBy(pc, { user_id: currentUser.username });
+            let response : CharacterNameResponseDTO[] = [];
+
+            pcEntity.forEach(eachPc => {
+                let isOnline: boolean = true;
+                if (eachPc.play_flag == 0) {
+                    isOnline = false;
+                }
+                const resp: CharacterNameResponseDTO = {
+                    characterName: eachPc.char_name,
+                    isCharacterOnline: isOnline
+                }
+
+                response.push(resp);
+            });
+
+            return res.status(200).json({ data: response });
 
         } catch (error) {
             console.error(error);

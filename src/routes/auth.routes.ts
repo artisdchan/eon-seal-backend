@@ -24,7 +24,7 @@ class AuthRoutes {
                     return res.status(401).json(message);
                 }
 
-                const token = jwt.sign({ user: req.user }, JWT_SECRET, { expiresIn: "1h" });
+                const token = jwt.sign({ user: user }, JWT_SECRET, { expiresIn: "1h" });
                 res.cookie("token", token, {expires: new Date(Date.now() + 86400 * 1000), httpOnly: true});
                 return res.status(200).json({token});
 
