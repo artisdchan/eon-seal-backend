@@ -135,13 +135,13 @@ export default class UserController {
             const currentUser = req.user;
             const request = req.body as ResetPasswordDTO;
             const dbUtils = new DBUtils();
-            const tableName = await dbUtils.getIdTable(currentUser?.username!);
+            const tableName = await dbUtils.getIdTable(currentUser?.gameUserId!);
             if (!SealMemberDataSource.isInitialized) {
                 await SealMemberDataSource.initialize();
             }
 
             const hashedOldPass = await SealMemberDataSource.manager.query(`SELECT OLD_PASSWORD('${request.currentPassword}') AS hash_password`) as HashPasswordDTO[]
-            const user = await SealMemberDataSource.manager.query(`SELECT * FROM ${tableName} WHERE id = '${currentUser?.username}'`) as idtable1[]
+            const user = await SealMemberDataSource.manager.query(`SELECT * FROM ${tableName} WHERE id = '${currentUser?.gameUserId}'`) as idtable1[]
             if (user[0].passwd.toLowerCase() != hashedOldPass[0].hash_password.toLowerCase()) {
                 res.status(400).json({ message: 'Invalid current password.' });
                 next(null);
@@ -157,12 +157,12 @@ export default class UserController {
                 const userMsgExEntity = await queryRunner.manager.createQueryBuilder()
                 .select('usermsgex')
                 .from(usermsgex, 'usermsgex')
-                .where('usermsgex.userId = :userId', { userId: currentUser?.username })
+                .where('usermsgex.userId = :userId', { userId: currentUser?.gameUserId })
                 .getOne();
 
                 userMsgExEntity!.xixi = request.newPassword;
 
-                await queryRunner.manager.query(`UPDATE ${tableName} SET passwd = '${hashedNewPass[0].hash_password}' WHERE id = '${currentUser?.username}'`);
+                await queryRunner.manager.query(`UPDATE ${tableName} SET passwd = '${hashedNewPass[0].hash_password}' WHERE id = '${currentUser?.gameUserId}'`);
                 await queryRunner.manager.save(userMsgExEntity);
 
                 await queryRunner.commitTransaction()
@@ -235,7 +235,7 @@ export default class UserController {
                 await GDB0101DataSource.initialize();
             }
 
-            const pcEntity = await GDB0101DataSource.manager.findBy(pc, { user_id: currentUser.username });
+            const pcEntity = await GDB0101DataSource.manager.findBy(pc, { user_id: currentUser.gameUserId });
             let response : CharacterNameResponseDTO[] = [];
 
             pcEntity.forEach(eachPc => {
@@ -251,7 +251,7 @@ export default class UserController {
                 response.push(resp);
             });
 
-            return res.status(200).json({ data: response });
+            return res.status(200).json({ status: 200, data: response });
 
         } catch (error) {
             console.error(error);

@@ -1,10 +1,12 @@
-import { application, Application } from "express";
+import { Application } from "express";
 import authRoutes from "./auth.routes";
+import storeRoutes from "./store.routes";
 import userRoutes from "./user.routes";
 
 export default class Routes {
     constructor(app: Application) {
       app.use("/api/user", userRoutes);
-      app.use('/api/auth', authRoutes)
+      app.use('/api/auth', authRoutes);
+      app.use('/api/store', storeRoutes);
     }
   }

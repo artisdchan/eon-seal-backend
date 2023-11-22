@@ -1,5 +1,5 @@
 
 export interface AuthenUser {
-    username: string;
+    gameUserId: string;
     email: string;
 }

@@ -21,19 +21,19 @@ passport.deserializeUser(async (id: AuthenUser, done) => {
 
         const dbUtils = new DBUtils();
 
-        let tblName = await dbUtils.getIdTable(id.username);
+        let tblName = await dbUtils.getIdTable(id.gameUserId);
 
         if (!SealMemberDataSource.isInitialized) {
             await SealMemberDataSource.initialize();
         }
-        let user = await SealMemberDataSource.manager.query(`SELECT * FROM ${tblName} WHERE id = '${id.username}'`) as idtable1
+        let user = await SealMemberDataSource.manager.query(`SELECT * FROM ${tblName} WHERE id = '${id.gameUserId}'`) as idtable1
 
         if (user == null) {
-            console.error("user not found", id.username);
+            console.error("user not found", id.gameUserId);
             return done(null, false);
         } else {
             done(null, {
-                username: user.id,
+                gameUserId: user.id,
                 email: user.email!
             });
         }
@@ -69,7 +69,7 @@ passport.use('password', new LocalStrategy(
         }
 
         done(null, {
-            username: user[0].id,
+            gameUserId: user[0].id,
             email: user[0].email!
         });
     }
@@ -86,8 +86,8 @@ passport.use(new JwtStrategy({
             if (!SealMemberDataSource.isInitialized) {
                 await SealMemberDataSource.initialize();
             }
-            let tblName = await dbUtils.getIdTable(jwtPayload.user.username);
-            const user = await SealMemberDataSource.manager.query(`SELECT * FROM ${tblName} WHERE id = '${jwtPayload.user.username}'`) as idtable1[]
+            let tblName = await dbUtils.getIdTable(jwtPayload.user.gameUserId);
+            const user = await SealMemberDataSource.manager.query(`SELECT * FROM ${tblName} WHERE id = '${jwtPayload.user.gameUserId}'`) as idtable1[]
 
             if (user == null) {
                 console.error("user not found", jwtPayload.userId);
@@ -95,7 +95,7 @@ passport.use(new JwtStrategy({
             }
 
             done(null, {
-                username: user[0].id,
+                gameUserId: user[0].id,
                 email: user[0].email!
             });
 
