@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { GDB0101DataSource, SealMemberDataSource } from "../data-source";
 import { AuthenUser } from "../dto/authen.dto";
 import { ConvertRCRequestDTO, ConvertRCType } from "../dto/store.dto";
+import { log_item_transaction } from "../entity/log.entity";
 import { store } from "../entity/store.entity";
 import { usermsgex } from "../entity/usermsgex.entity";
 import LogService from "../service/log.service";
@@ -11,7 +12,7 @@ export default class StoreController {
 
     public getRCAmount = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            
+
             const currentUser = req.user as AuthenUser;
             if (!GDB0101DataSource.isInitialized) {
                 await GDB0101DataSource.initialize();
@@ -50,20 +51,20 @@ export default class StoreController {
     }
 
     public convertRC = async (req: Request, res: Response, next: NextFunction) => {
+        const currentUser = req.user as AuthenUser;
+        const request = req.body as ConvertRCRequestDTO;
+        const storeService = new StoreService();
+        const logService = new LogService();
+        let log = await logService.insertLogItemTransaction("CONVERT_RC", request.convertType.toString(), "PREPARE_CONVERT_RC", currentUser.gameUserId);
         try {
             // Request amount must be integer.
-            const currentUser = req.user as AuthenUser;
-            const request = req.body as ConvertRCRequestDTO;
-            const storeService = new StoreService();
-            const logService = new LogService();
+
             if (!GDB0101DataSource.isInitialized) {
                 await GDB0101DataSource.initialize();
             }
             if (!SealMemberDataSource.isInitialized) {
                 await SealMemberDataSource.initialize();
             }
-
-            let log = await logService.insertLogItemTransaction("CONVERT_RC", request.convertType.toString(), "PREPARE_CONVERT_RC", null, currentUser.gameUserId);
 
             const userMsgExEntity = await SealMemberDataSource.manager.findOneBy(usermsgex, { userId: currentUser.gameUserId });
             if (userMsgExEntity == null) {
@@ -79,7 +80,7 @@ export default class StoreController {
 
             const rcItemId: number = 27232;
             // TODO Get RC Item ID From DB config
-            const cashPerRc = 1000; 
+            const cashPerRc = 1000;
             // TODO Get from DB config
 
             if (request.convertType == ConvertRCType.RC_TO_CASH) {
@@ -100,10 +101,12 @@ export default class StoreController {
                     return res.status(400).json({ status: 400, message: 'Invalid RC Amount.' });
                 }
 
-                const cashToBeAdd = rcAmount * cashPerRc;
+                const cashToBeAdd = request.rcAmount! * cashPerRc;
 
-                storeEntity = storeService.setValueIntoStoreEntity(rcAmountPosition, Number(rcAmount - request.rcAmount!));
-                await GDB0101DataSource.manager.save(storeEntity);
+                // const rcAmountObj = storeService.setValueIntoStoreEntity(rcAmountPosition, Number(rcAmount - request.rcAmount!));
+                // const aa = { ...storeEntity, ...rcAmountObj } as store;
+                // await GDB0101DataSource.manager.save(aa);
+                await GDB0101DataSource.manager.decrement(store, { user_id: currentUser.gameUserId }, rcAmountPosition, request.rcAmount!);
 
                 userMsgExEntity.gold! += cashToBeAdd;
                 await SealMemberDataSource.manager.save(userMsgExEntity);
@@ -144,9 +147,16 @@ export default class StoreController {
                 userMsgExEntity.gold! -= cashTobeMinus;
                 await SealMemberDataSource.manager.save(userMsgExEntity);
 
-                storeEntity = storeService.setValueIntoStoreEntity(rcPosition, rcItemId);
-                storeEntity = storeService.setValueIntoStoreEntity(rcAmountPosition, rcAmount + request.rcAmount! - 1);
-                await GDB0101DataSource.manager.save(storeEntity);
+                const aa = storeService.setValueIntoStoreEntity(rcPosition, rcItemId);
+                const bb = storeService.setValueIntoStoreEntity(rcAmountPosition, rcAmount + request.rcAmount! - 1);
+                const cc = { ...aa, ...bb } as store;
+                cc.user_id = currentUser.gameUserId;
+                // await GDB0101DataSource.manager.update(store, currentUser.gameUserId, { rcPosition: rcItemId })
+                await GDB0101DataSource.manager.getRepository(store).save({
+                    ...storeEntity,
+                    ...aa,
+                    ...bb
+                })
 
                 log = await logService.updateLogItemTransaction("SUCCESS", `RC Amount: ${request.rcAmount}, Cash Amount: ${cashTobeMinus}`, log);
 
@@ -159,6 +169,7 @@ export default class StoreController {
 
         } catch (error) {
             console.error(error);
+            log = await logService.updateLogItemTransaction(log.status, 'internal server error', log);
             return res.status(500).json({ status: 500, message: 'internal server error' });
         }
     }

@@ -69,7 +69,7 @@ GDB0101DataSource.initialize()
     })
 LogItemDataSource.initialize()
     .then(() => {
-        console.log("gdb0101 Data Source has been initialized!")
+        console.log("log_item Data Source has been initialized!")
     })
     .catch((err) => {
         console.error("Error during Data Source initialization", err)

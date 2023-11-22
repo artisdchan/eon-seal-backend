@@ -1,6 +1,5 @@
 export type ConvertRCRequestDTO = {
-    rcAmount: number | undefined;
-    cashAmount: number | undefined;
+    rcAmount: number;
     convertType: ConvertRCType
 }
 

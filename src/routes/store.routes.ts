@@ -12,6 +12,7 @@ class StoreRoutes {
 
     intializeRoutes() {
         this.router.get('/rc', passport.authenticate('jwt'), this.controller.getRCAmount);
+        this.router.post('/rc', passport.authenticate('jwt'), this.controller.convertRC);
     }
 
 }
