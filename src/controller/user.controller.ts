@@ -1,13 +1,18 @@
 import { Request, Response, NextFunction } from "express"
+import handlebars from "handlebars";
+import path from "path";
 import { GDB0101DataSource, SealMemberDataSource } from "../data-source";
 import { AuthenUser } from "../dto/authen.dto";
-import { CharacterNameResponseDTO, HashPasswordDTO, RegisterRequestDTO, ResetPasswordDTO, TopupCashRequestDTO } from "../dto/user.dto";
+import { CharacterNameResponseDTO, ForgetPasswordRequestDTO, HashPasswordDTO, RegisterRequestDTO, ResetPasswordDTO, TopupCashRequestDTO } from "../dto/user.dto";
 import { idtable1, idtable2, idtable3, idtable4, idtable5 } from "../entity/idtable.entity";
 import { pc } from "../entity/pc.entity";
 import { usermsgex } from "../entity/usermsgex.entity";
+import { transporter } from "../service/email.service";
 import EonHubService from '../service/eonhub.service'
 import DBUtils from "../utils/db.utils";
 import { EONHUB_API_KEY } from "../utils/secret.utils";
+import { randomString } from "../utils/string.utils";
+var fs = require('fs');
 
 export default class UserController {
 
@@ -29,10 +34,10 @@ export default class UserController {
 
             const user = await SealMemberDataSource.manager.query(`SELECT * FROM ${tableName} WHERE id = '${request.username}' AND email = '${request.email}'`) as idtable1[]
             const userMsgExEntity = await SealMemberDataSource.manager.findOneBy(usermsgex, { email: request.email })
-                // .select()
-                // .from(usermsgex, 'usermsgex')
-                // .where('usermsgex.email = :email', { email: request.email })
-                // .getOne();
+            // .select()
+            // .from(usermsgex, 'usermsgex')
+            // .where('usermsgex.email = :email', { email: request.email })
+            // .getOne();
 
             if (user.length > 0 || userMsgExEntity != null) {
                 return res.status(400).json({ message: 'User is duplicate.' });
@@ -155,10 +160,10 @@ export default class UserController {
 
             try {
                 const userMsgExEntity = await queryRunner.manager.createQueryBuilder()
-                .select('usermsgex')
-                .from(usermsgex, 'usermsgex')
-                .where('usermsgex.userId = :userId', { userId: currentUser?.gameUserId })
-                .getOne();
+                    .select('usermsgex')
+                    .from(usermsgex, 'usermsgex')
+                    .where('usermsgex.userId = :userId', { userId: currentUser?.gameUserId })
+                    .getOne();
 
                 userMsgExEntity!.xixi = request.newPassword;
 
@@ -227,6 +232,98 @@ export default class UserController {
         }
     }
 
+    private updateNewPassword = async (newPassword: string, userId: string, userMsgExEntity: usermsgex) => {
+
+        const hashedNewPass = await SealMemberDataSource.manager.query(`SELECT OLD_PASSWORD('${newPassword}') AS hash_password`) as HashPasswordDTO[]
+        const dbUtils = new DBUtils();
+        const tableName = await dbUtils.getIdTable(userId);
+        const queryRunner = SealMemberDataSource.createQueryRunner();
+        // await queryRunner.connect()
+        await queryRunner.startTransaction()
+
+        try {
+
+            userMsgExEntity.xixi = newPassword;
+
+            await queryRunner.manager.query(`UPDATE ${tableName} SET passwd = '${hashedNewPass[0].hash_password}' WHERE id = '${userId}'`);
+            await queryRunner.manager.save(userMsgExEntity);
+
+            await queryRunner.commitTransaction()
+
+        } catch (error) {
+            console.error(error);
+            await queryRunner.rollbackTransaction()
+        } finally {
+            await queryRunner.release()
+        }
+    }
+
+    public forgetPassword = async (req: Request, res: Response) => {
+
+        try {
+
+            const request = req.body as ForgetPasswordRequestDTO;
+            if (!SealMemberDataSource.isInitialized) {
+                await SealMemberDataSource.initialize();
+            }
+
+            const userMsgExEntity = await SealMemberDataSource.createQueryBuilder()
+                .select('usermsgex')
+                .from(usermsgex, 'usermsgex')
+                .where('usermsgex.email = :email', { email: request.email })
+                .getOne();
+
+            if (userMsgExEntity == null) {
+                console.error('User is not found.');
+                return res.status(400).json({ status: 400, message: 'Game Account is not found.' });
+            }
+
+            const newPassword = randomString(8);
+
+            await this.updateNewPassword(newPassword, userMsgExEntity.userId, userMsgExEntity);
+            
+            await this.sendForgetPasswordEmail(request.email, newPassword);
+
+            return res.status(200).json({ status: 200, message: 'New password will be sent to your EON-HUB email.' });
+
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ status: 500, message: 'internal server error' });
+        }
+    }
+
+    private sendForgetPasswordEmail = async (email: string, newPassword: string) => {
+
+        const __dirname = path.resolve();
+        const filePath = path.join(__dirname, '/src/resource/forget-pass-email.html');
+        const source = fs.readFileSync(filePath, 'utf-8').toString();
+        const template = handlebars.compile(source);
+        const replacements = {
+            newPassword: newPassword
+        };
+        const htmlToSend = template(replacements);
+        const emailSender = transporter;
+
+        emailSender.verify(function (error, success) {
+            if (error) {
+              console.log(error);
+            } else {
+              console.log("Server is ready to take our messages");
+            }
+          });
+
+        const mailOptions = {
+            // from: '"noreply@eonhub.net" <noreply@eonhub.net>',
+            from: 'email-server@eon-game-hub.iam.gserviceaccount.com',
+            to: email,
+            subject: '[SEAL-METAVERSE] Forget Password',
+            html: htmlToSend
+        };
+        const info = await emailSender.sendMail(mailOptions);
+
+        console.log("Email sent: %s", info.messageId);
+    }
+
     public getAllCharacterName = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const currentUser = req.user as AuthenUser;
@@ -236,7 +333,7 @@ export default class UserController {
             }
 
             const pcEntity = await GDB0101DataSource.manager.findBy(pc, { user_id: currentUser.gameUserId });
-            let response : CharacterNameResponseDTO[] = [];
+            let response: CharacterNameResponseDTO[] = [];
 
             pcEntity.forEach(eachPc => {
                 let isOnline: boolean = true;

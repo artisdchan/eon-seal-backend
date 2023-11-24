@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "eon-game-hub",
+  "private_key_id": "cb50ac96168dcb304d7393957844309c04884a3c",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDbjWOGsOvKq+m6\nUYYPMgdeRcWIZngMpcyBg9VfJ6kN1vmAs793Qt9BrbXAT87/WJDTFMga54tA8rEQ\n0OxMNocWnzrIg6/YGbdDtIEZcw4wHE30Q+F0NN0E3H2e7LDb8+6rgq6+TMy+eAdB\n2+kPy492by5CWk7JTS1Vl2Romz9jT2s9jPVf9mcTsQY2E3u4zgpgVpSKxrJorhku\nL4gSyNACQ7bCDfaMLMPKCC2lb3+FJyupIYnOvVghMXhcNLRGtUbyJAj5vyYa93+n\nXed8LS0x+z1jiSCBeID1ScH2OlpIsVaFdj5hkp1P5lrRCACVT+sZ3l9ki4DMtTfd\nVzeuPX9xAgMBAAECggEAZ1bKdLhLk66NKbx7jCVxIGdYzZXlhZZ4hrGFue8R/Eim\nUXTJdxoLuX9I4AbwmHGYYTIT6c34Vo6k1xRvVIQJ25UA9yY8m0unXf/VECR+lhiM\nfJ+Cu86yBTq/ChHAQRc0zJeLJllBuZkHWXFn5p5anVVBgcu977Qa1YGXqkEAef4l\nczUIQNcNqaiZNoEosuKBTOWqsCgIEERveXs1Z7XrVx+CyQLSVpNnsLSapBRJJGzn\n9nN8Ux+SVv7dLPL6FGuhbtwpU97ZZ9ZNlzjf77u36q4BvlkhY3HAvixtBUqYs6Hv\nflE9TWrc7NZ0H0JA9tv1802TfI+LxDmlCFjjoQvYDQKBgQDx/zGMUEgaHm44FZTg\nakr9frrBI3Tycuoqh1h3SGCJhwfTR22IJBRHH9depfJ0Lih2yt0Jj6CRTGD1rosA\nnvQlZo5+EIZmcYtcuOEwpopMlsfkITzzCJ/OurYRrvKxvdGlfzX1x8vWnpVox/Y2\n9GqSdYApKewnT8hUrPM4bNmwowKBgQDoQbbUIMY499TcW+EZCVq9jC3Gn+NHmudL\n6JZs6RYMVGuu9V09TmmMtLYc6XBFL7k7bxcS714xrTF5jy3nrbcsZXQYkznIpNog\nz5xmB7lFYuRwIu2lR8GudBAW35H3x5er6P2v5Kg9vp/rVyshh+Q8W1ctDrQpKiff\n8bVvhFFM2wKBgQC65aOnwW0eNvha+lgDxjPqedDUT4UHpraxZ9xsK4rbTF0/0L+I\nUI0UrUPRhoqtLeT0chKqSrHw5bNQq6ARN7JJnF5agHq8bd77GpJY15aiNiVlTEJd\nVQDPUaZCHAK2QWrDzW6oRsloFQxBY4YFxVj1iigUIpuPdO+8beJeZrrtzwKBgQDY\nfzkPr6VWwR34cuT205N0ENEyzyOrQafNSHe/+d4FjEP8iNdrKEaXVHRVqvxuYbgG\nwNz/V4W0RL9TkrW1umZ+yetYZRR+Bb0WzK/7I8P9+9r49HYVlTfjiGjfCXQlRjYJ\nl1uytDBnreOgGlcoIGYOJQ6z/3rMzHDy/XqlAvBN9QKBgGCKPzqSwoA6pQEpk7gG\nJYCKAdo7rFwzxEOzVOB/bA9a4dkMdOr4TL+Dd6h5EEW0biPMorJOzpeZPN5Jx5cM\nr46oDgzEr2bv3OF7bVq1ZfunjxNo6FhMWb0UazF9y8n4SzYndckCSaIldJYA9OtX\ntzmxW+8msDKO9BaGQRYZwiiP\n-----END PRIVATE KEY-----\n",
+  "client_email": "email-server@eon-game-hub.iam.gserviceaccount.com",
+  "client_id": "115491281779292474183",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/email-server%40eon-game-hub.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

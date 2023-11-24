@@ -22,3 +22,7 @@ export type CharacterNameResponseDTO = {
     characterName: string;
     isCharacterOnline: boolean;
 }
+
+export type ForgetPasswordRequestDTO = {
+    email: string;
+}

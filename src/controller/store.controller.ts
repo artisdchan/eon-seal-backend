@@ -57,7 +57,6 @@ export default class StoreController {
         const logService = new LogService();
         let log = await logService.insertLogItemTransaction("CONVERT_RC", request.convertType.toString(), "PREPARE_CONVERT_RC", currentUser.gameUserId);
         try {
-            // Request amount must be integer.
 
             if (!GDB0101DataSource.isInitialized) {
                 await GDB0101DataSource.initialize();
@@ -101,13 +100,11 @@ export default class StoreController {
                     return res.status(400).json({ status: 400, message: 'Invalid RC Amount.' });
                 }
 
-                const cashToBeAdd = request.rcAmount! * cashPerRc;
-
-                // const rcAmountObj = storeService.setValueIntoStoreEntity(rcAmountPosition, Number(rcAmount - request.rcAmount!));
-                // const aa = { ...storeEntity, ...rcAmountObj } as store;
-                // await GDB0101DataSource.manager.save(aa);
+                log = await logService.updateLogItemTransaction("PREPARE_CALCULATE_RC", undefined, log);
                 await GDB0101DataSource.manager.decrement(store, { user_id: currentUser.gameUserId }, rcAmountPosition, request.rcAmount!);
 
+                log = await logService.updateLogItemTransaction("PREPARE_CALCULATE_CASH", undefined, log);
+                const cashToBeAdd = request.rcAmount! * cashPerRc;
                 userMsgExEntity.gold! += cashToBeAdd;
                 await SealMemberDataSource.manager.save(userMsgExEntity);
 
@@ -144,18 +141,18 @@ export default class StoreController {
                     rcAmount = Number(storeEntity[rcAmountPosition]) + 1;
                 }
 
+                log = await logService.updateLogItemTransaction("PREPARE_CALCULATE_CASH", undefined, log);
                 userMsgExEntity.gold! -= cashTobeMinus;
                 await SealMemberDataSource.manager.save(userMsgExEntity);
 
-                const aa = storeService.setValueIntoStoreEntity(rcPosition, rcItemId);
-                const bb = storeService.setValueIntoStoreEntity(rcAmountPosition, rcAmount + request.rcAmount! - 1);
-                const cc = { ...aa, ...bb } as store;
-                cc.user_id = currentUser.gameUserId;
-                // await GDB0101DataSource.manager.update(store, currentUser.gameUserId, { rcPosition: rcItemId })
+                log = await logService.updateLogItemTransaction("PREPARE_CALCULATE_RC", undefined, log);
+                const rcItemObj = storeService.setValueIntoStoreEntity(rcPosition, rcItemId);
+                const rcAmountObj = storeService.setValueIntoStoreEntity(rcAmountPosition, rcAmount + request.rcAmount! - 1);
+                
                 await GDB0101DataSource.manager.getRepository(store).save({
                     ...storeEntity,
-                    ...aa,
-                    ...bb
+                    ...rcItemObj,
+                    ...rcAmountObj
                 })
 
                 log = await logService.updateLogItemTransaction("SUCCESS", `RC Amount: ${request.rcAmount}, Cash Amount: ${cashTobeMinus}`, log);
