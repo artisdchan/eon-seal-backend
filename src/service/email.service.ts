@@ -10,6 +10,6 @@ export const transporter = nodemailer.createTransport({
         user: 'noreply@eonhub.net',
         serviceClient: keys.client_id,
         privateKey: keys.private_key,
-        // accessUrl: keys.token_uri,
-    }
+    },
+    from: keys.client_email
 })

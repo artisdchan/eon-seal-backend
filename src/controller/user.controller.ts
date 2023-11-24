@@ -313,8 +313,6 @@ export default class UserController {
           });
 
         const mailOptions = {
-            // from: '"noreply@eonhub.net" <noreply@eonhub.net>',
-            from: 'email-server@eon-game-hub.iam.gserviceaccount.com',
             to: email,
             subject: '[SEAL-METAVERSE] Forget Password',
             html: htmlToSend
