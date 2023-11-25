@@ -1,6 +1,6 @@
 import { Column, Entity, PrimaryColumn } from "typeorm";
 
-@Entity()
+@Entity({ name: 'web_config' })
 export class WebConfig {
     
     @PrimaryColumn({ name: 'config_key' })
