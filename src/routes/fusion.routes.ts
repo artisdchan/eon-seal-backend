@@ -13,7 +13,8 @@ class FusionRoutes {
     initializeRoutes() {
         this.router.post('/', passport.authenticate('jwt'), this.controller.fusionCostume);
         this.router.get('/', passport.authenticate('jwt'), this.controller.getItemFusionList);
-        this.router.post('/exchange', passport.authenticate('jwt'), this.controller.exchangeCostume);
+        this.router.post('/redeem', passport.authenticate('jwt'), this.controller.exchangeCostume);
+        this.router.post('/re-roll', passport.authenticate('jwt'), this.controller.reRoll);
     }
 }
 
