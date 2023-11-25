@@ -16,5 +16,6 @@ export class WebConfig {
 
 export enum WebConfigConstant {
     RC_ITEM_ID_CONFIG = 'RC_ITEM_CONFIG',
-    CASH_PER_RC_CONFIG = 'CASH_PER_RC_CONFIG'
+    CASH_PER_RC_CONFIG = 'CASH_PER_RC_CONFIG',
+    CRYSTAL_CONVERT_TAX = 'CRYSTAL_CONVERT_TAX'
 }

@@ -424,7 +424,7 @@ export default class FusionController {
             }
 
             if (pcEntityList.money < cegelTax) {
-                return res.status(400).json({ status: 400, message: 'Insufficient cegel.' }); 
+                return res.status(400).json({ status: 400, message: 'Insufficient cegel.' });
             }
 
             pcEntityList.money -= cegelTax;
@@ -453,6 +453,7 @@ export default class FusionController {
                     itemName: tobeAddCostume.itemName,
                     itemPicture: tobeAddCostume.itemPicture
                 }
+                await logService.insertLogItemTransaction("FUSION_ITEM", "RE_ROLL_ITEM", "SUCCESS", currentUser.gameUserId, 'Re-roll fusion item complete.');
 
                 return res.status(200).json({ status: 200, data: response });
 
@@ -503,6 +504,8 @@ export default class FusionController {
                     itemPicture: tobeAddCostume.itemPicture
                 }
 
+                await logService.insertLogItemTransaction("FUSION_ITEM", "RE_ROLL_ITEM", "SUCCESS", currentUser.gameUserId, 'Re-roll fusion item complete.');
+                
                 return res.status(200).json({ status: 200, data: response });
 
             } else {
