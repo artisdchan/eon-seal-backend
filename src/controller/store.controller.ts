@@ -2,9 +2,8 @@ import { Request, Response, NextFunction } from "express";
 import { GDB0101DataSource, SealMemberDataSource } from "../data-source";
 import { AuthenUser } from "../dto/authen.dto";
 import { ConvertRCRequestDTO, ConvertRCType } from "../dto/store.dto";
-import { log_item_transaction } from "../entity/log.entity";
-import { store } from "../entity/store.entity";
-import { usermsgex } from "../entity/usermsgex.entity";
+import { store } from "../entity/gdb0101/store.entity";
+import { usermsgex } from "../entity/seal_member/usermsgex.entity";
 import LogService from "../service/log.service";
 import StoreService from "../service/store.service";
 
@@ -55,7 +54,7 @@ export default class StoreController {
         const request = req.body as ConvertRCRequestDTO;
         const storeService = new StoreService();
         const logService = new LogService();
-        let log = await logService.insertLogItemTransaction("CONVERT_RC", request.convertType.toString(), "PREPARE_CONVERT_RC", currentUser.gameUserId);
+        let log = await logService.insertLogItemTransaction("CONVERT_RC", request.convertType.toString(), "PREPARE_CONVERT_RC", currentUser.gameUserId, undefined);
         try {
 
             if (!GDB0101DataSource.isInitialized) {
@@ -79,7 +78,7 @@ export default class StoreController {
 
             const rcItemId: number = 27232;
             // TODO Get RC Item ID From DB config
-            const cashPerRc = 1000;
+            const cashPerRc = 100;
             // TODO Get from DB config
 
             if (request.convertType == ConvertRCType.RC_TO_CASH) {

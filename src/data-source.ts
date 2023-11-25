@@ -1,11 +1,15 @@
 import { DataSource } from "typeorm";
-import { idtable1, idtable2, idtable3, idtable4, idtable5 } from "./entity/idtable.entity";
-import { inventory } from "./entity/inventory.entity";
-import { log_item_transaction } from "./entity/log.entity";
-import { pc } from "./entity/pc.entity";
-import { store } from "./entity/store.entity";
-import { usermsgex } from "./entity/usermsgex.entity";
+import { CashInventory } from "./entity/gdb0101/cash_inventory.entity";
+import { FusionItemConfig } from "./entity/item/fusion_item.entity";
+import { idtable1, idtable2, idtable3, idtable4, idtable5 } from "./entity/seal_member/idtable.entity";
+import { inventory } from "./entity/gdb0101/inventory.entity";
+import { log_item_transaction } from "./entity/log_item/log.entity";
+import { pc } from "./entity/gdb0101/pc.entity";
+import { SealItem } from "./entity/item/seal_item.entity";
+import { store } from "./entity/gdb0101/store.entity";
+import { usermsgex } from "./entity/seal_member/usermsgex.entity";
 import { SEAL_DB_HOST, SEAL_DB_PASS, SEAL_DB_PORT, SEAL_DB_USER } from "./utils/secret.utils";
+import { WebUserDetail } from "./entity/seal_member/web_user_detail.entity";
 
 export const SealMemberDataSource = new DataSource({
     type: "mariadb",
@@ -18,7 +22,7 @@ export const SealMemberDataSource = new DataSource({
     logging: true,
     entities: [
         idtable1, idtable2, idtable3, idtable4, idtable5,
-        usermsgex
+        usermsgex, WebUserDetail
     ],
     connectTimeout: 2000
 })
@@ -33,7 +37,22 @@ export const GDB0101DataSource = new DataSource({
     synchronize: false,
     logging: true,
     entities: [
-        pc, inventory, store
+        pc, inventory, store, CashInventory
+    ],
+    connectTimeout: 2000
+})
+
+export const ItemDataSource = new DataSource({
+    type: "mariadb",
+    host: SEAL_DB_HOST,
+    port: Number(SEAL_DB_PORT),
+    username: SEAL_DB_USER,
+    password: SEAL_DB_PASS,
+    database: "item",
+    synchronize: false,
+    logging: true,
+    entities: [
+        SealItem, FusionItemConfig
     ],
     connectTimeout: 2000
 })
@@ -70,6 +89,13 @@ GDB0101DataSource.initialize()
 LogItemDataSource.initialize()
     .then(() => {
         console.log("log_item Data Source has been initialized!")
+    })
+    .catch((err) => {
+        console.error("Error during Data Source initialization", err)
+    })
+ItemDataSource.initialize()
+    .then(() => {
+        console.log("item Data Source has been initialized!")
     })
     .catch((err) => {
         console.error("Error during Data Source initialization", err)

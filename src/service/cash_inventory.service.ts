@@ -1,8 +1,8 @@
-import { store } from "../entity/gdb0101/store.entity";
+import { CashInventory } from "../entity/gdb0101/cash_inventory.entity";
 
-export default class StoreService {
+export default class CashInventoryService {
 
-    public findItemInStorentity = (itemId: number, entity: store) => {
+    public findItemInCashInventoryntity = (itemId: number, entity: CashInventory) => {
 
         const result = (Object.keys(entity) as (keyof typeof entity)[]).find((key) => {
 
@@ -15,7 +15,7 @@ export default class StoreService {
 
     }
 
-    public findEmptySlotInStorentity = (entity: store) => {
+    public findEmptySlotInCashInventoryntity = (entity: CashInventory) => {
 
         const result = (Object.keys(entity) as (keyof typeof entity)[]).find((key) => {
 
@@ -30,9 +30,9 @@ export default class StoreService {
 
     }
 
-    public findEmptySlotAmountInStoreEntity = (entity: store) => {
+    public findEmptySlotAmountInCashInventoryEntity = (entity: CashInventory) => {
 
-        const emptySlotPosition = this.findEmptySlotInStorentity(entity);
+        const emptySlotPosition = this.findEmptySlotInCashInventoryntity(entity);
         if (emptySlotPosition == undefined) {
             return undefined;
         }
@@ -42,9 +42,9 @@ export default class StoreService {
         return itemAmountPosition;
     }
 
-    public findItemAmountPositionInStoreEntity = (itemId: number, entity: store) => {
+    public findItemAmountPositionInCashInventoryEntity = (itemId: number, entity: CashInventory) => {
 
-        const itemPosition = this.findItemInStorentity(itemId, entity);
+        const itemPosition = this.findItemInCashInventoryntity(itemId, entity);
             if (itemPosition == undefined) {
                 return undefined;
             }
@@ -55,10 +55,10 @@ export default class StoreService {
 
     }
 
-    public setValueIntoStoreEntity = <K extends keyof store>(key: K, value: store[K]) => {
-        const _store: store = Object.assign({}, store); // Consider also the ES6 spread operator here
-        _store[key] = value;
-        return _store;
+    public setValueIntoCashInventoryEntity = <K extends keyof CashInventory>(key: K, value: CashInventory[K]) => {
+        const _CashInventory: CashInventory = Object.assign({}, CashInventory); // Consider also the ES6 spread operator here
+        _CashInventory[key] = value;
+        return _CashInventory;
     };
 
 }

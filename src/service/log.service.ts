@@ -1,9 +1,9 @@
 import { LogItemDataSource } from "../data-source";
-import { log_item_transaction } from "../entity/log.entity";
+import { log_item_transaction } from "../entity/log_item/log.entity";
 
 export default class LogService {
 
-    public insertLogItemTransaction = async (logType: string, logAction: string, status: string, actionBy: string) => {
+    public insertLogItemTransaction = async (logType: string, logAction: string, status: string, actionBy: string, message: string | undefined) => {
         try {
 
             if (!LogItemDataSource.isInitialized) {
@@ -14,6 +14,7 @@ export default class LogService {
                 logType: logType,
                 logAction: logAction,
                 status: status,
+                message: message,
                 actionByUserId: actionBy,
                 createTime: new Date(),
                 updateTime: new Date()

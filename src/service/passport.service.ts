@@ -3,7 +3,7 @@ import passportLocal from "passport-local"
 import passportJwt from "passport-jwt";
 import { AuthenUser } from "../dto/authen.dto";
 import { SealMemberDataSource } from "../data-source";
-import { idtable1 } from "../entity/idtable.entity";
+import { idtable1 } from "../entity/seal_member/idtable.entity";
 import DBUtils from "../utils/db.utils";
 import { HashPasswordDTO } from "../dto/user.dto";
 import { JWT_SECRET } from "../utils/secret.utils";

@@ -4,14 +4,15 @@ import path from "path";
 import { GDB0101DataSource, SealMemberDataSource } from "../data-source";
 import { AuthenUser } from "../dto/authen.dto";
 import { CharacterNameResponseDTO, ForgetPasswordRequestDTO, HashPasswordDTO, RegisterRequestDTO, ResetPasswordDTO, TopupCashRequestDTO } from "../dto/user.dto";
-import { idtable1, idtable2, idtable3, idtable4, idtable5 } from "../entity/idtable.entity";
-import { pc } from "../entity/pc.entity";
-import { usermsgex } from "../entity/usermsgex.entity";
+import { idtable1, idtable2, idtable3, idtable4, idtable5 } from "../entity/seal_member/idtable.entity";
+import { pc } from "../entity/gdb0101/pc.entity";
+import { usermsgex } from "../entity/seal_member/usermsgex.entity";
 import { transporter } from "../service/email.service";
 import EonHubService from '../service/eonhub.service'
 import DBUtils from "../utils/db.utils";
 import { EONHUB_API_KEY } from "../utils/secret.utils";
 import { randomString } from "../utils/string.utils";
+import { WebUserDetail } from "../entity/seal_member/web_user_detail.entity";
 var fs = require('fs');
 
 export default class UserController {
@@ -34,10 +35,6 @@ export default class UserController {
 
             const user = await SealMemberDataSource.manager.query(`SELECT * FROM ${tableName} WHERE id = '${request.username}' AND email = '${request.email}'`) as idtable1[]
             const userMsgExEntity = await SealMemberDataSource.manager.findOneBy(usermsgex, { email: request.email })
-            // .select()
-            // .from(usermsgex, 'usermsgex')
-            // .where('usermsgex.email = :email', { email: request.email })
-            // .getOne();
 
             if (user.length > 0 || userMsgExEntity != null) {
                 return res.status(400).json({ message: 'User is duplicate.' });
@@ -95,6 +92,17 @@ export default class UserController {
             userModel.vip = 0;
             userModel.day = 0;
 
+            const webUserDetailEntity = new WebUserDetail();
+            webUserDetailEntity.user_id = request.username;
+            webUserDetailEntity.userLevel = 1;
+            webUserDetailEntity.shardUnCommonPoint = 0;
+            webUserDetailEntity.shardCommonPoint = 0;
+            webUserDetailEntity.shardRarePoint = 0;
+            webUserDetailEntity.shardEpicPoint = 0;
+            webUserDetailEntity.shardLegenPoint = 0;
+            webUserDetailEntity.crystalPoint = 0;
+            webUserDetailEntity.cashSpendPoint = 0;
+
             const queryRunner = SealMemberDataSource.createQueryRunner();
             // await queryRunner.connect()
             await queryRunner.startTransaction()
@@ -115,6 +123,7 @@ export default class UserController {
                 }
 
                 await queryRunner.manager.save(userModel);
+                await queryRunner.manager.save(webUserDetailEntity);
 
                 await queryRunner.commitTransaction()
             } catch (error) {
