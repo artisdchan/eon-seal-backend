@@ -28,10 +28,16 @@ export type FusionItemRequestDTO = {
     itemType: ItemType
 }
 
-export type ExchangeCostumeResponseDTO = {
+export type ResponseItemDTO = {
     itemId: number,
     itemType: ItemType,
     itemLevel: ItemLevel,
     itemName: string,
     itemPicture: string 
+}
+
+export type ReRollRequestDTO = {
+    itemLevel: ItemLevel
+    characterSelectedItemId: number | undefined
+    accountSelectedItemId: number | undefined
 }

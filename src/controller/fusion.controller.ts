@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { GDB0101DataSource, ItemDataSource, LogItemDataSource, SealMemberDataSource } from "../data-source";
 import { AuthenUser } from "../dto/authen.dto";
-import { ExchangeCostumeResponseDTO, FusionItemRequestDTO, OwnedFusionItemResponseDTO, CharacterBagItem, AccountBagItem } from "../dto/fusion.dto";
+import { ResponseItemDTO, FusionItemRequestDTO, OwnedFusionItemResponseDTO, CharacterBagItem, AccountBagItem, ReRollRequestDTO } from "../dto/fusion.dto";
 import { CashInventory } from "../entity/gdb0101/cash_inventory.entity";
 import { FusionItemConfig, ItemLevel, ItemType } from "../entity/item/fusion_item.entity";
 import { pc } from "../entity/gdb0101/pc.entity";
@@ -84,7 +84,7 @@ export default class FusionController {
                             itemLevel: eachConfig.itemLevel,
                             itemName: eachConfig.itemName,
                             itemType: eachConfig.itemType,
-                            itemPicture: eachConfig.itemPicture 
+                            itemPicture: eachConfig.itemPicture
                         })
                     }
                 }
@@ -212,7 +212,7 @@ export default class FusionController {
                     const amountObj = (cashInventoryService.setValueIntoCashInventoryEntity(toBeRemoveAmountPosition!, 0));
 
                     await GDB0101DataSource.manager.getRepository(CashInventory).save({
-                        ...cashInventoryEntity,
+                        ...eachCharacter,
                         ...itemobj,
                         ...amountObj
                     })
@@ -248,12 +248,14 @@ export default class FusionController {
                     webUserDetailEntity.shardLegenPoint++;
                 }
 
+                await SealMemberDataSource.manager.save(webUserDetailEntity);
+
                 logMessage = `Fusion item fail`
                 logAction = 'FUSION_FAIL'
             }
 
             // Add new item
-            await ItemDataSource.manager.create(SealItem, {
+            await ItemDataSource.manager.save(SealItem, {
                 itemId: tobeAddCostume.itemId,
                 ItemOp1: 1,
                 ItemOp2: 0,
@@ -265,7 +267,7 @@ export default class FusionController {
 
             await logService.insertLogItemTransaction("FUSION_ITEM", logAction, "SUCCESS", currentUser.gameUserId, logMessage);
 
-            const response: ExchangeCostumeResponseDTO = {
+            const response: ResponseItemDTO = {
                 itemId: tobeAddCostume.itemId,
                 itemType: tobeAddCostume.itemType,
                 itemLevel: tobeAddCostume.itemLevel,
@@ -303,7 +305,7 @@ export default class FusionController {
         try {
 
             const currentUser = req.user as AuthenUser;
-            const { exchangeLevel } = req.params;
+            const { exchangeLevel } = req.query;
             const logService = new LogService();
 
             if (!GDB0101DataSource.isInitialized) {
@@ -352,7 +354,7 @@ export default class FusionController {
 
             // Random 1 from 6 costume from shard level 
             const tobeAddCostume = await this.randomCostume(requestLevel);
-            await ItemDataSource.manager.create(SealItem, {
+            await ItemDataSource.manager.save(SealItem, {
                 itemId: tobeAddCostume.itemId,
                 ItemOp1: 1,
                 ItemOp2: 0,
@@ -364,7 +366,7 @@ export default class FusionController {
 
             await logService.insertLogItemTransaction("FUSION_ITEM", "EXCHANGE_COSTUME", "SUCCESS", currentUser.gameUserId, `Successfully exchange shard to costume. (ItemLevel: ${requestLevel})`);
 
-            const response: ExchangeCostumeResponseDTO = {
+            const response: ResponseItemDTO = {
                 itemId: tobeAddCostume.itemId,
                 itemType: tobeAddCostume.itemType,
                 itemLevel: tobeAddCostume.itemLevel,
@@ -373,6 +375,122 @@ export default class FusionController {
             }
 
             return res.status(200).json({ status: 200, data: response });
+
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ status: 500, message: 'internal server error' });
+        }
+    }
+
+    public reRoll = async (req: Request, res: Response) => {
+        try {
+
+            const currentUser = req.user as AuthenUser;
+            const request = req.body as ReRollRequestDTO;
+            const logService = new LogService();
+            const cashInventoryService = new CashInventoryService();
+
+            if (!GDB0101DataSource.isInitialized) {
+                await GDB0101DataSource.initialize();
+            }
+            if (!SealMemberDataSource.isInitialized) {
+                await SealMemberDataSource.initialize();
+            }
+            if (!ItemDataSource.isInitialized) {
+                await ItemDataSource.initialize();
+            }
+
+            if (request.accountSelectedItemId == undefined && request.characterSelectedItemId == undefined) {
+                return res.status(400).json({ status: 400, message: 'Invalid request.' });
+            }
+
+            if (request.itemLevel <= ItemLevel.RARE) {
+                return res.status(400).json({ status: 400, message: 'Selected item must be rank EPIC or above.' })
+            }
+
+            if (request.accountSelectedItemId != undefined) {
+
+                await ItemDataSource.manager.remove(await ItemDataSource.manager.findOneBy(SealItem, { itemId: request.accountSelectedItemId, userId: currentUser.gameUserId }));
+
+                const tobeAddCostume = await this.randomCostume(request.itemLevel);
+                await ItemDataSource.manager.save(SealItem, {
+                    itemId: tobeAddCostume.itemId,
+                    ItemOp1: 1,
+                    ItemOp2: 0,
+                    ItemLimit: 0,
+                    userId: currentUser.gameUserId,
+                    OwnerDate: new Date,
+                    bxaid: 'BUY'
+                });
+                
+                const response: ResponseItemDTO = {
+                    itemId: tobeAddCostume.itemId,
+                    itemType: tobeAddCostume.itemType,
+                    itemLevel: tobeAddCostume.itemLevel,
+                    itemName: tobeAddCostume.itemName,
+                    itemPicture: tobeAddCostume.itemPicture
+                }
+    
+                return res.status(200).json({ status: 200, data: response });
+
+            } else if (request.characterSelectedItemId != undefined) {
+                // Find Character name
+                const pcEntityList = await GDB0101DataSource.manager.findBy(pc, { user_id: currentUser.gameUserId });
+                if (pcEntityList == null) {
+                    return res.status(400).json({ status: 400, message: 'Character is not found.' });
+                }
+
+                const characterName: string[] = [];
+                pcEntityList.map((each) => characterName.push(each.char_name));
+
+                // Find cash item in cash_inventory by character names
+                const cashInventoryEntity = await GDB0101DataSource.manager.createQueryBuilder()
+                    .select("cashInventory")
+                    .from(CashInventory, "cashInventory")
+                    .where("cashInventory.char_name IN (:...charNames)", { charNames: characterName })
+                    .getMany();
+
+                for (let eachCharacter of cashInventoryEntity) {
+                        const toBeRemoveItemPosition = cashInventoryService.findItemInCashInventoryntity(request.characterSelectedItemId, eachCharacter);
+                    if (toBeRemoveItemPosition!= undefined) {
+
+                        const toBeRemoveAmountPosition = cashInventoryService.findItemAmountPositionInCashInventoryEntity(request.characterSelectedItemId, eachCharacter);
+
+                        const itemobj = (cashInventoryService.setValueIntoCashInventoryEntity(toBeRemoveItemPosition!, 0));
+                        const amountObj = (cashInventoryService.setValueIntoCashInventoryEntity(toBeRemoveAmountPosition!, 0));
+
+                        await GDB0101DataSource.manager.getRepository(CashInventory).save({
+                            ...eachCharacter,
+                            ...itemobj,
+                            ...amountObj
+                        })
+                        const tobeAddCostume = await this.randomCostume(request.itemLevel);
+                        await ItemDataSource.manager.save(SealItem, {
+                            itemId: tobeAddCostume.itemId,
+                            ItemOp1: 1,
+                            ItemOp2: 0,
+                            ItemLimit: 0,
+                            userId: currentUser.gameUserId,
+                            OwnerDate: new Date,
+                            bxaid: 'BUY'
+                        });
+
+                        const response: ResponseItemDTO = {
+                            itemId: tobeAddCostume.itemId,
+                            itemType: tobeAddCostume.itemType,
+                            itemLevel: tobeAddCostume.itemLevel,
+                            itemName: tobeAddCostume.itemName,
+                            itemPicture: tobeAddCostume.itemPicture
+                        }
+            
+                        return res.status(200).json({ status: 200, data: response });
+            
+                    }
+                }
+                
+            } else {
+                return res.status(400).json({ status: 400, message: 'Invalid request.' })
+            }
 
         } catch (error) {
             console.error(error);

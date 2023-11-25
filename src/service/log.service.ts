@@ -10,7 +10,7 @@ export default class LogService {
                 await LogItemDataSource.initialize();
             }
     
-            let log = await LogItemDataSource.manager.create(log_item_transaction, {
+            let log = await LogItemDataSource.manager.save(log_item_transaction, {
                 logType: logType,
                 logAction: logAction,
                 status: status,

@@ -3,7 +3,7 @@ import { Column, Entity, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
 @Entity({ name: 'web_user_detail' })
 export class WebUserDetail {
 
-    @PrimaryGeneratedColumn('increment')
+    @PrimaryColumn()
     user_id!: string;
 
     @Column({ name: 'shard_common_point' })
