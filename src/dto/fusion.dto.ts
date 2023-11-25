@@ -40,4 +40,5 @@ export type ReRollRequestDTO = {
     itemLevel: ItemLevel
     characterSelectedItemId: number | undefined
     accountSelectedItemId: number | undefined
+    characterName: string
 }

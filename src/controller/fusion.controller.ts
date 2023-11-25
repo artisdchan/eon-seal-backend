@@ -10,6 +10,7 @@ import { usermsgex } from "../entity/seal_member/usermsgex.entity";
 import CashInventoryService from "../service/cash_inventory.service";
 import LogService from "../service/log.service";
 import { WebUserDetail } from "../entity/seal_member/web_user_detail.entity";
+import { WebConfig, WebConfigConstant } from "../entity/seal_member/web_config.entity";
 
 export default class FusionController {
 
@@ -399,6 +400,9 @@ export default class FusionController {
             if (!ItemDataSource.isInitialized) {
                 await ItemDataSource.initialize();
             }
+            if (!LogItemDataSource.isInitialized) {
+                await LogItemDataSource.initialize();
+            }
 
             if (request.accountSelectedItemId == undefined && request.characterSelectedItemId == undefined) {
                 return res.status(400).json({ status: 400, message: 'Invalid request.' });
@@ -407,6 +411,25 @@ export default class FusionController {
             if (request.itemLevel <= ItemLevel.RARE) {
                 return res.status(400).json({ status: 400, message: 'Selected item must be rank EPIC or above.' })
             }
+
+            // Find Character name
+            const pcEntityList = await GDB0101DataSource.manager.findOneBy(pc, { user_id: currentUser.gameUserId, char_name: request.characterName });
+            if (pcEntityList == null) {
+                return res.status(400).json({ status: 400, message: 'Character is not found.' });
+            }
+
+            let cegelTax = 3000;
+            if (request.itemLevel == ItemLevel.LEGENDARY) {
+                cegelTax = 30000;
+            }
+
+            if (pcEntityList.money < cegelTax) {
+                return res.status(400).json({ status: 400, message: 'Insufficient cegel.' }); 
+            }
+
+            pcEntityList.money -= cegelTax;
+
+            await GDB0101DataSource.manager.save(pcEntityList);
 
             if (request.accountSelectedItemId != undefined) {
 
@@ -422,7 +445,7 @@ export default class FusionController {
                     OwnerDate: new Date,
                     bxaid: 'BUY'
                 });
-                
+
                 const response: ResponseItemDTO = {
                     itemId: tobeAddCostume.itemId,
                     itemType: tobeAddCostume.itemType,
@@ -430,64 +453,58 @@ export default class FusionController {
                     itemName: tobeAddCostume.itemName,
                     itemPicture: tobeAddCostume.itemPicture
                 }
-    
+
                 return res.status(200).json({ status: 200, data: response });
 
             } else if (request.characterSelectedItemId != undefined) {
-                // Find Character name
-                const pcEntityList = await GDB0101DataSource.manager.findBy(pc, { user_id: currentUser.gameUserId });
-                if (pcEntityList == null) {
-                    return res.status(400).json({ status: 400, message: 'Character is not found.' });
-                }
-
-                const characterName: string[] = [];
-                pcEntityList.map((each) => characterName.push(each.char_name));
 
                 // Find cash item in cash_inventory by character names
                 const cashInventoryEntity = await GDB0101DataSource.manager.createQueryBuilder()
                     .select("cashInventory")
                     .from(CashInventory, "cashInventory")
-                    .where("cashInventory.char_name IN (:...charNames)", { charNames: characterName })
-                    .getMany();
+                    .where("cashInventory.char_name = (:charNames)", { charNames: request.characterName })
+                    .getOne();
 
-                for (let eachCharacter of cashInventoryEntity) {
-                        const toBeRemoveItemPosition = cashInventoryService.findItemInCashInventoryntity(request.characterSelectedItemId, eachCharacter);
-                    if (toBeRemoveItemPosition!= undefined) {
-
-                        const toBeRemoveAmountPosition = cashInventoryService.findItemAmountPositionInCashInventoryEntity(request.characterSelectedItemId, eachCharacter);
-
-                        const itemobj = (cashInventoryService.setValueIntoCashInventoryEntity(toBeRemoveItemPosition!, 0));
-                        const amountObj = (cashInventoryService.setValueIntoCashInventoryEntity(toBeRemoveAmountPosition!, 0));
-
-                        await GDB0101DataSource.manager.getRepository(CashInventory).save({
-                            ...eachCharacter,
-                            ...itemobj,
-                            ...amountObj
-                        })
-                        const tobeAddCostume = await this.randomCostume(request.itemLevel);
-                        await ItemDataSource.manager.save(SealItem, {
-                            itemId: tobeAddCostume.itemId,
-                            ItemOp1: 1,
-                            ItemOp2: 0,
-                            ItemLimit: 0,
-                            userId: currentUser.gameUserId,
-                            OwnerDate: new Date,
-                            bxaid: 'BUY'
-                        });
-
-                        const response: ResponseItemDTO = {
-                            itemId: tobeAddCostume.itemId,
-                            itemType: tobeAddCostume.itemType,
-                            itemLevel: tobeAddCostume.itemLevel,
-                            itemName: tobeAddCostume.itemName,
-                            itemPicture: tobeAddCostume.itemPicture
-                        }
-            
-                        return res.status(200).json({ status: 200, data: response });
-            
-                    }
+                if (cashInventoryEntity == null) {
+                    return res.status(400).json({ status: 400, message: 'Invalid character.' })
                 }
-                
+
+                const toBeRemoveItemPosition = cashInventoryService.findItemInCashInventoryntity(request.characterSelectedItemId, cashInventoryEntity);
+                if (toBeRemoveItemPosition == undefined) {
+                    return res.status(400).json({ status: 400, message: 'Invalid request.' })
+                }
+
+                const toBeRemoveAmountPosition = cashInventoryService.findItemAmountPositionInCashInventoryEntity(request.characterSelectedItemId, cashInventoryEntity);
+
+                const itemobj = (cashInventoryService.setValueIntoCashInventoryEntity(toBeRemoveItemPosition!, 0));
+                const amountObj = (cashInventoryService.setValueIntoCashInventoryEntity(toBeRemoveAmountPosition!, 0));
+
+                await GDB0101DataSource.manager.getRepository(CashInventory).save({
+                    ...cashInventoryEntity,
+                    ...itemobj,
+                    ...amountObj
+                })
+                const tobeAddCostume = await this.randomCostume(request.itemLevel);
+                await ItemDataSource.manager.save(SealItem, {
+                    itemId: tobeAddCostume.itemId,
+                    ItemOp1: 1,
+                    ItemOp2: 0,
+                    ItemLimit: 0,
+                    userId: currentUser.gameUserId,
+                    OwnerDate: new Date,
+                    bxaid: 'BUY'
+                });
+
+                const response: ResponseItemDTO = {
+                    itemId: tobeAddCostume.itemId,
+                    itemType: tobeAddCostume.itemType,
+                    itemLevel: tobeAddCostume.itemLevel,
+                    itemName: tobeAddCostume.itemName,
+                    itemPicture: tobeAddCostume.itemPicture
+                }
+
+                return res.status(200).json({ status: 200, data: response });
+
             } else {
                 return res.status(400).json({ status: 400, message: 'Invalid request.' })
             }

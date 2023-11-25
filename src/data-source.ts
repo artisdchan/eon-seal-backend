@@ -10,6 +10,7 @@ import { store } from "./entity/gdb0101/store.entity";
 import { usermsgex } from "./entity/seal_member/usermsgex.entity";
 import { SEAL_DB_HOST, SEAL_DB_PASS, SEAL_DB_PORT, SEAL_DB_USER } from "./utils/secret.utils";
 import { WebUserDetail } from "./entity/seal_member/web_user_detail.entity";
+import { WebConfig } from "./entity/seal_member/web_config.entity";
 
 export const SealMemberDataSource = new DataSource({
     type: "mariadb",
@@ -22,7 +23,7 @@ export const SealMemberDataSource = new DataSource({
     logging: true,
     entities: [
         idtable1, idtable2, idtable3, idtable4, idtable5,
-        usermsgex, WebUserDetail
+        usermsgex, WebUserDetail, WebConfig
     ],
     connectTimeout: 2000
 })
@@ -67,7 +68,7 @@ export const LogItemDataSource = new DataSource({
     synchronize: false,
     logging: true,
     entities: [
-        log_item_transaction
+        log_item_transaction 
     ],
     connectTimeout: 2000
 })
