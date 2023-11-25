@@ -1,46 +1,99 @@
 import { Request, Response } from "express";
 import { GDB0101DataSource, ItemDataSource, LogItemDataSource, SealMemberDataSource } from "../data-source";
 import { AuthenUser } from "../dto/authen.dto";
-import { ExchangeCostumeResponseDTO, FusionItemRequestDTO, OwnedFusionItemResponseDTO } from "../dto/fusion.dto";
+import { ExchangeCostumeResponseDTO, FusionItemRequestDTO, OwnedFusionItemResponseDTO, CharacterBagItem, AccountBagItem } from "../dto/fusion.dto";
 import { CashInventory } from "../entity/gdb0101/cash_inventory.entity";
 import { FusionItemConfig, ItemLevel, ItemType } from "../entity/item/fusion_item.entity";
 import { pc } from "../entity/gdb0101/pc.entity";
 import { SealItem } from "../entity/item/seal_item.entity";
-import { store } from "../entity/gdb0101/store.entity";
 import { usermsgex } from "../entity/seal_member/usermsgex.entity";
 import CashInventoryService from "../service/cash_inventory.service";
 import LogService from "../service/log.service";
-import StoreService from "../service/store.service";
 import { WebUserDetail } from "../entity/seal_member/web_user_detail.entity";
 
-export default class FusionShopController {
+export default class FusionController {
 
     public getItemFusionList = async (req: Request, res: Response) => {
         try {
 
             const currentUser = req.user as AuthenUser;
-            const { characterName } = req.query;
+            const cashInventoryService = new CashInventoryService();
             if (!GDB0101DataSource.isInitialized) {
                 await GDB0101DataSource.initialize();
             }
             if (!SealMemberDataSource.isInitialized) {
                 await SealMemberDataSource.initialize();
             }
+            if (!ItemDataSource.isInitialized) {
+                await ItemDataSource.initialize();
+            }
 
             const userEntity = await SealMemberDataSource.manager.findOneBy(usermsgex, { userId: currentUser.gameUserId });
             if (userEntity == null) {
                 return res.status(400).json({ status: 400, message: 'User ID is not exist.' })
             }
-            
-            // const fusionItemConfigEntityList = await 
 
-            const cashInventoryEntity = await GDB0101DataSource.manager.findOneBy(CashInventory, { char_name: String(characterName) });
-            if (cashInventoryEntity == null) {
-                return res.status(404).json({ status: 404, message: 'Cash Storage is not found.' })
+            // Find Character name
+            const pcEntityList = await GDB0101DataSource.manager.findBy(pc, { user_id: currentUser.gameUserId });
+            if (pcEntityList == null) {
+                return res.status(400).json({ status: 400, message: 'Character is not found.' });
             }
 
-            // TODO Filter costume only
-            const response: OwnedFusionItemResponseDTO[] = [];
+            const characterName: string[] = [];
+            pcEntityList.map((each) => characterName.push(each.char_name));
+
+            // Find cash item in cash_inventory by character names
+            const cashInventoryEntity = await GDB0101DataSource.manager.createQueryBuilder()
+                .select("cashInventory")
+                .from(CashInventory, "cashInventory")
+                .where("cashInventory.char_name IN (:...charNames)", { charNames: characterName })
+                .getMany();
+
+            const sealItemEntity = await ItemDataSource.manager.findBy(SealItem, { userId: currentUser.gameUserId });
+            if (cashInventoryEntity == null && sealItemEntity == null) {
+                return res.status(400).json({ status: 400, message: 'Inventory is not exist.' })
+            }
+
+            const fusionItemConfigEntityList = await ItemDataSource.manager.findBy(FusionItemConfig, { itemType: ItemType.COSTUME });
+            if (fusionItemConfigEntityList == null) {
+                return res.status(400).json({ status: 400, message: 'Configurations are not found.' });
+            }
+
+            const characterBagResponse: CharacterBagItem[] = [];
+            const accountBagResponse: AccountBagItem[] = [];
+
+            for (let eachCharacter of cashInventoryEntity) {
+                for (let eachConfig of fusionItemConfigEntityList) {
+                    if (cashInventoryService.findItemInCashInventoryntity(eachConfig.itemId, eachCharacter) != undefined) {
+                        characterBagResponse.push({
+                            itemId: eachConfig.itemId,
+                            itemLevel: eachConfig.itemLevel,
+                            itemName: eachConfig.itemName,
+                            itemType: eachConfig.itemType,
+                            itemPicture: eachConfig.itemPicture
+                        })
+                    }
+                }
+            }
+
+            for (let eachItem of sealItemEntity) {
+                for (let eachConfig of fusionItemConfigEntityList) {
+                    if (eachItem.itemId == eachConfig.itemId) {
+                        accountBagResponse.push({
+                            itemId: eachConfig.itemId,
+                            itemLevel: eachConfig.itemLevel,
+                            itemName: eachConfig.itemName,
+                            itemType: eachConfig.itemType,
+                            itemPicture: eachConfig.itemPicture 
+                        })
+                    }
+                }
+            }
+
+            const response: OwnedFusionItemResponseDTO = {
+                characterBag: characterBagResponse,
+                accountBag: accountBagResponse
+            };
 
             return res.status(200).json({ status: 200, data: response });
 
@@ -104,7 +157,7 @@ export default class FusionShopController {
             let matchedCount: number = 0;
 
             if (!this.isRequestItemValidWithConfig(request.characterSelectedItemId, fusionItemConfig)) {
-                return res.status(400).json({ status: 400, message: 'Invalid input items.'})                
+                return res.status(400).json({ status: 400, message: 'Invalid input items.' })
             }
 
             matchedCount += request.characterSelectedItemId.length;
@@ -112,14 +165,14 @@ export default class FusionShopController {
             // Check request is valid with config
             if (matchedCount != 4) {
                 if (!this.isRequestItemValidWithConfig(request.accountSelectedItemId, fusionItemConfig)) {
-                    return res.status(400).json({ status: 400, message: 'Invalid input items.'}) 
+                    return res.status(400).json({ status: 400, message: 'Invalid input items.' })
                 }
             }
 
             matchedCount += request.accountSelectedItemId.length;
 
             if (matchedCount != 4) {
-                return res.status(400).json({ status: 400, message: 'Invalid input items.'})  
+                return res.status(400).json({ status: 400, message: 'Invalid input items.' })
             }
 
             // Check request exists in character bag
@@ -127,7 +180,7 @@ export default class FusionShopController {
                 for (let eachCharacter of cashInventoryEntity) {
                     // each selected item id must exist in bag
                     if (cashInventoryService.findItemInCashInventoryntity(eachRequest, eachCharacter) == undefined) {
-                        return res.status(400).json({ status: 400, message: 'Invalid input items.'})   
+                        return res.status(400).json({ status: 400, message: 'Invalid input items.' })
                     }
                 }
             }
@@ -137,7 +190,7 @@ export default class FusionShopController {
                 for (let eachAccountItem of sealItemEntity) {
                     // each selected item id must exist in bag
                     if (eachRequest != eachAccountItem.itemId) {
-                        return res.status(400).json({ status: 400, message: 'Invalid input items.'})  
+                        return res.status(400).json({ status: 400, message: 'Invalid input items.' })
                     }
                 }
             }
@@ -186,16 +239,16 @@ export default class FusionShopController {
                     return res.status(400).json({ status: 400, message: 'User is not found.' })
                 }
                 if (request.itemLevel === ItemLevel.COMMON) {
-                    webUserDetailEntity.shardUnCommonPoint ++;
+                    webUserDetailEntity.shardUnCommonPoint++;
                 } else if (request.itemLevel === ItemLevel.UNCOMMON) {
-                    webUserDetailEntity.shardRarePoint ++;
+                    webUserDetailEntity.shardRarePoint++;
                 } else if (request.itemLevel === ItemLevel.RARE) {
-                    webUserDetailEntity.shardEpicPoint ++;
+                    webUserDetailEntity.shardEpicPoint++;
                 } else if (request.itemLevel === ItemLevel.EPIC) {
-                    webUserDetailEntity.shardLegenPoint ++;
+                    webUserDetailEntity.shardLegenPoint++;
                 }
 
-                logMessage = `Fusion item fail` 
+                logMessage = `Fusion item fail`
                 logAction = 'FUSION_FAIL'
             }
 
@@ -229,13 +282,13 @@ export default class FusionShopController {
 
     }
 
-    private isRequestItemValidWithConfig = (selectedItemIdList: number[], configItemIdList: number[]) : boolean => {
+    private isRequestItemValidWithConfig = (selectedItemIdList: number[], configItemIdList: number[]): boolean => {
 
         let matchedCount = 0;
         for (let eachConfig of configItemIdList) {
             for (let eachSelectedItem of selectedItemIdList) {
                 if (eachConfig == eachSelectedItem) {
-                    matchedCount ++;
+                    matchedCount++;
                 }
             }
         }
@@ -290,7 +343,7 @@ export default class FusionShopController {
                 shardAmount = webUserDetailEntity.shardLegenPoint;
                 webUserDetailEntity.shardLegenPoint -= condShardAmount;
             }
-            
+
             if (condShardAmount > shardAmount) {
                 return res.status(400).json({ status: 400, message: 'Insufficient item.' })
             }
@@ -327,13 +380,13 @@ export default class FusionShopController {
         }
     }
 
-    private randomCostume = async (level: ItemLevel) : Promise<FusionItemConfig> => {
+    private randomCostume = async (level: ItemLevel): Promise<FusionItemConfig> => {
         const fusionItemEntityList = await ItemDataSource.manager.findBy(FusionItemConfig, {
             itemType: ItemType.COSTUME,
             itemLevel: level
         });
 
-        const ranNum =  Math.floor(Math.random() * (fusionItemEntityList.length - 1 + 1) + 1)
+        const ranNum = Math.floor(Math.random() * (fusionItemEntityList.length - 1 + 1) + 1)
 
         return fusionItemEntityList[ranNum - 1];
     }
