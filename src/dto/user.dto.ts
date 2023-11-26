@@ -26,3 +26,13 @@ export type CharacterNameResponseDTO = {
 export type ForgetPasswordRequestDTO = {
     email: string;
 }
+
+export type UserDetailResponseDTO = {
+    shardCommonPoint: number
+    shardUnCommonPoint: number
+    shardRarePoint: number
+    shardEpicPoint: number
+    shardLegendaryPoint: number
+    crystalPoint: number
+    cashSpendPoint: number
+}

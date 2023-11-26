@@ -3,7 +3,7 @@ import handlebars from "handlebars";
 import path from "path";
 import { GDB0101DataSource, SealMemberDataSource } from "../data-source";
 import { AuthenUser } from "../dto/authen.dto";
-import { CharacterNameResponseDTO, ForgetPasswordRequestDTO, HashPasswordDTO, RegisterRequestDTO, ResetPasswordDTO, TopupCashRequestDTO } from "../dto/user.dto";
+import { CharacterNameResponseDTO, ForgetPasswordRequestDTO, HashPasswordDTO, RegisterRequestDTO, ResetPasswordDTO, TopupCashRequestDTO, UserDetailResponseDTO } from "../dto/user.dto";
 import { idtable1, idtable2, idtable3, idtable4, idtable5 } from "../entity/seal_member/idtable.entity";
 import { pc } from "../entity/gdb0101/pc.entity";
 import { usermsgex } from "../entity/seal_member/usermsgex.entity";
@@ -354,6 +354,37 @@ export default class UserController {
 
                 response.push(resp);
             });
+
+            return res.status(200).json({ status: 200, data: response });
+
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ status: 500, message: 'internal server error' });
+        }
+    }
+
+    public getUserDetail = async (req: Request, res: Response) => {
+        try {
+           
+            const currentUser = req.user as AuthenUser;
+            if (!SealMemberDataSource.isInitialized) {
+                await SealMemberDataSource.initialize();
+            }
+            
+            const userDetail = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: currentUser.gameUserId });
+            if (userDetail == null) {
+                return res.status(400).json({ status: 400, message: 'User is not found.' })
+            }
+
+            const response: UserDetailResponseDTO = {
+                shardCommonPoint: userDetail.shardCommonPoint,
+                shardUnCommonPoint: userDetail.shardUnCommonPoint,
+                shardRarePoint: userDetail.shardRarePoint,
+                shardEpicPoint: userDetail.shardEpicPoint,
+                shardLegendaryPoint: userDetail.shardLegenPoint,
+                crystalPoint: userDetail.crystalPoint,
+                cashSpendPoint: userDetail.cashSpendPoint
+            }
 
             return res.status(200).json({ status: 200, data: response });
 

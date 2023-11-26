@@ -11,6 +11,8 @@ import { usermsgex } from "./entity/seal_member/usermsgex.entity";
 import { SEAL_DB_HOST, SEAL_DB_PASS, SEAL_DB_PORT, SEAL_DB_USER } from "./utils/secret.utils";
 import { WebUserDetail } from "./entity/seal_member/web_user_detail.entity";
 import { WebConfig } from "./entity/seal_member/web_config.entity";
+import { CrystalShop } from "./entity/item/crystal_shop.entity";
+import { CrystalShopPurchaseHistory } from "./entity/log_item/log_crystal_purchase.entity";
 
 export const SealMemberDataSource = new DataSource({
     type: "mariadb",
@@ -53,7 +55,7 @@ export const ItemDataSource = new DataSource({
     synchronize: false,
     logging: true,
     entities: [
-        SealItem, FusionItemConfig
+        SealItem, FusionItemConfig, CrystalShop
     ],
     connectTimeout: 2000
 })
@@ -68,7 +70,7 @@ export const LogItemDataSource = new DataSource({
     synchronize: false,
     logging: true,
     entities: [
-        log_item_transaction 
+        log_item_transaction, CrystalShopPurchaseHistory
     ],
     connectTimeout: 2000
 })

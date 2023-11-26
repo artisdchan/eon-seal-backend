@@ -16,6 +16,7 @@ class UserRoutes {
         this.router.post('/topup', this.controller.topupCash);
         this.router.get('/character', passport.authenticate('jwt'), this.controller.getAllCharacterName);
         this.router.post('/forget', this.controller.forgetPassword);
+        this.router.get('/detail', passport.authenticate('jwt'), this.controller.getUserDetail);
     }
 
 }
