@@ -36,10 +36,11 @@ export default class LogService {
     
             log.status = status;
             log.message = message;
-            log = await LogItemDataSource.manager.save(log)
+            log = await LogItemDataSource.manager.save(log_item_transaction, log)
             return log;
         } catch (error) {
             console.error(error);
+            // return undefined;
             throw new Error('Fail to update log.');
         }
     }

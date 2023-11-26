@@ -1,10 +1,11 @@
 import { Request, Response } from "express";
 import { GDB0101DataSource, ItemDataSource, LogItemDataSource, SealMemberDataSource } from "../data-source";
 import { AuthenUser } from "../dto/authen.dto";
-import { PurchaseCrystalShopRequestDTO } from "../dto/crystal.dto";
+import { CrystalShopRequestDTO, CrystalShopResponseDTO, PurchaseCrystalShopRequestDTO } from "../dto/crystal.dto";
+import { getOffSet, getPageination, PaginationAndDataResponse } from "../dto/pagination.dto";
 import { CashInventory } from "../entity/gdb0101/cash_inventory.entity";
 import { store } from "../entity/gdb0101/store.entity";
-import { CrystalItemBag, CrystalShop } from "../entity/item/crystal_shop.entity";
+import { CrystalItemBag, CrystalItemType, CrystalShop } from "../entity/item/crystal_shop.entity";
 import { SealItem } from "../entity/item/seal_item.entity";
 import { CrystalShopPurchaseHistory } from "../entity/log_item/log_crystal_purchase.entity";
 import { WebUserDetail } from "../entity/seal_member/web_user_detail.entity";
@@ -44,7 +45,7 @@ export default class CrystalController {
                 return res.status(400).json({ status: 400, message: 'User is not found.' });
             }
 
-            const crystalShop = await ItemDataSource.manager.findOneBy(CrystalShop, { id: request.purchasedId });
+            let crystalShop = await ItemDataSource.manager.findOneBy(CrystalShop, { id: request.purchasedId });
             if (crystalShop == null) {
                 log = await logService.updateLogItemTransaction("FAIL", 'Invalid request.', log);
                 return res.status(400).json({ status: 400, message: 'Invalid request.' });
@@ -79,7 +80,7 @@ export default class CrystalController {
 
             // reduct crystal point
             webUserDetail.crystalPoint -= price
-            await ItemDataSource.manager.save(webUserDetail);
+            await SealMemberDataSource.manager.save(webUserDetail);
 
             log = await logService.updateLogItemTransaction("PREPARE_INVENTORY", undefined, log);
             let errMsg = "";
@@ -106,11 +107,15 @@ export default class CrystalController {
                 // DO NOTHING
             }
 
+            // update global count
+            crystalShop.globalPurchaseLimit++;
+            crystalShop = await ItemDataSource.manager.save(CrystalShop, crystalShop);
+
             log = await logService.updateLogItemTransaction("SUCCESS", `Successfully purchase item from Crystal Shop.`, log);
             await LogItemDataSource.manager.save(CrystalShopPurchaseHistory, {
                 actionUserId: currentUser.gameUserId,
                 purchasedItemId: crystalShop.itemId,
-                purchasedCrystalPrice: crystalShop.priceCrystal,
+                purchasedCrystalPrice: price,
                 purchasedTime: new Date,
                 purchasedCrystalShopId: crystalShop.id
             })
@@ -119,7 +124,91 @@ export default class CrystalController {
 
         } catch (error) {
             console.error(error);
-            log = await logService.updateLogItemTransaction("FAIL", 'internal server error.', log);
+            // log = await logService.updateLogItemTransaction("FAIL", 'internal server error.', log);
+            return res.status(500).json({ status: 500, message: 'internal server error' });
+        }
+    }
+
+    public getCystalShopList = async (req: Request, res: Response) => {
+        try {
+
+            if (!GDB0101DataSource.isInitialized) {
+                await GDB0101DataSource.initialize();
+            }
+            if (!SealMemberDataSource.isInitialized) {
+                await SealMemberDataSource.initialize();
+            }
+            if (!ItemDataSource.isInitialized) {
+                await ItemDataSource.initialize();
+            }
+            if (!LogItemDataSource.isInitialized) {
+                await LogItemDataSource.initialize();
+            }
+
+            const currentUser = req.user as AuthenUser;
+            const { page, perPage, itemType } = req.query as unknown as CrystalShopRequestDTO;
+
+            const query = await ItemDataSource.manager.getRepository(CrystalShop).createQueryBuilder('crystalShop').where('crystalShop.status = :status', { status: 'ACTIVE' });
+            if (itemType) {
+                query.andWhere('crystalShop.item_type = :itemType', { itemType });
+            }
+
+            const offSet = getOffSet(page, perPage);
+            const [crystalShop, count] = await query.limit(perPage).offset(offSet).getManyAndCount();
+            const crystalResponseDTOList: CrystalShopResponseDTO[] = []
+
+            for (let eachCrystalShop of crystalShop) {
+
+                const purchaseCount = await LogItemDataSource.manager.countBy(CrystalShopPurchaseHistory, { purchasedCrystalShopId: eachCrystalShop.id, actionUserId: currentUser.gameUserId });
+                let price = eachCrystalShop.priceCrystal;
+                let isBuyable = true;
+
+                if (eachCrystalShop.itemType != CrystalItemType.UNLIMIT) {
+
+                    // calculate price if purchase count is more than account limit and able to purchase over limit
+                    if (eachCrystalShop.accountPurchaseLimit != 0 && eachCrystalShop.accountPurchaseLimit <= purchaseCount) {
+                        if (!eachCrystalShop.enablePurchaseOverLimit) {
+                            isBuyable = false;
+                        } else {
+                            price = Math.ceil(price + (price * eachCrystalShop.overLimitPricePercent / 100));
+                        }
+                    }
+
+                    if (eachCrystalShop.globalPurchaseLimit != 0 && eachCrystalShop.globalPurchaseLimit < eachCrystalShop.countGlobalPurchase) {
+                        isBuyable = false;
+                    }
+
+                }
+
+                const crystalShopResponseDTO: CrystalShopResponseDTO = {
+                    id: eachCrystalShop.id,
+                    itemId: eachCrystalShop.itemId,
+                    itemName: eachCrystalShop.itemName,
+                    itemAmount: eachCrystalShop.itemAmount,
+                    itemPicture: eachCrystalShop.itemPicture,
+                    itemType: eachCrystalShop.itemType,
+                    globalPurchaseLimit: eachCrystalShop.globalPurchaseLimit,
+                    globalPurchaseCount: eachCrystalShop.countGlobalPurchase,
+                    accountPurchaseLimit: eachCrystalShop.accountPurchaseLimit,
+                    accountPurchaseCount: purchaseCount,
+                    itemCrystalPrice: price,
+                    isBuyable: isBuyable
+                }
+
+                crystalResponseDTOList.push(crystalShopResponseDTO);
+
+            }
+
+            const response: PaginationAndDataResponse = {
+                status: 200,
+                data: crystalResponseDTOList,
+                metadata: getPageination(perPage, count, page)
+            }
+
+            return res.status(200).json(response);
+
+        } catch (error) {
+            console.error(error);
             return res.status(500).json({ status: 500, message: 'internal server error' });
         }
     }
@@ -165,15 +254,22 @@ export default class CrystalController {
 
     private insertAccountCashInventory = async (userId: string, itemId: number, itemAmount: number): Promise<string> => {
 
-        await ItemDataSource.manager.save(SealItem, {
-            itemId: itemId,
-            ItemOp1: itemAmount - 1,
-            ItemOp2: 0,
-            ItemLimit: 0,
-            userId: userId,
-            OwnerDate: new Date,
-            bxaid: 'BUY'
-        });
+        const cashItem = await ItemDataSource.manager.findOneBy(SealItem, { userId: userId, itemId: itemId });
+        if (cashItem == null) {
+            await ItemDataSource.manager.save(SealItem, {
+                itemId: itemId,
+                ItemOp1: itemAmount - 1,
+                ItemOp2: 0,
+                ItemLimit: 0,
+                userId: userId,
+                OwnerDate: new Date,
+                bxaid: 'BUY'
+            });
+        } else {
+            cashItem.ItemOp1 += itemAmount;
+            await ItemDataSource.manager.save(SealItem, cashItem);
+        }
+
 
         return "";
     }
