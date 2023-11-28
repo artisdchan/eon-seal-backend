@@ -198,7 +198,7 @@ export default class FusionController {
                 }
             }
 
-            if (foundCount != 4) {
+            if (foundCount < 4) {
                 return res.status(400).json({ status: 400, message: 'Invalid input items.' })
             }
 
