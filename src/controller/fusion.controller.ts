@@ -177,23 +177,29 @@ export default class FusionController {
             }
 
             // Check request exists in character bag
+            let foundCount = 0;
             for (let eachRequest of request.characterSelectedItemId) {
-                for (let eachCharacter of cashInventoryEntity) {
+                for (let eachCharacter of cashInventoryEntity) { 
                     // each selected item id must exist in bag
-                    if (cashInventoryService.findItemInCashInventoryntity(eachRequest, eachCharacter) == undefined) {
-                        return res.status(400).json({ status: 400, message: 'Invalid input items.' })
+                    if (cashInventoryService.findItemInCashInventoryntity(eachRequest, eachCharacter) != undefined) {
+                        foundCount ++;
                     }
                 }
             }
+            
 
             // Check request exists in account bag
             for (let eachRequest of request.accountSelectedItemId) {
                 for (let eachAccountItem of sealItemEntity) {
                     // each selected item id must exist in bag
-                    if (eachRequest != eachAccountItem.itemId) {
-                        return res.status(400).json({ status: 400, message: 'Invalid input items.' })
+                    if (eachRequest == eachAccountItem.itemId) {
+                        foundCount++;
                     }
                 }
+            }
+
+            if (foundCount != 4) {
+                return res.status(400).json({ status: 400, message: 'Invalid input items.' })
             }
 
             let tobeAddCostume: FusionItemConfig;
