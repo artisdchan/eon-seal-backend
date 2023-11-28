@@ -1,6 +1,7 @@
 import { Application } from "express";
 import authRoutes from "./auth.routes";
 import crystalRoutes from "./crystal.routes";
+import dashboardRoutes from "./dashboard.routes";
 import fusionRoutes from "./fusion.routes";
 import storeRoutes from "./store.routes";
 import userRoutes from "./user.routes";
@@ -12,5 +13,6 @@ export default class Routes {
       app.use('/api/store', storeRoutes);
       app.use('/api/fusion', fusionRoutes);
       app.use('/api/crystal-shop', crystalRoutes);
+      app.use('/api/dashboard', dashboardRoutes);
     }
   }

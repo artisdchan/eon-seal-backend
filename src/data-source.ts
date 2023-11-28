@@ -13,6 +13,8 @@ import { WebUserDetail } from "./entity/seal_member/web_user_detail.entity";
 import { WebConfig } from "./entity/seal_member/web_config.entity";
 import { CrystalShop } from "./entity/item/crystal_shop.entity";
 import { CrystalShopPurchaseHistory } from "./entity/log_item/log_crystal_purchase.entity";
+import { guildinfo } from "./entity/gdb0101/guild_info.entity";
+import { guildstore } from "./entity/gdb0101/guild_store.entity";
 
 export const SealMemberDataSource = new DataSource({
     type: "mariadb",
@@ -40,7 +42,8 @@ export const GDB0101DataSource = new DataSource({
     synchronize: false,
     logging: true,
     entities: [
-        pc, inventory, store, CashInventory
+        pc, inventory, store, CashInventory, guildinfo, 
+        guildstore 
     ],
     connectTimeout: 2000
 })

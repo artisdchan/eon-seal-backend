@@ -184,7 +184,7 @@ export default class StoreController {
 
         } catch (error) {
             console.error(error);
-            log = await logService.updateLogItemTransaction(log.status, 'internal server error', log);
+            // log = await logService.updateLogItemTransaction(log.status, 'internal server error', log);
             return res.status(500).json({ status: 500, message: 'internal server error' });
         }
     }
@@ -274,7 +274,7 @@ export default class StoreController {
 
         } catch (error) {
             console.error(error);
-            log = await logService.updateLogItemTransaction(log.status, 'internal server error', log);
+            // log = await logService.updateLogItemTransaction(log.status, 'internal server error', log);
             return res.status(500).json({ status: 500, message: 'internal server error' });
         }
     }
