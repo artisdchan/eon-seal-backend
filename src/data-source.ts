@@ -29,7 +29,7 @@ export const SealMemberDataSource = new DataSource({
         idtable1, idtable2, idtable3, idtable4, idtable5,
         usermsgex, WebUserDetail, WebConfig
     ],
-    connectTimeout: 2000
+    // connectTimeout: 2000
 })
 
 export const GDB0101DataSource = new DataSource({
@@ -45,7 +45,7 @@ export const GDB0101DataSource = new DataSource({
         pc, inventory, store, CashInventory, guildinfo, 
         guildstore 
     ],
-    connectTimeout: 2000
+    // connectTimeout: 2000
 })
 
 export const ItemDataSource = new DataSource({
@@ -60,7 +60,7 @@ export const ItemDataSource = new DataSource({
     entities: [
         SealItem, FusionItemConfig, CrystalShop
     ],
-    connectTimeout: 2000
+    // connectTimeout: 2000
 })
 
 export const LogItemDataSource = new DataSource({
@@ -75,7 +75,7 @@ export const LogItemDataSource = new DataSource({
     entities: [
         log_item_transaction, CrystalShopPurchaseHistory
     ],
-    connectTimeout: 2000
+    // connectTimeout: 2000
 })
 
 SealMemberDataSource.initialize()
