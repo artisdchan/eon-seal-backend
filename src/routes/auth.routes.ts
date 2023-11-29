@@ -31,6 +31,7 @@ class AuthRoutes {
             })(req, res, next);
             
         });
+        this.router.post('/verify', this.controller.verify);
     }
 }
 

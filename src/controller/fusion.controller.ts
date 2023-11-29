@@ -186,7 +186,6 @@ export default class FusionController {
                     }
                 }
             }
-            
 
             // Check request exists in account bag
             for (let eachRequest of request.accountSelectedItemId) {
