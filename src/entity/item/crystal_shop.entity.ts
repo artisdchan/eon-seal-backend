@@ -27,6 +27,9 @@ export class CrystalShop {
     @Column({ name: 'price_crystal' })
     priceCrystal!: number
 
+    @Column({ name: 'price_cegel' })
+    priceCegel!: number
+
     @Column({ name: 'enable_purchase_over_limit' })
     enablePurchaseOverLimit!: boolean
 
@@ -50,7 +53,7 @@ export class CrystalShop {
 export enum CrystalItemBag {
     CHARACTER_CASH_INVENTORY = 'CHARACTER_CASH_INVENTORY',
     ACCOUNT_CASH_INVENTORY = 'ACCOUNT_CASH_INVENTORY',
-    IN_GAME_INVENTORY = 'IN_GAME_INVENTORY'
+    IN_GAME_ITEM_INVENTORY = 'IN_GAME_ITEM_INVENTORY'
 }
 
 export enum CrystalItemStatus{

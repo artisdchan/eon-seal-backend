@@ -13,6 +13,7 @@ class CrystalRoutes {
     initializeRoutes() {
         this.router.post('/purchase', passport.authenticate('jwt'), this.controller.purchase);
         this.router.get('/', passport.authenticate('jwt'), this.controller.getCystalShopList);
+        this.router.get('/money', passport.authenticate('jwt'), this.controller.getMoney);
     }
 }
 

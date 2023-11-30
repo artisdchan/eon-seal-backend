@@ -2,7 +2,7 @@ import { CrystalItemType } from "../entity/item/crystal_shop.entity"
 
 export type PurchaseCrystalShopRequestDTO = {
     purchasedId: number
-    characterName: string
+    // characterName: string
 }
 
 export type CrystalShopResponseDTO = {
@@ -14,10 +14,12 @@ export type CrystalShopResponseDTO = {
     itemType: string
     isBuyable: boolean
     itemCrystalPrice: number
+    itemCegelPrice: number
     globalPurchaseLimit: number
     globalPurchaseCount: number
     accountPurchaseLimit: number
     accountPurchaseCount: number
+    itemBag: string
 }
 
 export type CrystalShopRequestDTO = {

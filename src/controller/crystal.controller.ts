@@ -85,8 +85,8 @@ export default class CrystalController {
             log = await logService.updateLogItemTransaction("PREPARE_INVENTORY", undefined, log);
             let errMsg = "";
             // add item into store
-            if (crystalShop.itemBag == CrystalItemBag.IN_GAME_INVENTORY) {
-                errMsg = await this.insertInGameInventory(currentUser.gameUserId, crystalShop.itemId, crystalShop.itemAmount);
+            if (crystalShop.itemBag == CrystalItemBag.IN_GAME_ITEM_INVENTORY) {
+                errMsg = await this.insertInGameInventory(currentUser.gameUserId, crystalShop.itemId, crystalShop.itemAmount, crystalShop.priceCegel);
                 if (errMsg != "") {
                     log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_INVENTORY", errMsg, log);
                     return res.status(400).json({ status: 400, message: errMsg });
@@ -98,11 +98,11 @@ export default class CrystalController {
                     return res.status(400).json({ status: 400, message: errMsg });
                 }
             } else if (crystalShop.itemBag == CrystalItemBag.CHARACTER_CASH_INVENTORY) {
-                errMsg = await this.insertCharacterCashInventory(currentUser.gameUserId, request.characterName, crystalShop.itemId, crystalShop.itemAmount);
-                if (errMsg != "") {
-                    log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_INVENTORY", errMsg, log);
-                    return res.status(400).json({ status: 400, message: errMsg });
-                }
+                // errMsg = await this.insertCharacterCashInventory(currentUser.gameUserId, request.characterName, crystalShop.itemId, crystalShop.itemAmount);
+                // if (errMsg != "") {
+                //     log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_INVENTORY", errMsg, log);
+                //     return res.status(400).json({ status: 400, message: errMsg });
+                // }
             } else {
                 // DO NOTHING
             }
@@ -192,7 +192,9 @@ export default class CrystalController {
                     accountPurchaseLimit: eachCrystalShop.accountPurchaseLimit,
                     accountPurchaseCount: purchaseCount,
                     itemCrystalPrice: price,
-                    isBuyable: isBuyable
+                    itemCegelPrice: eachCrystalShop.priceCegel,
+                    isBuyable: isBuyable,
+                    itemBag: eachCrystalShop.itemBag
                 }
 
                 crystalResponseDTOList.push(crystalShopResponseDTO);
@@ -213,7 +215,48 @@ export default class CrystalController {
         }
     }
 
-    private insertInGameInventory = async (userId: string, itemId: number, itemAmount: number): Promise<string> => {
+    public getMoney = async (req: Request, res: Response) => {
+
+        try {
+           
+            if (!GDB0101DataSource.isInitialized) {
+                await GDB0101DataSource.initialize();
+            }
+            if (!SealMemberDataSource.isInitialized) {
+                await SealMemberDataSource.initialize();
+            }
+            if (!ItemDataSource.isInitialized) {
+                await ItemDataSource.initialize();
+            }
+            if (!LogItemDataSource.isInitialized) {
+                await LogItemDataSource.initialize();
+            }
+
+            const currentUser = req.user as AuthenUser;
+           
+            const webUserDetail = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: currentUser.gameUserId });
+            if (webUserDetail == null) {
+                return res.status(400).json({ status: 400, message: 'User is not found.' });
+            }
+
+            let storeEntity = await GDB0101DataSource.manager.findOneBy(store, { user_id: currentUser.gameUserId });
+            if (storeEntity == null) {
+                return res.status(400).json({ status: 400, message: 'User is not found.' });
+            }
+
+            return res.status(200).json({ status: 200, data: {
+                crystalPoint: webUserDetail.crystalPoint,
+                cegel: storeEntity.segel
+            }})
+    
+
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ status: 500, message: 'internal server error' });
+        }
+    }
+
+    private insertInGameInventory = async (userId: string, itemId: number, itemAmount: number, cegelPrice: number): Promise<string> => {
 
         const storeService = new StoreService();
 
@@ -221,6 +264,12 @@ export default class CrystalController {
         if (storeEntity == null) {
             return 'Character is not exist.';
         }
+
+        if (storeEntity.segel < cegelPrice) {
+            return 'Insufficient cegel.'
+        }
+
+        storeEntity.segel -= cegelPrice;
 
         let itemPosition = storeService.findItemInStorentity(itemId, storeEntity);
         if (itemPosition == undefined) {
