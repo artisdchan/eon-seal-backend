@@ -231,9 +231,10 @@ export default class FusionController {
                 await ItemDataSource.manager.remove(toBeDeleteObj);
             }
 
+            const nextItemLevel: ItemLevel = currentItemLevel + 1;
             // success chance is 5%
             if (this.isFusionSuccess(5)) {
-                tobeAddCostume = await this.randomCostume(Number(ItemLevel[currentItemLevel + 1]))
+                tobeAddCostume = await this.randomCostume(nextItemLevel)
                 logMessage = `Fusion item success`
                 logAction = 'FUSION_SUCCESS'
             } else {
@@ -362,7 +363,7 @@ export default class FusionController {
             const tobeAddCostume = await this.randomCostume(requestLevel);
             await ItemDataSource.manager.save(SealItem, {
                 itemId: tobeAddCostume.itemId,
-                ItemOp1: 1,
+                ItemOp1: 0,
                 ItemOp2: 0,
                 ItemLimit: 0,
                 userId: currentUser.gameUserId,
