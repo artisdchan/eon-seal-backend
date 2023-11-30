@@ -4,7 +4,7 @@ export type DashBoardResponseDTO = {
 }
 
 export enum TopListType {
-    CRYSTAL = 'CRYTAL',
+    CRYSTAL = 'CRYSTAL',
     RUBY = 'RUBY',
     CEGEL = 'CEGEL',
     DIAMOND = 'DIAMOND',
@@ -19,5 +19,11 @@ export type AllMoney = {
 
 export type CharacterItemDTO = {
     charName: string
+    amount: number
+    userId: string
+}
+
+export type AccountItemAmountDTO = {
+    userId: string
     amount: number
 }
