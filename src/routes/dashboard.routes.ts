@@ -12,6 +12,7 @@ class DashboardRoutes {
 
     intializeRoutes() {
         this.router.get("/", this.controller.dashboard);
+        this.router.get('/serverinfo', this.controller.serverInfo);
     }
 
 }

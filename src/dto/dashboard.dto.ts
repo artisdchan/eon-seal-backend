@@ -1,3 +1,5 @@
+import { type } from "os"
+
 export type DashBoardResponseDTO = {
     userId: string
     amount: number
@@ -26,4 +28,14 @@ export type CharacterItemDTO = {
 export type AccountItemAmountDTO = {
     userId: string
     amount: number
+}
+
+export type ServerInfoResponseDTO = {
+    allOnlinePlayer: number
+    allCash: number
+    allCegel: number
+    allCrystal: number
+    allRuby: number
+    allDiamond: number
+    allRc: number
 }

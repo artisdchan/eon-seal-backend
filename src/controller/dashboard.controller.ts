@@ -1,5 +1,5 @@
 import { GDB0101DataSource, ItemDataSource, SealMemberDataSource } from "../data-source";
-import { DashBoardResponseDTO, AllMoney, TopListType, CharacterItemDTO, AccountItemAmountDTO } from "../dto/dashboard.dto";
+import { DashBoardResponseDTO, AllMoney, TopListType, CharacterItemDTO, AccountItemAmountDTO, ServerInfoResponseDTO } from "../dto/dashboard.dto";
 import { Request, Response } from "express"
 import { pc } from "../entity/gdb0101/pc.entity";
 import { usermsgex } from "../entity/seal_member/usermsgex.entity";
@@ -10,6 +10,8 @@ import InventoryService from "../service/inventory.servic";
 import { store } from "../entity/gdb0101/store.entity";
 import StoreService from "../service/store.service";
 import { WebConfig, WebConfigConstant } from "../entity/seal_member/web_config.entity";
+import { AuthenUser } from "../dto/authen.dto";
+import { MoreThan } from "typeorm";
 
 export class DashboardController {
 
@@ -54,9 +56,9 @@ export class DashboardController {
                     itemId = Number(await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.config_value').where('config.config_key = :key', { key: WebConfigConstant.CRYSTAL_ITEM_ID_CONFIG }).getOne());
                 } else if (topListType == TopListType.RUBY) {
                     itemId = Number(await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.config_value').where('config.config_key = :key', { key: WebConfigConstant.RUBY_ITEM_ID_CONFIG }).getOne());
-                }if (topListType == TopListType.DIAMOND) {
+                } if (topListType == TopListType.DIAMOND) {
                     itemId = Number(await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.config_value').where('config.config_key = :key', { key: WebConfigConstant.DIAMOND_ITEM_ID_CONFIG }).getOne());
-                }if (topListType == TopListType.RC) {
+                } if (topListType == TopListType.RC) {
                     itemId = Number(await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.config_value').where('config.config_key = :key', { key: WebConfigConstant.RC_ITEM_ID_CONFIG }).getOne());
                 }
                 const countItemFromInventory = await this.countItemFromInventory(itemId);
@@ -115,6 +117,65 @@ export class DashboardController {
         }
     }
 
+    public serverInfo = async (req: Request, res: Response) => {
+
+        if (!GDB0101DataSource.isInitialized) {
+            await GDB0101DataSource.initialize();
+        }
+        if (!SealMemberDataSource.isInitialized) {
+            await SealMemberDataSource.initialize();
+        }
+        if (!ItemDataSource.isInitialized) {
+            await ItemDataSource.initialize();
+        }
+
+        try {
+
+            const currentUser = req.user as AuthenUser;
+            //  Get all online players.
+            const countOnlinePlayer = await GDB0101DataSource.manager.countBy(pc, { play_flag: MoreThan(0) });
+            //  Get all CASH
+            const queryAllCash = await SealMemberDataSource.manager.getRepository(usermsgex).createQueryBuilder('user')
+                .select('SUM(user.gold)', 'amount').getRawOne();
+            //  Get all Cegel
+            const queryAllCelgel = await GDB0101DataSource.manager.query('select SUM(p.money + ifnull(0, gs.segel)) as amount from pc p left join guildinfo g on p.char_name = g.mastername left join guildstore gs  on g.name = gs.guildname ') as unknown as AllMoney[];
+            // const allCelgelAmount = queryAllCelgel.reduce((sum, each) => sum + each.amount, 0);
+            const allCelgelAmount = queryAllCelgel[0].amount
+            //  Get all Crystal
+            const crystalConfig = Number(await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.config_value').where('config.config_key = :key', { key: WebConfigConstant.CRYSTAL_ITEM_ID_CONFIG }).getOne());
+            const allCrystalFromInv = await (await this.countItemFromInventory(crystalConfig)).reduce((sum, each) => sum + each.amount, 0);
+            const allCrystalFromStore = await (await this.countItemFromStore(crystalConfig)).reduce((sum, each) => sum + each.amount, 0);
+            //  Get all Ruby
+            const rubyConfig = Number(await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.config_value').where('config.config_key = :key', { key: WebConfigConstant.RUBY_ITEM_ID_CONFIG }).getOne());
+            const allRubyFromInv = await (await this.countItemFromInventory(rubyConfig)).reduce((sum, each) => sum + each.amount, 0);
+            const allRubyFromStore = await (await this.countItemFromStore(rubyConfig)).reduce((sum, each) => sum + each.amount, 0);
+            //  Get all Diamond
+            const diamondConfig = Number(await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.config_value').where('config.config_key = :key', { key: WebConfigConstant.DIAMOND_ITEM_ID_CONFIG }).getOne());
+            const allDiamondFromInv = await (await this.countItemFromInventory(diamondConfig)).reduce((sum, each) => sum + each.amount, 0);
+            const allDiamondFromStore = await (await this.countItemFromStore(diamondConfig)).reduce((sum, each) => sum + each.amount, 0);
+            //  Get all RC
+            const rcConfig = Number(await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.config_value').where('config.config_key = :key', { key: WebConfigConstant.RC_ITEM_ID_CONFIG }).getOne());
+            const allRcFromInv = await (await this.countItemFromInventory(rcConfig)).reduce((sum, each) => sum + each.amount, 0);
+            const allRcFromStore = await (await this.countItemFromStore(rcConfig)).reduce((sum, each) => sum + each.amount, 0);
+
+            const response: ServerInfoResponseDTO = {
+                allOnlinePlayer: countOnlinePlayer,
+                allCash: Number(queryAllCash.amount),
+                allCegel: allCelgelAmount,
+                allCrystal: allCrystalFromInv + allCrystalFromStore,
+                allRuby: allRubyFromInv + allRubyFromStore,
+                allDiamond: allDiamondFromInv + allDiamondFromStore,
+                allRc: allRcFromInv + allRcFromStore
+            }
+
+            return res.status(200).json({ status: 200, data: response })
+
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ status: 500, message: 'internal server error' });
+        }
+    }
+
     private countItemFromInventory = async (itemId: number) => {
 
         const inventoryService = new InventoryService();
@@ -124,7 +185,8 @@ export class DashboardController {
         for (let each of inventoryEntity) {
             const amountPosition = inventoryService.findItemAmountPositionInInventoryEntity(itemId, each);
             if (amountPosition != undefined) {
-                const user = await SealMemberDataSource.manager.findOneBy(pc, { char_name: each.char_name });
+                console.log(each.char_name)
+                const user = await GDB0101DataSource.manager.findOneBy(pc, { char_name: each.char_name });
                 if (user != null) {
                     accountItemFromInv.push({ userId: user.user_id, amount: Number(each[amountPosition]) + 1 });
                 }
