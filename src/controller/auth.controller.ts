@@ -23,7 +23,7 @@ export default class AuthController {
 
             const userMsgExEntity = await SealMemberDataSource.manager.findOneBy(usermsgex, { email: googleResponse.email });
             if (userMsgExEntity == null) {
-                return res.status(404).json({ status: 404, message: 'User ID is not exist.' })
+                return res.status(404).json({ status: 404, message: 'User ID is not exist.', email: googleResponse.email })
             } else {
                 const token = jwt.sign({ user: {
                     gameUserId: userMsgExEntity.userId,
