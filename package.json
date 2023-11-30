@@ -13,6 +13,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/apicache": "^1.6.6",
     "@types/cookie-parser": "^1.4.6",
     "@types/cookie-session": "^2.0.47",
     "@types/cors": "^2.8.16",
@@ -35,6 +36,7 @@
   },
   "dependencies": {
     "@prisma/client": "^5.5.2",
+    "apicache": "^1.6.3",
     "cookie-parser": "^1.4.6",
     "cookie-session": "^2.0.0",
     "cors": "^2.8.5",

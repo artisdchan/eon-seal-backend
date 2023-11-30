@@ -7,6 +7,8 @@ import { idtable1 } from "../entity/seal_member/idtable.entity";
 import DBUtils from "../utils/db.utils";
 import { HashPasswordDTO } from "../dto/user.dto";
 import { JWT_SECRET } from "../utils/secret.utils";
+import { WebUserDetail } from "../entity/seal_member/web_user_detail.entity";
+import { NextFunction } from "express";
 
 const JwtStrategy = passportJwt.Strategy;
 const ExtractJwt = passportJwt.ExtractJwt;
@@ -29,12 +31,22 @@ passport.deserializeUser(async (id: AuthenUser, done) => {
         let user = await SealMemberDataSource.manager.query(`SELECT * FROM ${tblName} WHERE id = '${id.gameUserId}'`) as idtable1
 
         if (user == null) {
+
             console.error("user not found", id.gameUserId);
             return done(null, false);
+
         } else {
+
+            const userWeb = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: id.gameUserId });
+            let userLevel = 0;
+            if (userWeb != null) {
+                userLevel = userWeb.userLevel
+            }
+
             done(null, {
                 gameUserId: user.id,
-                email: user.email!
+                email: user.email!,
+                userLevel: userLevel
             });
         }
 
@@ -68,9 +80,16 @@ passport.use('password', new LocalStrategy(
             return done(null, false, { message: 'Invalid username or password.' });
         }
 
+        const userWeb = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: username });
+        let userLevel = 0;
+        if (userWeb != null) {
+            userLevel = userWeb.userLevel
+        }
+
         done(null, {
             gameUserId: user[0].id,
-            email: user[0].email!
+            email: user[0].email!,
+            userLevel: userLevel
         });
     }
 ))
@@ -90,13 +109,20 @@ passport.use(new JwtStrategy({
             const user = await SealMemberDataSource.manager.query(`SELECT * FROM ${tblName} WHERE id = '${jwtPayload.user.gameUserId}'`) as idtable1[]
 
             if (user == null) {
-                console.error("user not found", jwtPayload.userId);
+                console.error("user not found", jwtPayload.user.gameUserId);
                 return done(null, false);
+            }
+
+            const userWeb = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: jwtPayload.user.gameUserId });
+            let userLevel = 0;
+            if (userWeb != null) {
+                userLevel = userWeb.userLevel
             }
 
             done(null, {
                 gameUserId: user[0].id,
-                email: user[0].email!
+                email: user[0].email!,
+                userLevel: userLevel
             });
 
         } catch (error) {
