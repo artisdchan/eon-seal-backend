@@ -70,9 +70,6 @@ export class idtable1 {
     loveauth!: string
 
     @Column()
-    pass!: string
-
-    @Column()
     Mac?: string
 
     @Column()
@@ -104,9 +101,6 @@ export class idtable1 {
 
     @Column()
     Coin?: number
-
-    @Column()
-    trueId?: string
 
 }
 
@@ -180,9 +174,6 @@ export class idtable2 {
     loveauth!: string
 
     @Column()
-    pass!: string
-
-    @Column()
     Mac?: string
 
     @Column()
@@ -214,9 +205,6 @@ export class idtable2 {
 
     @Column()
     Coin?: number
-
-    @Column()
-    trueId?: string
 
 }
 @Entity()
@@ -289,9 +277,6 @@ export class idtable3 {
     loveauth!: string
 
     @Column()
-    pass!: string
-
-    @Column()
     Mac?: string
 
     @Column()
@@ -323,9 +308,6 @@ export class idtable3 {
 
     @Column()
     Coin?: number
-
-    @Column()
-    trueId?: string
 
 }
 @Entity()
@@ -398,9 +380,6 @@ export class idtable4 {
     loveauth!: string
 
     @Column()
-    pass!: string
-
-    @Column()
     Mac?: string
 
     @Column()
@@ -432,9 +411,6 @@ export class idtable4 {
 
     @Column()
     Coin?: number
-
-    @Column()
-    trueId?: string
 
 }
 @Entity()
@@ -507,9 +483,6 @@ export class idtable5 {
     loveauth!: string
 
     @Column()
-    pass!: string
-
-    @Column()
     Mac?: string
 
     @Column()
@@ -541,8 +514,5 @@ export class idtable5 {
 
     @Column()
     Coin?: number
-
-    @Column()
-    trueId?: string
 
 }

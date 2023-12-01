@@ -72,24 +72,4 @@ export class usermsgex {
     @Column()
     codeTime!: number
 
-    @Column()
-    dat_t!: number
-
-    @Column()
-    dat_to!: number
-
-    @Column()
-    day_t!: number
-
-    @Column()
-    day_to!: number
-
-    @Column()
-    day_z!: number
-
-    @Column()
-    vip!: number
-
-    @Column()
-    day!: number
 }

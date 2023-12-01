@@ -6,7 +6,12 @@ import apicache from 'apicache'
 class RankingRoutes {
     router = Router();
     controller = new RankingController();
-    cache = apicache.middleware;
+    cache = apicache.options({
+        headers: {
+          'cache-control': 'no-cache',
+        },
+        respectCacheControl: true
+      }).middleware;
     onlyStatus200 = (req: Request, res: Response) => res.statusCode === 200
 
     constructor() {

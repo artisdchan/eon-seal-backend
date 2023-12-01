@@ -7,7 +7,12 @@ import { checkLimitUserLevel } from "../utils/auth.utils";
 class DashboardRoutes {
     router = Router();
     controller = new DashboardController();
-    cache = apicache.middleware;
+    cache = apicache.options({
+        headers: {
+          'cache-control': 'no-cache',
+        },
+        respectCacheControl: true
+      }).middleware;
     onlyStatus200 = (req: Request, res: Response) => res.statusCode === 200
 
     constructor() {

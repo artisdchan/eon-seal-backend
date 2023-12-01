@@ -84,13 +84,6 @@ export default class UserController {
             userModel.referee = '';
             userModel.Receive = 0;
             userModel.code = 99999;
-            userModel.dat_t = 0;
-            userModel.dat_to = 0;
-            userModel.day_t = 0;
-            userModel.day_to = 0;
-            userModel.day_z = 0;
-            userModel.vip = 0;
-            userModel.day = 0;
 
             const webUserDetailEntity = new WebUserDetail();
             webUserDetailEntity.user_id = request.username;
