@@ -56,7 +56,7 @@ export default class StoreController {
         const request = req.body as ConvertRCRequestDTO;
         const storeService = new StoreService();
         const logService = new LogService();
-        let log = await logService.insertLogItemTransaction("CONVERT_RC", request.convertType.toString(), "PREPARE_CONVERT_RC", currentUser.gameUserId, undefined);
+        let log = await logService.insertLogItemTransaction("SWAP", request.convertType.toString(), "PREPARE_SWAP", currentUser.gameUserId, undefined);
         try {
 
             if (!GDB0101DataSource.isInitialized) {
@@ -101,15 +101,15 @@ export default class StoreController {
 
                 const rcAmount = Number(storeEntity[rcAmountPosition]) + 1;
 
-                if (request.rcAmount! > rcAmount) {
+                if (request.amount! > rcAmount) {
                     log = await logService.updateLogItemTransaction("PREPARE_RC_AND_CASH", 'Invalid RC Amount.', log);
                     return res.status(400).json({ status: 400, message: 'Invalid RC Amount.' });
-                } else if (request.rcAmount == rcAmount) {
+                } else if (request.amount == rcAmount) {
 
                     const rcItemObj = storeService.setValueIntoStoreEntity(rcPosition, 0);
                     const rcAmountObj = storeService.setValueIntoStoreEntity(rcAmountPosition, 0);
 
-                    log = await logService.updateLogItemTransaction("PREPARE_CALCULATE_RC", undefined, log);
+                    log = await logService.updateLogItemTransaction("PREPARE_UPDATE_RC", undefined, log);
                     await GDB0101DataSource.manager.getRepository(store).save({
                         ...storeEntity,
                         ...rcItemObj,
@@ -117,24 +117,24 @@ export default class StoreController {
                     })
 
                 } else {
-                    log = await logService.updateLogItemTransaction("PREPARE_CALCULATE_RC", undefined, log);
-                    await GDB0101DataSource.manager.decrement(store, { user_id: currentUser.gameUserId }, rcAmountPosition, request.rcAmount!);
+                    log = await logService.updateLogItemTransaction("PREPARE_UPDATE_RC", undefined, log);
+                    await GDB0101DataSource.manager.decrement(store, { user_id: currentUser.gameUserId }, rcAmountPosition, request.amount!);
                 }
 
-                log = await logService.updateLogItemTransaction("PREPARE_CALCULATE_CASH", undefined, log);
-                const cashToBeAdd = request.rcAmount! * cashPerRc;
+                log = await logService.updateLogItemTransaction("PREPARE_UPDATE_CASH", undefined, log);
+                const cashToBeAdd = request.amount! * cashPerRc;
                 userMsgExEntity.gold! += cashToBeAdd;
                 await SealMemberDataSource.manager.save(userMsgExEntity);
 
-                log = await logService.updateLogItemTransaction("SUCCESS", `Old RC Amount: ${rcAmount}, New RC Amount: ${request.rcAmount}, Cash Amount: ${cashToBeAdd}`, log);
+                log = await logService.updateLogItemTransaction("SUCCESS", `Old RC Amount: ${rcAmount}, New RC Amount: ${request.amount}, Cash Amount: ${cashToBeAdd}`, log);
 
             } else if (request.convertType == ConvertRCType.CASH_TO_RC) {
 
-                log = await logService.updateLogItemTransaction("PREPARE_RC_AND_CASH", undefined, log);
-                const cashTobeMinus = request.rcAmount! * cashPerRc;
+                log = await logService.updateLogItemTransaction("PREPARE_CASH_TO_RC", undefined, log);
+                const cashTobeMinus = request.amount! * cashPerRc;
 
                 if (cashTobeMinus > userMsgExEntity.gold!) {
-                    log = await logService.updateLogItemTransaction("PREPARE_RC_AND_CASH", 'Insufficient Cash Point.', log);
+                    log = await logService.updateLogItemTransaction("PREPARE_CASH_TO_RC", 'Insufficient Cash Point.', log);
                     return res.status(400).json({ status: 400, message: 'Insufficient Cash Point.' });
                 }
 
@@ -143,7 +143,7 @@ export default class StoreController {
                 if (rcPosition == undefined) {
                     rcPosition = storeService.findEmptySlotInStorentity(storeEntity);
                     if (rcPosition == undefined) {
-                        log = await logService.updateLogItemTransaction("PREPARE_RC_AND_CASH", 'No available slot.', log);
+                        log = await logService.updateLogItemTransaction("PREPARE_CASH_TO_RC", 'No available slot.', log);
                         return res.status(400).json({ status: 400, message: 'No available slot.' });
                     }
                 }
@@ -152,20 +152,20 @@ export default class StoreController {
                 if (rcAmountPosition == undefined) {
                     rcAmountPosition = storeService.findEmptySlotAmountInStoreEntity(storeEntity);
                     if (rcAmountPosition == undefined) {
-                        log = await logService.updateLogItemTransaction("PREPARE_RC_AND_CASH", 'No available slot.', log);
+                        log = await logService.updateLogItemTransaction("PREPARE_CASH_TO_RC", 'No available slot.', log);
                         return res.status(400).json({ status: 400, message: 'No available slot.' });
                     }
                 } else {
                     rcAmount = Number(storeEntity[rcAmountPosition]) + 1;
                 }
 
-                log = await logService.updateLogItemTransaction("PREPARE_CALCULATE_CASH", undefined, log);
+                log = await logService.updateLogItemTransaction("PREPARE_UPDATE_CASH", undefined, log);
                 userMsgExEntity.gold! -= cashTobeMinus;
                 await SealMemberDataSource.manager.save(userMsgExEntity);
 
-                log = await logService.updateLogItemTransaction("PREPARE_CALCULATE_RC", undefined, log);
+                log = await logService.updateLogItemTransaction("PREPARE_UPDATE_RC", undefined, log);
                 const rcItemObj = storeService.setValueIntoStoreEntity(rcPosition, rcItemId);
-                const rcAmountObj = storeService.setValueIntoStoreEntity(rcAmountPosition, rcAmount + request.rcAmount! - 1);
+                const rcAmountObj = storeService.setValueIntoStoreEntity(rcAmountPosition, rcAmount + request.amount! - 1);
 
                 await GDB0101DataSource.manager.getRepository(store).save({
                     ...storeEntity,
@@ -173,7 +173,69 @@ export default class StoreController {
                     ...rcAmountObj
                 })
 
-                log = await logService.updateLogItemTransaction("SUCCESS", `RC Amount: ${request.rcAmount}, Cash Amount: ${cashTobeMinus}`, log);
+                log = await logService.updateLogItemTransaction("SUCCESS", `RC Amount: ${request.amount}, Cash Amount: ${cashTobeMinus}`, log);
+
+            } else if (request.convertType == ConvertRCType.CRYSTAL_TO_CP) {
+
+                const cegelTaxConfig = await SealMemberDataSource.manager.findOneBy(WebConfig, { configKey: WebConfigConstant.CRYSTAL_CONVERT_TAX });
+                if (cegelTaxConfig == null) {
+                    log = await logService.updateLogItemTransaction("PREPARE_CALCULATE_CRYSTAL", 'Configuration is not found', log);
+                    return res.status(400).json({ status: 400, message: 'Configuration is not found.' })
+                }
+
+                if (storeEntity.segel < Number(cegelTaxConfig.configValue)) {
+                    log = await logService.updateLogItemTransaction("PREPARE_CALCULATE_CRYSTAL", 'Insufficient cegel.', log);
+                    return res.status(400).json({ status: 400, message: 'Insufficient cegel.' })
+                }
+
+                const crystalItemId = Number((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.config_value').where('config.config_key = :key', { key: WebConfigConstant.CRYSTAL_ITEM_ID_CONFIG }).getOne())?.configValue);
+
+                const crystalItemPosition = storeService.findItemInStorentity(crystalItemId, storeEntity);
+
+                if (crystalItemPosition == undefined) {
+                    log = await logService.updateLogItemTransaction("PREPARE_CALCULATE_CRYSTAL", 'Insufficient crystal.', log);
+                    return res.status(400).json({ status: 400, message: 'Insufficient crystal.' });
+                }
+
+                const crystalAmountPosition = storeService.findItemAmountPositionInStoreEntity(crystalItemId, storeEntity);
+                if (crystalAmountPosition == undefined) {
+                    log = await logService.updateLogItemTransaction("PREPARE_CALCULATE_CRYSTAL", 'Insufficient crystal.', log);
+                    return res.status(400).json({ status: 400, message: 'Insufficient crystal.' });
+                }
+
+                const availableCrystalItem = storeEntity[crystalAmountPosition] as number;
+                if (availableCrystalItem < request.amount) {
+                    log = await logService.updateLogItemTransaction("PREPARE_CALCULATE_CRYSTAL", 'Insufficient crystal.', log);
+                    return res.status(400).json({ status: 400, message: 'Insufficient crystal.' });
+                } else if (availableCrystalItem == request.amount) {
+
+                    const crystalItemObj = storeService.setValueIntoStoreEntity(crystalItemPosition, 0);
+                    const crystalAmountObj = storeService.setValueIntoStoreEntity(crystalAmountPosition, 0);
+                    storeEntity.segel -= Number(cegelTaxConfig.configValue)
+
+                    log = await logService.updateLogItemTransaction("UPDATE_CRYSTAL_ITEM", undefined, log);
+                    await GDB0101DataSource.manager.getRepository(store).save({
+                        ...storeEntity,
+                        ...crystalItemObj,
+                        ...crystalAmountObj
+                    })
+
+                } else {
+                    log = await logService.updateLogItemTransaction("UPDATE_CRYSTAL_ITEM", undefined, log);
+                    await GDB0101DataSource.manager.decrement(store, { user_id: currentUser.gameUserId }, crystalAmountPosition, request.amount);
+                }
+
+                log = await logService.updateLogItemTransaction("UPDATE_CRYSTAL_POINT", undefined, log);
+                const webUserDetail = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: currentUser.gameUserId });
+                if (webUserDetail == null) {
+                    log = await logService.updateLogItemTransaction("UPDATE_CRYSTAL_POINT", 'User is not found.', log);
+                    return res.status(400).json({ status: 400, message: 'User is not found.' });
+                }
+
+                webUserDetail.crystalPoint += request.amount;
+                await SealMemberDataSource.manager.save(webUserDetail);
+
+                log = await logService.updateLogItemTransaction("CONVERT_CRYSTAL_COMPLETE", `Old Crystal Point: ${webUserDetail.crystalPoint - request.amount}, New Crystal Point: ${webUserDetail.crystalPoint}`, log);
 
             } else {
                 // DO NOTHING

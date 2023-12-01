@@ -58,7 +58,8 @@ export const ItemDataSource = new DataSource({
     synchronize: false,
     logging: true,
     entities: [
-        SealItem, FusionItemConfig, CrystalShop
+        SealItem, 
+        FusionItemConfig, CrystalShop
     ],
     // connectTimeout: 2000
 })
