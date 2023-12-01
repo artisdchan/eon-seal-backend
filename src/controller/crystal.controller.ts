@@ -5,7 +5,7 @@ import { CrystalShopRequestDTO, CrystalShopResponseDTO, PurchaseCrystalShopReque
 import { getOffSet, getPageination, PaginationAndDataResponse } from "../dto/pagination.dto";
 import { CashInventory } from "../entity/gdb0101/cash_inventory.entity";
 import { store } from "../entity/gdb0101/store.entity";
-import { CrystalItemBag, CrystalItemType, CrystalShop } from "../entity/item/crystal_shop.entity";
+import { CrystalItemBag, CrystalItemStatus, CrystalItemType, CrystalShop } from "../entity/item/crystal_shop.entity";
 import { SealItem } from "../entity/item/seal_item.entity";
 import { CrystalShopPurchaseHistory } from "../entity/log_item/log_crystal_purchase.entity";
 import { WebUserDetail } from "../entity/seal_member/web_user_detail.entity";
@@ -45,7 +45,7 @@ export default class CrystalController {
                 return res.status(400).json({ status: 400, message: 'User is not found.' });
             }
 
-            let crystalShop = await ItemDataSource.manager.findOneBy(CrystalShop, { id: request.purchasedId });
+            let crystalShop = await ItemDataSource.manager.findOneBy(CrystalShop, { id: request.purchasedId, status: CrystalItemStatus.ACTIVE });
             if (crystalShop == null) {
                 log = await logService.updateLogItemTransaction("FAIL", 'Invalid request.', log);
                 return res.status(400).json({ status: 400, message: 'Invalid request.' });
@@ -72,21 +72,23 @@ export default class CrystalController {
 
             log = await logService.updateLogItemTransaction("PREPARE_UPDATE_CRYSTAL_POINT", undefined, log);
             // calculate price
-            let price = crystalShop.priceCrystal;
+            let priceCrystal = crystalShop.priceCrystal;
+            let priceCegel = crystalShop.priceCegel;
 
             if (crystalShop.accountPurchaseLimit != 0 && crystalShop.accountPurchaseLimit <= purchaseCount && crystalShop.enablePurchaseOverLimit) {
-                price = price + (price * crystalShop.overLimitPricePercent / 100)
+                priceCrystal = Math.ceil(priceCrystal + (priceCrystal * crystalShop.overLimitPricePercent / 100)) 
+                priceCegel = Math.ceil(priceCegel + (priceCegel * crystalShop.overLimitPricePercent / 100))
             }
 
             // reduct crystal point
-            webUserDetail.crystalPoint -= price
+            webUserDetail.crystalPoint -= priceCrystal
             await SealMemberDataSource.manager.save(webUserDetail);
 
             log = await logService.updateLogItemTransaction("PREPARE_INVENTORY", undefined, log);
             let errMsg = "";
             // add item into store
             if (crystalShop.itemBag == CrystalItemBag.IN_GAME_ITEM_INVENTORY) {
-                errMsg = await this.insertInGameInventory(currentUser.gameUserId, crystalShop.itemId, crystalShop.itemAmount, crystalShop.priceCegel);
+                errMsg = await this.insertInGameInventory(currentUser.gameUserId, crystalShop.itemId, crystalShop.itemAmount, priceCegel);
                 if (errMsg != "") {
                     log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_INVENTORY", errMsg, log);
                     return res.status(400).json({ status: 400, message: errMsg });
@@ -108,14 +110,15 @@ export default class CrystalController {
             }
 
             // update global count
-            crystalShop.globalPurchaseLimit++;
+            crystalShop.countGlobalPurchase++;
             crystalShop = await ItemDataSource.manager.save(CrystalShop, crystalShop);
 
             log = await logService.updateLogItemTransaction("SUCCESS", `Successfully purchase item from Crystal Shop.`, log);
             await LogItemDataSource.manager.save(CrystalShopPurchaseHistory, {
                 actionUserId: currentUser.gameUserId,
                 purchasedItemId: crystalShop.itemId,
-                purchasedCrystalPrice: price,
+                purchasedCegelPrice: priceCegel,
+                purchasedCrystalPrice: priceCrystal,
                 purchasedTime: new Date,
                 purchasedCrystalShopId: crystalShop.id
             })
@@ -161,6 +164,7 @@ export default class CrystalController {
 
                 const purchaseCount = await LogItemDataSource.manager.countBy(CrystalShopPurchaseHistory, { purchasedCrystalShopId: eachCrystalShop.id, actionUserId: currentUser.gameUserId });
                 let price = eachCrystalShop.priceCrystal;
+                let priceCegel = eachCrystalShop.priceCegel;
                 let isBuyable = true;
 
                 if (eachCrystalShop.itemType != CrystalItemType.UNLIMIT) {
@@ -171,6 +175,7 @@ export default class CrystalController {
                             isBuyable = false;
                         } else {
                             price = Math.ceil(price + (price * eachCrystalShop.overLimitPricePercent / 100));
+                            priceCegel = Math.ceil(priceCegel + (priceCegel * eachCrystalShop.overLimitPricePercent / 100));
                         }
                     }
 
@@ -192,7 +197,7 @@ export default class CrystalController {
                     accountPurchaseLimit: eachCrystalShop.accountPurchaseLimit,
                     accountPurchaseCount: purchaseCount,
                     itemCrystalPrice: price,
-                    itemCegelPrice: eachCrystalShop.priceCegel,
+                    itemCegelPrice: priceCegel,
                     isBuyable: isBuyable,
                     itemBag: eachCrystalShop.itemBag
                 }

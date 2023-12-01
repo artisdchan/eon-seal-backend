@@ -15,6 +15,9 @@ export class CrystalShopPurchaseHistory {
     @Column({ name: 'purchased_crystal_price' })
     purchasedCrystalPrice!: number
 
+    @Column({ name: 'purchased_cegel_price' })
+    purchasedCegelPrice!: number
+
     @Column({ name: 'purchased_time' })
     purchasedTime!: Date
 
