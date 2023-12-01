@@ -29,6 +29,7 @@ export default class UserController {
                 return next(null);
             }
 
+            
             const dbUtils = new DBUtils();
             if (!SealMemberDataSource.isInitialized) {
                 await SealMemberDataSource.initialize();
