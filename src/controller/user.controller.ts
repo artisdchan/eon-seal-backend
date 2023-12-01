@@ -119,7 +119,7 @@ export default class UserController {
 
                 await queryRunner.manager.save(userModel);
                 await queryRunner.manager.save(webUserDetailEntity);
-                await queryRunner.manager.query(storeService.initialStoreQueryString(request.username, request.storePass));
+                await GDB0101DataSource.manager.query(storeService.initialStoreQueryString(request.username, request.storePass));
 
                 await queryRunner.commitTransaction()
             } catch (error) {
