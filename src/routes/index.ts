@@ -1,5 +1,6 @@
 import { Application } from "express";
 import authRoutes from "./auth.routes";
+import configRoutes from "./config.routes";
 import crystalRoutes from "./crystal.routes";
 import dashboardRoutes from "./dashboard.routes";
 import fusionRoutes from "./fusion.routes";
@@ -16,5 +17,6 @@ export default class Routes {
       app.use('/api/crystal-shop', crystalRoutes);
       app.use('/api/dashboard', dashboardRoutes);
       app.use('/api/ranking', rankingRoutes);
+      app.use('/api/config', configRoutes);
     }
   }
