@@ -13,6 +13,7 @@ import DBUtils from "../utils/db.utils";
 import { EONHUB_API_KEY } from "../utils/secret.utils";
 import { randomString } from "../utils/string.utils";
 import { WebUserDetail } from "../entity/seal_member/web_user_detail.entity";
+import StoreService from "../service/store.service";
 var fs = require('fs');
 
 export default class UserController {
@@ -21,6 +22,7 @@ export default class UserController {
         try {
             const request = req.body as RegisterRequestDTO;
             const eonhubService = new EonHubService();
+            const storeService = new StoreService();
 
             if (!(await eonhubService.isUserExist(request.email))) {
                 res.status(400).json({ message: 'The email not exists in EON-HUB.' })
@@ -117,6 +119,7 @@ export default class UserController {
 
                 await queryRunner.manager.save(userModel);
                 await queryRunner.manager.save(webUserDetailEntity);
+                await queryRunner.manager.query(storeService.initialStoreQueryString(request.username, request.storePass));
 
                 await queryRunner.commitTransaction()
             } catch (error) {

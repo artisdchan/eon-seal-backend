@@ -2,6 +2,7 @@ export interface RegisterRequestDTO {
     username: string
     password: string
     email: string
+    storePass: number
 }
 
 export interface ResetPasswordDTO {
