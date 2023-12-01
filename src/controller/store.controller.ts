@@ -33,8 +33,8 @@ export default class StoreController {
             }
 
             const storeService = new StoreService();
-            const rcItemId: number = 27232;
-            // TODO Get RC Item ID From DB config
+            const rcItemConfig = await SealMemberDataSource.manager.findOneBy(WebConfig, { configKey: WebConfigConstant.RC_ITEM_ID_CONFIG });
+            const rcItemId: number = Number(rcItemConfig?.configValue);
 
             const rcAmountPosition = storeService.findItemAmountPositionInStoreEntity(rcItemId, storeEntity);
             if (rcAmountPosition == undefined) {
@@ -188,7 +188,8 @@ export default class StoreController {
                     return res.status(400).json({ status: 400, message: 'Insufficient cegel.' })
                 }
 
-                const crystalItemId = Number((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.config_value').where('config.config_key = :key', { key: WebConfigConstant.CRYSTAL_ITEM_ID_CONFIG }).getOne())?.configValue);
+                const crystalItemIdQuery = await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config').where('config.config_key = :key', { key: WebConfigConstant.CRYSTAL_ITEM_ID_CONFIG }).getOne();
+                const crystalItemId = Number(crystalItemIdQuery?.configValue);
 
                 const crystalItemPosition = storeService.findItemInStorentity(crystalItemId, storeEntity);
 

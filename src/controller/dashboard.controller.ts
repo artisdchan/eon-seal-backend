@@ -142,19 +142,19 @@ export class DashboardController {
             // const allCelgelAmount = queryAllCelgel.reduce((sum, each) => sum + each.amount, 0);
             const allCelgelAmount = queryAllCelgel[0].amount
             //  Get all Crystal
-            const crystalConfig = Number((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.config_value').where('config.config_key = :key', { key: WebConfigConstant.CRYSTAL_ITEM_ID_CONFIG }).getOne())?.configValue);
+            const crystalConfig = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.CRYSTAL_ITEM_ID_CONFIG }).getOne())?.configValue));
             const allCrystalFromInv = await (await this.countItemFromInventory(crystalConfig)).reduce((sum, each) => sum + each.amount, 0);
             const allCrystalFromStore = await (await this.countItemFromStore(crystalConfig)).reduce((sum, each) => sum + each.amount, 0);
             //  Get all Ruby
-            const rubyConfig = Number((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.config_value').where('config.config_key = :key', { key: WebConfigConstant.RUBY_ITEM_ID_CONFIG }).getOne())?.configValue);
+            const rubyConfig = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.RUBY_ITEM_ID_CONFIG }).getOne())?.configValue));
             const allRubyFromInv = await (await this.countItemFromInventory(rubyConfig)).reduce((sum, each) => sum + each.amount, 0);
             const allRubyFromStore = await (await this.countItemFromStore(rubyConfig)).reduce((sum, each) => sum + each.amount, 0);
             //  Get all Diamond
-            const diamondConfig = Number((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.config_value').where('config.config_key = :key', { key: WebConfigConstant.DIAMOND_ITEM_ID_CONFIG }).getOne())?.configValue);
+            const diamondConfig = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.DIAMOND_ITEM_ID_CONFIG }).getOne())?.configValue));
             const allDiamondFromInv = await (await this.countItemFromInventory(diamondConfig)).reduce((sum, each) => sum + each.amount, 0);
             const allDiamondFromStore = await (await this.countItemFromStore(diamondConfig)).reduce((sum, each) => sum + each.amount, 0);
             //  Get all RC
-            const rcConfig = Number((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.config_value').where('config.config_key = :key', { key: WebConfigConstant.RC_ITEM_ID_CONFIG }).getOne())?.configValue);
+            const rcConfig = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.RC_ITEM_ID_CONFIG }).getOne())?.configValue));
             const allRcFromInv = await (await this.countItemFromInventory(rcConfig)).reduce((sum, each) => sum + each.amount, 0);
             const allRcFromStore = await (await this.countItemFromStore(rcConfig)).reduce((sum, each) => sum + each.amount, 0);
 
