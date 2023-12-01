@@ -76,13 +76,23 @@ export default class CrystalController {
             let priceCegel = crystalShop.priceCegel;
 
             if (crystalShop.accountPurchaseLimit != 0 && crystalShop.accountPurchaseLimit <= purchaseCount && crystalShop.enablePurchaseOverLimit) {
-                priceCrystal = Math.ceil(priceCrystal + (priceCrystal * crystalShop.overLimitPricePercent / 100)) 
+                priceCrystal = Math.ceil(priceCrystal + (priceCrystal * crystalShop.overLimitPricePercent / 100))
                 priceCegel = Math.ceil(priceCegel + (priceCegel * crystalShop.overLimitPricePercent / 100))
             }
 
             // reduct crystal point
             webUserDetail.crystalPoint -= priceCrystal
             await SealMemberDataSource.manager.save(webUserDetail);
+
+            log = await logService.updateLogItemTransaction("PREPARE_UPDATE_CRYSTAL_POINT", undefined, log);
+            if (priceCegel != 0) {
+                const storeEntity = await GDB0101DataSource.manager.findOneBy(store, { user_id: currentUser.gameUserId });
+                if (!storeEntity || storeEntity.segel < priceCegel) {
+
+                    log = await logService.updateLogItemTransaction("PREPARE_UPDATE_CRYSTAL_POINT", 'Insufficient cegel.', log);
+                    return res.status(400).json({ status: 400, message: 'Insufficient cegel.' })
+                }
+            }
 
             log = await logService.updateLogItemTransaction("PREPARE_INVENTORY", undefined, log);
             let errMsg = "";
@@ -227,7 +237,7 @@ export default class CrystalController {
     public getMoney = async (req: Request, res: Response) => {
 
         try {
-           
+
             if (!GDB0101DataSource.isInitialized) {
                 await GDB0101DataSource.initialize();
             }
@@ -242,7 +252,7 @@ export default class CrystalController {
             }
 
             const currentUser = req.user as AuthenUser;
-           
+
             const webUserDetail = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: currentUser.gameUserId });
             if (webUserDetail == null) {
                 return res.status(400).json({ status: 400, message: 'User is not found.' });
@@ -253,11 +263,13 @@ export default class CrystalController {
                 return res.status(400).json({ status: 400, message: 'User is not found.' });
             }
 
-            return res.status(200).json({ status: 200, data: {
-                crystalPoint: webUserDetail.crystalPoint,
-                cegel: storeEntity.segel
-            }})
-    
+            return res.status(200).json({
+                status: 200, data: {
+                    crystalPoint: webUserDetail.crystalPoint,
+                    cegel: storeEntity.segel
+                }
+            })
+
 
         } catch (error) {
             console.error(error);
