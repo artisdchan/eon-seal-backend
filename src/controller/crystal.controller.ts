@@ -149,11 +149,15 @@ export default class CrystalController {
             }
 
             const currentUser = req.user as AuthenUser;
-            const { page, perPage, itemType } = req.query as unknown as CrystalShopRequestDTO;
+            const { page, perPage, itemType, itemName } = req.query as unknown as CrystalShopRequestDTO;
 
             const query = await ItemDataSource.manager.getRepository(CrystalShop).createQueryBuilder('crystalShop').where('crystalShop.status = :status', { status: 'ACTIVE' });
             if (itemType) {
                 query.andWhere('crystalShop.item_type = :itemType', { itemType });
+            }
+
+            if (itemName) {
+                query.andWhere('crystalShop.item_name LIKE :itemName', { itemName: `%${itemName}%` });
             }
 
             const offSet = getOffSet(page, perPage);

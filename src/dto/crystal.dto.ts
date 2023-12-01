@@ -26,4 +26,5 @@ export type CrystalShopRequestDTO = {
     page: number
     perPage: number
     itemType: CrystalItemType | undefined
+    itemName: string | undefined
 }
