@@ -53,13 +53,13 @@ export class DashboardController {
 
                 let itemId = 27232;
                 if (topListType == TopListType.CRYSTAL) {
-                    itemId = Number(await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.config_value').where('config.config_key = :key', { key: WebConfigConstant.CRYSTAL_ITEM_ID_CONFIG }).getOne());
+                    itemId = Number((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.CRYSTAL_ITEM_ID_CONFIG }).getOne())?.configValue)
                 } else if (topListType == TopListType.RUBY) {
-                    itemId = Number(await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.config_value').where('config.config_key = :key', { key: WebConfigConstant.RUBY_ITEM_ID_CONFIG }).getOne());
-                } if (topListType == TopListType.DIAMOND) {
-                    itemId = Number(await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.config_value').where('config.config_key = :key', { key: WebConfigConstant.DIAMOND_ITEM_ID_CONFIG }).getOne());
-                } if (topListType == TopListType.RC) {
-                    itemId = Number(await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.config_value').where('config.config_key = :key', { key: WebConfigConstant.RC_ITEM_ID_CONFIG }).getOne());
+                    itemId = Number((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.RUBY_ITEM_ID_CONFIG }).getOne())?.configValue);
+                } else if (topListType == TopListType.DIAMOND) {
+                    itemId = Number((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.DIAMOND_ITEM_ID_CONFIG }).getOne())?.configValue);
+                } else if (topListType == TopListType.RC) {
+                    itemId = Number((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.RC_ITEM_ID_CONFIG }).getOne())?.configValue);
                 }
                 const countItemFromInventory = await this.countItemFromInventory(itemId);
                 const countItemFromStore = await this.countItemFromStore(itemId);
@@ -142,19 +142,19 @@ export class DashboardController {
             // const allCelgelAmount = queryAllCelgel.reduce((sum, each) => sum + each.amount, 0);
             const allCelgelAmount = queryAllCelgel[0].amount
             //  Get all Crystal
-            const crystalConfig = Number(await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.config_value').where('config.config_key = :key', { key: WebConfigConstant.CRYSTAL_ITEM_ID_CONFIG }).getOne());
+            const crystalConfig = Number((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.config_value').where('config.config_key = :key', { key: WebConfigConstant.CRYSTAL_ITEM_ID_CONFIG }).getOne())?.configValue);
             const allCrystalFromInv = await (await this.countItemFromInventory(crystalConfig)).reduce((sum, each) => sum + each.amount, 0);
             const allCrystalFromStore = await (await this.countItemFromStore(crystalConfig)).reduce((sum, each) => sum + each.amount, 0);
             //  Get all Ruby
-            const rubyConfig = Number(await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.config_value').where('config.config_key = :key', { key: WebConfigConstant.RUBY_ITEM_ID_CONFIG }).getOne());
+            const rubyConfig = Number((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.config_value').where('config.config_key = :key', { key: WebConfigConstant.RUBY_ITEM_ID_CONFIG }).getOne())?.configValue);
             const allRubyFromInv = await (await this.countItemFromInventory(rubyConfig)).reduce((sum, each) => sum + each.amount, 0);
             const allRubyFromStore = await (await this.countItemFromStore(rubyConfig)).reduce((sum, each) => sum + each.amount, 0);
             //  Get all Diamond
-            const diamondConfig = Number(await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.config_value').where('config.config_key = :key', { key: WebConfigConstant.DIAMOND_ITEM_ID_CONFIG }).getOne());
+            const diamondConfig = Number((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.config_value').where('config.config_key = :key', { key: WebConfigConstant.DIAMOND_ITEM_ID_CONFIG }).getOne())?.configValue);
             const allDiamondFromInv = await (await this.countItemFromInventory(diamondConfig)).reduce((sum, each) => sum + each.amount, 0);
             const allDiamondFromStore = await (await this.countItemFromStore(diamondConfig)).reduce((sum, each) => sum + each.amount, 0);
             //  Get all RC
-            const rcConfig = Number(await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.config_value').where('config.config_key = :key', { key: WebConfigConstant.RC_ITEM_ID_CONFIG }).getOne());
+            const rcConfig = Number((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.config_value').where('config.config_key = :key', { key: WebConfigConstant.RC_ITEM_ID_CONFIG }).getOne())?.configValue);
             const allRcFromInv = await (await this.countItemFromInventory(rcConfig)).reduce((sum, each) => sum + each.amount, 0);
             const allRcFromStore = await (await this.countItemFromStore(rcConfig)).reduce((sum, each) => sum + each.amount, 0);
 
