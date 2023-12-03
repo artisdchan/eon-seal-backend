@@ -29,7 +29,7 @@ export default class UserController {
                 return next(null);
             }
 
-            
+
             const dbUtils = new DBUtils();
             if (!SealMemberDataSource.isInitialized) {
                 await SealMemberDataSource.initialize();
@@ -126,6 +126,7 @@ export default class UserController {
             } catch (error) {
                 console.error(error);
                 await queryRunner.rollbackTransaction()
+                res.status(500).send({ status: 500, message: `internal server error.` });
             } finally {
                 await queryRunner.release()
             }
@@ -287,7 +288,7 @@ export default class UserController {
             const newPassword = randomString(8);
 
             await this.updateNewPassword(newPassword, userMsgExEntity.userId, userMsgExEntity);
-            
+
             await this.sendForgetPasswordEmail(request.email, newPassword);
 
             return res.status(200).json({ status: 200, message: 'New password will be sent to your EON-HUB email.' });
@@ -312,11 +313,11 @@ export default class UserController {
 
         emailSender.verify(function (error, success) {
             if (error) {
-              console.log(error);
+                console.log(error);
             } else {
-              console.log("Server is ready to take our messages");
+                console.log("Server is ready to take our messages");
             }
-          });
+        });
 
         const mailOptions = {
             to: email,
@@ -362,12 +363,12 @@ export default class UserController {
 
     public getUserDetail = async (req: Request, res: Response) => {
         try {
-           
+
             const currentUser = req.user as AuthenUser;
             if (!SealMemberDataSource.isInitialized) {
                 await SealMemberDataSource.initialize();
             }
-            
+
             const userDetail = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: currentUser.gameUserId });
             if (userDetail == null) {
                 return res.status(400).json({ status: 400, message: 'User is not found.' })

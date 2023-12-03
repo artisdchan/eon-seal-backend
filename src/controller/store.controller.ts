@@ -43,7 +43,7 @@ export default class StoreController {
 
             const rcAmount = Number(storeEntity[rcAmountPosition]) + 1;
 
-            return res.status(200).json({ status: 200, totalRcAmount: rcAmount });
+            return res.status(200).json({ status: 200, totalRcAmount: rcAmount, cashAmount: userEntity.gold });
 
         } catch (error) {
             console.error(error);
