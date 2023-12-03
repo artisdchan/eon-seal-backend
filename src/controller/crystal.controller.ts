@@ -8,6 +8,7 @@ import { store } from "../entity/gdb0101/store.entity";
 import { CrystalItemBag, CrystalItemStatus, CrystalItemType, CrystalShop } from "../entity/item/crystal_shop.entity";
 import { SealItem } from "../entity/item/seal_item.entity";
 import { CrystalShopPurchaseHistory } from "../entity/log_item/log_crystal_purchase.entity";
+import { WebConfig, WebConfigConstant } from "../entity/seal_member/web_config.entity";
 import { WebUserDetail } from "../entity/seal_member/web_user_detail.entity";
 import CashInventoryService from "../service/cash_inventory.service";
 import LogService from "../service/log.service";
@@ -19,8 +20,9 @@ export default class CrystalController {
 
         const logService = new LogService();
         const currentUser = req.user as AuthenUser;
+        const type = req.params.type
 
-        let log = await logService.insertLogItemTransaction("CRYSTAL_SHOP", "PURCHASE_ITEM", "PREPARE_PROCESS", currentUser.gameUserId, undefined);
+        let log = await logService.insertLogItemTransaction(`${type.toUpperCase()}_SHOP`, "PURCHASE_ITEM", "PREPARE_PROCESS", currentUser.gameUserId, undefined);
 
         try {
 
@@ -74,10 +76,55 @@ export default class CrystalController {
             // calculate price
             let priceCrystal = crystalShop.priceCrystal;
             let priceCegel = crystalShop.priceCegel;
+            let priceRedDragon = crystalShop.priceRedDragon;
+            let priceBlueDragon = crystalShop.priceBlueDragon;
 
             if (crystalShop.accountPurchaseLimit != 0 && crystalShop.accountPurchaseLimit <= purchaseCount && crystalShop.enablePurchaseOverLimit) {
                 priceCrystal = Math.ceil(priceCrystal + (priceCrystal * crystalShop.overLimitPricePercent / 100))
                 priceCegel = Math.ceil(priceCegel + (priceCegel * crystalShop.overLimitPricePercent / 100))
+                priceRedDragon = Math.ceil(priceRedDragon + (priceRedDragon * crystalShop.overLimitPricePercent / 100))
+                priceBlueDragon = Math.ceil(priceBlueDragon + (priceBlueDragon * crystalShop.overLimitPricePercent / 100))
+            }
+
+            if (priceRedDragon != 0 || priceBlueDragon != 0) {
+
+                const storeService = new StoreService();
+
+                let storeEntity = await GDB0101DataSource.manager.findOneBy(store, { user_id: currentUser.gameUserId });
+                if (storeEntity == null) {
+                    log = await logService.updateLogItemTransaction("PREPARE_UPDATE_CRYSTAL_POINT", 'Insufficient dragon point.', log);
+                    return res.status(400).json({ status: 400, message: 'Insufficient dragon point.' })
+                }
+
+                let blueDragonAmount = 0;
+                let redDragonAmount = 0;
+
+                const blueDragonItemIdConfig = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.BLUE_DRAGON_ITEM_ID_CONFIG }).getOne())?.configValue));
+                const redDragonItemIdConfig = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.RED_DRAGON_ITEM_ID_CONFIG }).getOne())?.configValue));
+
+                const blueDragonAmountPosition = await storeService.findItemAmountPositionInStoreEntity(blueDragonItemIdConfig, storeEntity);
+                if (blueDragonAmountPosition) {
+                    blueDragonAmount = Number(storeEntity[blueDragonAmountPosition]) + 1
+                }
+                const redDragonAmountPosition = await storeService.findItemAmountPositionInStoreEntity(redDragonItemIdConfig, storeEntity);
+                if (redDragonAmountPosition) {
+                    redDragonAmount = Number(storeEntity[redDragonAmountPosition]) + 1
+                }
+
+                if (blueDragonAmount < priceBlueDragon || redDragonAmount < priceRedDragon) {
+                    log = await logService.updateLogItemTransaction("PREPARE_UPDATE_CRYSTAL_POINT", 'Insufficient dragon point.', log);
+                    return res.status(400).json({ status: 400, message: 'Insufficient dragon point.' })
+                }
+
+                const updateBlueDragonObj = storeService.setValueIntoStoreEntity(blueDragonAmountPosition!, blueDragonAmount - priceBlueDragon);
+                const updateRedDragonObj = storeService.setValueIntoStoreEntity(redDragonAmountPosition!, redDragonAmount - priceRedDragon);
+
+                await GDB0101DataSource.manager.getRepository(store).save({
+                    ...storeEntity,
+                    ...updateBlueDragonObj,
+                    ...updateRedDragonObj
+                })
+        
             }
 
             // reduct crystal point
@@ -130,7 +177,9 @@ export default class CrystalController {
                 purchasedCegelPrice: priceCegel,
                 purchasedCrystalPrice: priceCrystal,
                 purchasedTime: new Date,
-                purchasedCrystalShopId: crystalShop.id
+                purchasedCrystalShopId: crystalShop.id,
+                purchasedRedDragonPrice: priceRedDragon,
+                purchasedBlueDragonPrice: priceBlueDragon,
             })
 
             return res.sendStatus(200);
@@ -159,9 +208,10 @@ export default class CrystalController {
             }
 
             const currentUser = req.user as AuthenUser;
+            const type = req.params.type;
             const { page, perPage, itemType, itemName } = req.query as unknown as CrystalShopRequestDTO;
 
-            const query = await ItemDataSource.manager.getRepository(CrystalShop).createQueryBuilder('crystalShop').where('crystalShop.status = :status', { status: 'ACTIVE' });
+            const query = await ItemDataSource.manager.getRepository(CrystalShop).createQueryBuilder('crystalShop').where('crystalShop.status = :status', { status: 'ACTIVE' }).andWhere('crystalShop.shopType = :type', { type: String(type).toUpperCase() });
             if (itemType) {
                 query.andWhere('crystalShop.item_type = :itemType', { itemType });
             }

@@ -6,6 +6,9 @@ export class CrystalShop {
     @PrimaryGeneratedColumn('increment')
     id!: number
 
+    @Column({ name: 'shop_type' })
+    shopType!: string
+
     @Column({ name: 'item_name' })
     itemName!: string
 
@@ -29,6 +32,12 @@ export class CrystalShop {
 
     @Column({ name: 'price_cegel' })
     priceCegel!: number
+
+    @Column({ name: 'price_red_dragon' })
+    priceRedDragon!: number
+
+    @Column({ name: 'price_blue_dragon' })
+    priceBlueDragon!: number
 
     @Column({ name: 'enable_purchase_over_limit' })
     enablePurchaseOverLimit!: boolean

@@ -14,7 +14,7 @@ export default class Routes {
       app.use('/api/auth', authRoutes);
       app.use('/api/store', storeRoutes);
       app.use('/api/fusion', fusionRoutes);
-      app.use('/api/crystal-shop', crystalRoutes);
+      app.use('/api/shop', crystalRoutes);
       app.use('/api/dashboard', dashboardRoutes);
       app.use('/api/ranking', rankingRoutes);
       app.use('/api/config', configRoutes);

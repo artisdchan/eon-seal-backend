@@ -18,6 +18,12 @@ export class CrystalShopPurchaseHistory {
     @Column({ name: 'purchased_cegel_price' })
     purchasedCegelPrice!: number
 
+    @Column({ name: 'purchased_red_dragon_price' })
+    purchasedRedDragonPrice!: number
+
+    @Column({ name: 'purchased_blue_dragon_price' })
+    purchasedBlueDragonPrice!: number
+
     @Column({ name: 'purchased_time' })
     purchasedTime!: Date
 
