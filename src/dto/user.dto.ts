@@ -36,4 +36,9 @@ export type UserDetailResponseDTO = {
     shardLegendaryPoint: number
     crystalPoint: number
     cashSpendPoint: number
+    cashPoint: number
+    rcAmount: number
+    cegelAmount: number
+    blueDragonAmount: number
+    redDragonAmount: number
 }

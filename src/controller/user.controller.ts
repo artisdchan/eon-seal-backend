@@ -14,6 +14,8 @@ import { EONHUB_API_KEY } from "../utils/secret.utils";
 import { randomString } from "../utils/string.utils";
 import { WebUserDetail } from "../entity/seal_member/web_user_detail.entity";
 import StoreService from "../service/store.service";
+import { store } from "../entity/gdb0101/store.entity";
+import { WebConfig, WebConfigConstant } from "../entity/seal_member/web_config.entity";
 var fs = require('fs');
 
 export default class UserController {
@@ -374,6 +376,41 @@ export default class UserController {
                 return res.status(400).json({ status: 400, message: 'User is not found.' })
             }
 
+            const userEntity = await SealMemberDataSource.manager.findOneBy(usermsgex, { userId: currentUser.gameUserId });
+            if (userEntity == null) {
+                return res.status(400).json({ status: 400, message: 'User ID is not exist.' })
+            }
+
+            const storeService = new StoreService();
+            const storeEntity = await GDB0101DataSource.manager.findOneBy(store, { user_id: currentUser.gameUserId });
+            if (storeEntity == null) {
+                return res.status(400).json({ status: 400, message: 'Character is not exist.' })
+            }
+
+            let rcAmount = 0;
+            const rcItemId = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.RC_ITEM_ID_CONFIG }).getOne())?.configValue));
+            const rcAmountPosition = storeService.findItemAmountPositionInStoreEntity(rcItemId, storeEntity);
+            if (rcAmountPosition) {
+                rcAmount = Number(storeEntity[rcAmountPosition]) + 1
+            }
+
+            const cegelAmount = storeEntity.segel;
+
+            let blueDragonAmount = 0;
+            let redDragonAmount = 0;
+
+            const blueDragonItemIdConfig = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.BLUE_DRAGON_ITEM_ID_CONFIG }).getOne())?.configValue));
+            const redDragonItemIdConfig = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.RED_DRAGON_ITEM_ID_CONFIG }).getOne())?.configValue));
+           
+            const blueDragonAmountPosition = await storeService.findItemAmountPositionInStoreEntity(blueDragonItemIdConfig, storeEntity);
+            if (blueDragonAmountPosition) {
+                blueDragonAmount = Number(storeEntity[blueDragonAmountPosition]) + 1
+            }
+            const redDragonAmountPosition = await storeService.findItemAmountPositionInStoreEntity(redDragonItemIdConfig, storeEntity);
+            if (redDragonAmountPosition) {
+                redDragonAmount = Number(storeEntity[redDragonAmountPosition]) + 1
+            }
+
             const response: UserDetailResponseDTO = {
                 shardCommonPoint: userDetail.shardCommonPoint,
                 shardUnCommonPoint: userDetail.shardUnCommonPoint,
@@ -381,7 +418,12 @@ export default class UserController {
                 shardEpicPoint: userDetail.shardEpicPoint,
                 shardLegendaryPoint: userDetail.shardLegenPoint,
                 crystalPoint: userDetail.crystalPoint,
-                cashSpendPoint: userDetail.cashSpendPoint
+                cashSpendPoint: userDetail.cashSpendPoint,
+                rcAmount: rcAmount,
+                cegelAmount: cegelAmount,
+                cashPoint: Number(userEntity.gold),
+                blueDragonAmount: blueDragonAmount,
+                redDragonAmount: redDragonAmount
             }
 
             return res.status(200).json({ status: 200, data: response });
