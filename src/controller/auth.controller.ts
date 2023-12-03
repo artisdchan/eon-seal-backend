@@ -1,8 +1,10 @@
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { SealMemberDataSource } from "../data-source";
+import { idtable1 } from "../entity/seal_member/idtable.entity";
 import { usermsgex } from "../entity/seal_member/usermsgex.entity";
 import { WebUserDetail } from "../entity/seal_member/web_user_detail.entity";
+import DBUtils from "../utils/db.utils";
 import { JWT_SECRET } from "../utils/secret.utils";
 
 export default class AuthController {
@@ -33,11 +35,20 @@ export default class AuthController {
                     userLevel = userWeb.userLevel
                 }
 
+                const dbUtils = new DBUtils();
+                let tblName = await dbUtils.getIdTable(userWeb!.user_id);
+                const user = await SealMemberDataSource.manager.query(`SELECT * FROM ${tblName} WHERE id = '${userWeb!.user_id}'`) as idtable1[]
+    
+                if (user == null) {
+                    return res.status(404).json({ status: 404, message: 'User ID is not exist.', email: googleResponse.email })
+                }
+
                 const token = jwt.sign({
                     user: {
                         gameUserId: userMsgExEntity.userId,
                         email: userMsgExEntity.email!,
-                        userLevel: userLevel
+                        userLevel: userLevel,
+                        userStatus: user[0].Status
                     }
                 }, JWT_SECRET, { expiresIn: "1h" });
                 // res.cookie("token", token, {expires: new Date(Date.now() + 86400 * 1000), httpOnly: true});

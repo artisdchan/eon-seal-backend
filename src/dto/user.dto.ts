@@ -41,4 +41,6 @@ export type UserDetailResponseDTO = {
     cegelAmount: number
     blueDragonAmount: number
     redDragonAmount: number
+    userLevel: number
+    userStatus: string
 }

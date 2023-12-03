@@ -46,7 +46,8 @@ passport.deserializeUser(async (id: AuthenUser, done) => {
             done(null, {
                 gameUserId: user.id,
                 email: user.email!,
-                userLevel: userLevel
+                userLevel: userLevel,
+                userStatus: user.Status!
             });
         }
 
@@ -89,7 +90,8 @@ passport.use('password', new LocalStrategy(
         done(null, {
             gameUserId: user[0].id,
             email: user[0].email!,
-            userLevel: userLevel
+            userLevel: userLevel,
+            userStatus: user[0].Status!
         });
     }
 ))
@@ -122,7 +124,8 @@ passport.use(new JwtStrategy({
             done(null, {
                 gameUserId: user[0].id,
                 email: user[0].email!,
-                userLevel: userLevel
+                userLevel: userLevel,
+                userStatus: user[0].Status!
             });
 
         } catch (error) {

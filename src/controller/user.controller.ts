@@ -411,6 +411,11 @@ export default class UserController {
                 redDragonAmount = Number(storeEntity[redDragonAmountPosition]) + 1
             }
 
+            let userStatus = 'ACTIVE'
+            // if (currentUser.userStatus != 1) {
+            //     userStatus = 'INACTIVE'
+            // }
+
             const response: UserDetailResponseDTO = {
                 shardCommonPoint: userDetail.shardCommonPoint,
                 shardUnCommonPoint: userDetail.shardUnCommonPoint,
@@ -423,7 +428,9 @@ export default class UserController {
                 cegelAmount: cegelAmount,
                 cashPoint: Number(userEntity.gold),
                 blueDragonAmount: blueDragonAmount,
-                redDragonAmount: redDragonAmount
+                redDragonAmount: redDragonAmount,
+                userLevel: userDetail.userLevel,
+                userStatus: userStatus
             }
 
             return res.status(200).json({ status: 200, data: response });
