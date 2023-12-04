@@ -13,6 +13,8 @@ import { WebUserDetail } from "../entity/seal_member/web_user_detail.entity";
 import CashInventoryService from "../service/cash_inventory.service";
 import LogService from "../service/log.service";
 import StoreService from "../service/store.service";
+import { startOfToday, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns'
+import { Between, LessThan, MoreThan } from "typeorm";
 
 export default class CrystalController {
 
@@ -59,7 +61,20 @@ export default class CrystalController {
                 return res.status(400).json({ status: 400, message: 'Insufficient crystal.' })
             }
 
-            const purchaseCount = await LogItemDataSource.manager.countBy(CrystalShopPurchaseHistory, { actionUserId: currentUser.gameUserId, purchasedCrystalShopId: crystalShop.id })
+            let purchaseCount = 0;
+            if (crystalShop.itemType == CrystalItemType.DAILY) {
+                const dateFrom = startOfToday();
+                const dateTo = endOfDay(new Date);
+                purchaseCount = await LogItemDataSource.manager.countBy(CrystalShopPurchaseHistory, { actionUserId: currentUser.gameUserId, purchasedCrystalShopId: crystalShop.id, purchasedTime: Between(dateFrom, dateTo) })
+            } else if (crystalShop.itemType == CrystalItemType.WEEKLY) {
+                const dateFrom = startOfWeek(new Date, { weekStartsOn: 1 })
+                const dateTo = endOfWeek(new Date, { weekStartsOn: 1 })
+                purchaseCount = await LogItemDataSource.manager.countBy(CrystalShopPurchaseHistory, { actionUserId: currentUser.gameUserId, purchasedCrystalShopId: crystalShop.id, purchasedTime: Between(dateFrom, dateTo) })
+            } else if (crystalShop.itemType == CrystalItemType.MONTHLY) {
+                const dateFrom = startOfMonth(new Date)
+                const dateTo = endOfMonth(new Date)
+                purchaseCount = await LogItemDataSource.manager.countBy(CrystalShopPurchaseHistory, { actionUserId: currentUser.gameUserId, purchasedCrystalShopId: crystalShop.id, purchasedTime: Between(dateFrom, dateTo) })
+            }
             // account purchase reach limit and not able to purchase over limit.
             if (crystalShop.accountPurchaseLimit != 0 && crystalShop.accountPurchaseLimit <= purchaseCount && !crystalShop.enablePurchaseOverLimit) {
                 log = await logService.updateLogItemTransaction("FAIL", 'The item has been reached purchase limit.', log);
@@ -124,7 +139,7 @@ export default class CrystalController {
                     ...updateBlueDragonObj,
                     ...updateRedDragonObj
                 })
-        
+
             }
 
             // reduct crystal point
@@ -226,9 +241,26 @@ export default class CrystalController {
 
             for (let eachCrystalShop of crystalShop) {
 
-                const purchaseCount = await LogItemDataSource.manager.countBy(CrystalShopPurchaseHistory, { purchasedCrystalShopId: eachCrystalShop.id, actionUserId: currentUser.gameUserId });
+                // const purchaseCount = await LogItemDataSource.manager.countBy(CrystalShopPurchaseHistory, { purchasedCrystalShopId: eachCrystalShop.id, actionUserId: currentUser.gameUserId });
+
+                let purchaseCount = 0;
+                if (eachCrystalShop.itemType == CrystalItemType.DAILY) {
+                    const dateFrom = startOfToday();
+                    const dateTo = endOfDay(new Date);
+                    purchaseCount = await LogItemDataSource.manager.countBy(CrystalShopPurchaseHistory, { actionUserId: currentUser.gameUserId, purchasedCrystalShopId: eachCrystalShop.id, purchasedTime: Between(dateFrom, dateTo) })
+                } else if (eachCrystalShop.itemType == CrystalItemType.WEEKLY) {
+                    const dateFrom = startOfWeek(new Date, { weekStartsOn: 1 })
+                    const dateTo = endOfWeek(new Date, { weekStartsOn: 1 })
+                    purchaseCount = await LogItemDataSource.manager.countBy(CrystalShopPurchaseHistory, { actionUserId: currentUser.gameUserId, purchasedCrystalShopId: eachCrystalShop.id, purchasedTime: Between(dateFrom, dateTo) })
+                } else if (eachCrystalShop.itemType == CrystalItemType.MONTHLY) {
+                    const dateFrom = startOfMonth(new Date)
+                    const dateTo = endOfMonth(new Date)
+                    purchaseCount = await LogItemDataSource.manager.countBy(CrystalShopPurchaseHistory, { actionUserId: currentUser.gameUserId, purchasedCrystalShopId: eachCrystalShop.id, purchasedTime: Between(dateFrom, dateTo) })
+                }
                 let price = eachCrystalShop.priceCrystal;
                 let priceCegel = eachCrystalShop.priceCegel;
+                let priceRedDragon = eachCrystalShop.priceRedDragon;
+                let priceBlueDragon = eachCrystalShop.priceBlueDragon;
                 let isBuyable = true;
 
                 if (eachCrystalShop.itemType != CrystalItemType.UNLIMIT) {
@@ -240,6 +272,8 @@ export default class CrystalController {
                         } else {
                             price = Math.ceil(price + (price * eachCrystalShop.overLimitPricePercent / 100));
                             priceCegel = Math.ceil(priceCegel + (priceCegel * eachCrystalShop.overLimitPricePercent / 100));
+                            priceRedDragon = Math.ceil(priceRedDragon + (priceRedDragon * eachCrystalShop.overLimitPricePercent / 100));
+                            priceBlueDragon = Math.ceil(priceBlueDragon + (priceBlueDragon * eachCrystalShop.overLimitPricePercent / 100));
                         }
                     }
 

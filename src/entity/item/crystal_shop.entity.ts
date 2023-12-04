@@ -51,6 +51,15 @@ export class CrystalShop {
     @Column({ name: 'account_purchase_limit' })
     accountPurchaseLimit!: number
 
+    // @Column({ name: 'account_purchase_limit_daily' })
+    // accountPurchaseLimitDaily!: number
+
+    // @Column({ name: 'account_purchase_limit_weekly' })
+    // accountPurchaseLimitWeekly!: number
+
+    // @Column({ name: 'account_purchase_limit_monthly' })
+    // accountPurchaseLimitMonthly!: number
+
     @Column({ name: 'count_global_purchase' })
     countGlobalPurchase!: number
 
