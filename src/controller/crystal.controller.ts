@@ -62,19 +62,19 @@ export default class CrystalController {
             }
 
             let purchaseCount = 0;
+            let dateFrom: Date = new Date
+            let dateTo: Date = new Date
             if (crystalShop.itemType == CrystalItemType.DAILY) {
-                const dateFrom = startOfToday();
-                const dateTo = endOfDay(new Date);
-                purchaseCount = await LogItemDataSource.manager.countBy(CrystalShopPurchaseHistory, { actionUserId: currentUser.gameUserId, purchasedCrystalShopId: crystalShop.id, purchasedTime: Between(dateFrom, dateTo) })
+                dateFrom = startOfToday();
+                dateTo = endOfDay(new Date);
             } else if (crystalShop.itemType == CrystalItemType.WEEKLY) {
-                const dateFrom = startOfWeek(new Date, { weekStartsOn: 1 })
-                const dateTo = endOfWeek(new Date, { weekStartsOn: 1 })
-                purchaseCount = await LogItemDataSource.manager.countBy(CrystalShopPurchaseHistory, { actionUserId: currentUser.gameUserId, purchasedCrystalShopId: crystalShop.id, purchasedTime: Between(dateFrom, dateTo) })
+                dateFrom = startOfWeek(new Date, { weekStartsOn: 1 })
+                dateTo = endOfWeek(new Date, { weekStartsOn: 1 })
             } else if (crystalShop.itemType == CrystalItemType.MONTHLY) {
-                const dateFrom = startOfMonth(new Date)
-                const dateTo = endOfMonth(new Date)
-                purchaseCount = await LogItemDataSource.manager.countBy(CrystalShopPurchaseHistory, { actionUserId: currentUser.gameUserId, purchasedCrystalShopId: crystalShop.id, purchasedTime: Between(dateFrom, dateTo) })
+                dateFrom = startOfMonth(new Date)
+                dateTo = endOfMonth(new Date)
             }
+            purchaseCount = await LogItemDataSource.manager.countBy(CrystalShopPurchaseHistory, { actionUserId: currentUser.gameUserId, purchasedCrystalShopId: crystalShop.id, purchasedTime: Between(dateFrom, dateTo) })
             // account purchase reach limit and not able to purchase over limit.
             if (crystalShop.accountPurchaseLimit != 0 && crystalShop.accountPurchaseLimit <= purchaseCount && !crystalShop.enablePurchaseOverLimit) {
                 log = await logService.updateLogItemTransaction("FAIL", 'The item has been reached purchase limit.', log);
@@ -107,7 +107,7 @@ export default class CrystalController {
 
                 let storeEntity = await GDB0101DataSource.manager.findOneBy(store, { user_id: currentUser.gameUserId });
                 if (storeEntity == null) {
-                    log = await logService.updateLogItemTransaction("PREPARE_UPDATE_CRYSTAL_POINT", 'Insufficient dragon point.', log);
+                    log = await logService.updateLogItemTransaction("PREPARE_UPDATE_DRAGON_POINT", 'Insufficient dragon point.', log);
                     return res.status(400).json({ status: 400, message: 'Insufficient dragon point.' })
                 }
 
@@ -127,7 +127,7 @@ export default class CrystalController {
                 }
 
                 if (blueDragonAmount < priceBlueDragon || redDragonAmount < priceRedDragon) {
-                    log = await logService.updateLogItemTransaction("PREPARE_UPDATE_CRYSTAL_POINT", 'Insufficient dragon point.', log);
+                    log = await logService.updateLogItemTransaction("PREPARE_UPDATE_DRAGON_POINT", 'Insufficient dragon point.', log);
                     return res.status(400).json({ status: 400, message: 'Insufficient dragon point.' })
                 }
 
