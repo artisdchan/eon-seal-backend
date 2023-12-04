@@ -238,6 +238,59 @@ export default class StoreController {
 
                 log = await logService.updateLogItemTransaction("CONVERT_CRYSTAL_COMPLETE", `Old Crystal Point: ${webUserDetail.crystalPoint - request.amount}, New Crystal Point: ${webUserDetail.crystalPoint}`, log);
 
+            } else if (request.convertType == ConvertRCType.CP_TO_CRYSTAL) {
+               
+                log = await logService.updateLogItemTransaction("CP_TO_CRYSTAL", undefined, log);
+
+                const webUserDetail = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: currentUser.gameUserId });
+                if (webUserDetail == null) {
+                    log = await logService.updateLogItemTransaction("UPDATE_CRYSTAL_POINT", 'User is not found.', log);
+                    return res.status(400).json({ status: 400, message: 'User is not found.' });
+                }
+                const cpTobeMinus = request.amount!;
+
+                if (cpTobeMinus > webUserDetail.crystalPoint) {
+                    log = await logService.updateLogItemTransaction("CP_TO_CRYSTAL", 'Insufficient Cash Point.', log);
+                    return res.status(400).json({ status: 400, message: 'Insufficient Cash Point.' });
+                }
+                const crystalItemId = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.CRYSTAL_ITEM_ID_CONFIG }).getOne())?.configValue));
+                let crystalPosition = storeService.findItemInStorentity(crystalItemId, storeEntity);
+                let crystalAmount = 0;
+                if (crystalPosition == undefined) {
+                    crystalPosition = storeService.findEmptySlotInStorentity(storeEntity);
+                    if (crystalPosition == undefined) {
+                        log = await logService.updateLogItemTransaction("CP_TO_CRYSTAL", 'No available slot.', log);
+                        return res.status(400).json({ status: 400, message: 'No available slot.' });
+                    }
+                }
+
+                let crystalAmountPosition = storeService.findItemAmountPositionInStoreEntity(crystalItemId, storeEntity);
+                if (crystalAmountPosition == undefined) {
+                    crystalAmountPosition = storeService.findEmptySlotAmountInStoreEntity(storeEntity);
+                    if (crystalAmountPosition == undefined) {
+                        log = await logService.updateLogItemTransaction("CP_TO_CRYSTAL", 'No available slot.', log);
+                        return res.status(400).json({ status: 400, message: 'No available slot.' });
+                    }
+                } else {
+                    crystalAmount = Number(storeEntity[crystalAmountPosition]) + 1;
+                }
+
+                log = await logService.updateLogItemTransaction("PREPARE_UPDATE_CP", undefined, log);
+                webUserDetail.crystalPoint -= cpTobeMinus;
+                await SealMemberDataSource.manager.save(webUserDetail);
+
+                log = await logService.updateLogItemTransaction("PREPARE_UPDATE_CRYSTAL", undefined, log);
+                const crystalItemObj = storeService.setValueIntoStoreEntity(crystalPosition, crystalItemId);
+                const crystalAmountObj = storeService.setValueIntoStoreEntity(crystalAmountPosition, crystalAmount + request.amount! - 1);
+
+                await GDB0101DataSource.manager.getRepository(store).save({
+                    ...storeEntity,
+                    ...crystalItemObj,
+                    ...crystalAmountObj
+                })
+
+                log = await logService.updateLogItemTransaction("SUCCESS", `Crystal Amount: ${request.amount}, CP Amount: ${cpTobeMinus}`, log);
+ 
             } else {
                 // DO NOTHING
             }
@@ -287,7 +340,7 @@ export default class StoreController {
                 return res.status(400).json({ status: 400, message: 'Configuration is not found.' })
             }
 
-            const crystalItemId = 27232;
+            const crystalItemId = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.CRYSTAL_ITEM_ID_CONFIG }).getOne())?.configValue));
 
             const crystalItemPosition = storeService.findItemInStorentity(crystalItemId, storeEntity);
             if (crystalItemPosition == undefined) {
