@@ -398,9 +398,11 @@ export default class UserController {
 
             let blueDragonAmount = 0;
             let redDragonAmount = 0;
+            let crystalAmount = 0;
 
             const blueDragonItemIdConfig = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.BLUE_DRAGON_ITEM_ID_CONFIG }).getOne())?.configValue));
             const redDragonItemIdConfig = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.RED_DRAGON_ITEM_ID_CONFIG }).getOne())?.configValue));
+            const crystalItemIdConfig = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.CRYSTAL_ITEM_ID_CONFIG }).getOne())?.configValue));
            
             const blueDragonAmountPosition = await storeService.findItemAmountPositionInStoreEntity(blueDragonItemIdConfig, storeEntity);
             if (blueDragonAmountPosition) {
@@ -409,6 +411,10 @@ export default class UserController {
             const redDragonAmountPosition = await storeService.findItemAmountPositionInStoreEntity(redDragonItemIdConfig, storeEntity);
             if (redDragonAmountPosition) {
                 redDragonAmount = Number(storeEntity[redDragonAmountPosition]) + 1
+            }
+            const crystalAmountPosition = await storeService.findItemAmountPositionInStoreEntity(crystalItemIdConfig, storeEntity);
+            if (crystalAmountPosition) {
+                crystalAmount = Number(storeEntity[crystalAmountPosition]) + 1
             }
 
             let userStatus = 'ACTIVE'
@@ -430,7 +436,8 @@ export default class UserController {
                 blueDragonAmount: blueDragonAmount,
                 redDragonAmount: redDragonAmount,
                 userLevel: userDetail.userLevel,
-                userStatus: userStatus
+                userStatus: userStatus,
+                crystalAmount: crystalAmount
             }
 
             return res.status(200).json({ status: 200, data: response });

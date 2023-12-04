@@ -43,4 +43,5 @@ export type UserDetailResponseDTO = {
     redDragonAmount: number
     userLevel: number
     userStatus: string
+    crystalAmount: number
 }
