@@ -200,6 +200,10 @@ export default class UserController {
     public topupCash = async (req: Request, res: Response, next: NextFunction) => {
         try {
 
+            if (!SealMemberDataSource.isInitialized) {
+                await SealMemberDataSource.initialize();
+            }
+            
             const requestApiKey = req.get('API-KEY') as string;
             if (requestApiKey != EONHUB_API_KEY) {
                 console.error('Invalid API-KEY.');
