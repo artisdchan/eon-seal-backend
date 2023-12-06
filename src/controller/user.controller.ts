@@ -393,10 +393,12 @@ export default class UserController {
 
             let rcAmount = 0;
             const rcItemId = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.RC_ITEM_ID_CONFIG }).getOne())?.configValue));
-            const rcAmountPosition = storeService.findItemAmountPositionInStoreEntity(rcItemId, storeEntity);
-            if (rcAmountPosition) {
-                rcAmount = Number(storeEntity[rcAmountPosition]) + 1
-            }
+            // const rcAmountPosition = storeService.findItemAmountPositionInStoreEntity(rcItemId, storeEntity);
+            // if (rcAmountPosition) {
+            //     rcAmount = Number(storeEntity[rcAmountPosition]) + 1
+            // }
+
+            rcAmount = storeService.countDuplicateItem(rcItemId, storeEntity)
 
             const cegelAmount = storeEntity.segel;
 
@@ -412,14 +414,17 @@ export default class UserController {
             if (blueDragonAmountPosition) {
                 blueDragonAmount = Number(storeEntity[blueDragonAmountPosition]) + 1
             }
-            const redDragonAmountPosition = await storeService.findItemAmountPositionInStoreEntity(redDragonItemIdConfig, storeEntity);
-            if (redDragonAmountPosition) {
-                redDragonAmount = Number(storeEntity[redDragonAmountPosition]) + 1
-            }
-            const crystalAmountPosition = await storeService.findItemAmountPositionInStoreEntity(crystalItemIdConfig, storeEntity);
-            if (crystalAmountPosition) {
-                crystalAmount = Number(storeEntity[crystalAmountPosition]) + 1
-            }
+            blueDragonAmount = storeService.countDuplicateItem(blueDragonItemIdConfig, storeEntity)
+            // const redDragonAmountPosition = await storeService.findItemAmountPositionInStoreEntity(redDragonItemIdConfig, storeEntity);
+            // if (redDragonAmountPosition) {
+            //     redDragonAmount = Number(storeEntity[redDragonAmountPosition]) + 1
+            // }
+            redDragonAmount = storeService.countDuplicateItem(redDragonItemIdConfig, storeEntity)
+            // const crystalAmountPosition = await storeService.findItemAmountPositionInStoreEntity(crystalItemIdConfig, storeEntity);
+            // if (crystalAmountPosition) {
+            //     crystalAmount = Number(storeEntity[crystalAmountPosition]) + 1
+            // }
+            crystalAmount = storeService.countDuplicateItem(crystalItemIdConfig, storeEntity)
 
             let userStatus = 'ACTIVE'
             // if (currentUser.userStatus != 1) {

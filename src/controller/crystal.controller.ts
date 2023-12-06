@@ -117,28 +117,45 @@ export default class CrystalController {
                 const blueDragonItemIdConfig = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.BLUE_DRAGON_ITEM_ID_CONFIG }).getOne())?.configValue));
                 const redDragonItemIdConfig = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.RED_DRAGON_ITEM_ID_CONFIG }).getOne())?.configValue));
 
-                const blueDragonAmountPosition = await storeService.findItemAmountPositionInStoreEntity(blueDragonItemIdConfig, storeEntity);
-                if (blueDragonAmountPosition) {
-                    blueDragonAmount = Number(storeEntity[blueDragonAmountPosition]) + 1
-                }
-                const redDragonAmountPosition = await storeService.findItemAmountPositionInStoreEntity(redDragonItemIdConfig, storeEntity);
-                if (redDragonAmountPosition) {
-                    redDragonAmount = Number(storeEntity[redDragonAmountPosition]) + 1
-                }
+                blueDragonAmount = storeService.countDuplicateItem(blueDragonItemIdConfig, storeEntity)
+                redDragonAmount = storeService.countDuplicateItem(redDragonItemIdConfig, storeEntity)
 
                 if (blueDragonAmount < priceBlueDragon || redDragonAmount < priceRedDragon) {
                     log = await logService.updateLogItemTransaction("PREPARE_UPDATE_DRAGON_POINT", 'Insufficient dragon point.', log);
                     return res.status(400).json({ status: 400, message: 'Insufficient dragon point.' })
                 }
 
-                const updateBlueDragonObj = storeService.setValueIntoStoreEntity(blueDragonAmountPosition!, blueDragonAmount - priceBlueDragon);
-                const updateRedDragonObj = storeService.setValueIntoStoreEntity(redDragonAmountPosition!, redDragonAmount - priceRedDragon);
+                let updateBlueObj: store = storeEntity
+                if (priceBlueDragon > 0) {
+                    const getAllBlueDup = storeService.getAllDuplicatePosition(blueDragonItemIdConfig, storeEntity);
+                    for (let i = 0; i < priceBlueDragon; i++) {
+                        updateBlueObj = {
+                            ...updateBlueObj,
+                            ...storeService.setValueIntoStoreEntity(getAllBlueDup[i], 0)
+                        }
+                    }
 
-                await GDB0101DataSource.manager.getRepository(store).save({
-                    ...storeEntity,
-                    ...updateBlueDragonObj,
-                    ...updateRedDragonObj
-                })
+                    await GDB0101DataSource.manager.getRepository(store).save({
+                        ...storeEntity,
+                        ...updateBlueObj
+                    })
+                }
+
+                let updateRedObj: store = storeEntity
+                if (priceRedDragon > 0) {
+                    const getAllRedDup = storeService.getAllDuplicatePosition(redDragonItemIdConfig, storeEntity);
+                    for (let i = 0; i < priceRedDragon; i++) {
+                        updateRedObj = {
+                            ...updateRedObj,
+                            ...storeService.setValueIntoStoreEntity(getAllRedDup[i], 0)
+                        }
+                    }
+
+                    await GDB0101DataSource.manager.getRepository(store).save({
+                        ...storeEntity,
+                        ...updateRedObj
+                    })
+                }
 
             }
 
@@ -296,6 +313,8 @@ export default class CrystalController {
                     accountPurchaseCount: purchaseCount,
                     itemCrystalPrice: price,
                     itemCegelPrice: priceCegel,
+                    itemRedDragonPrice: priceRedDragon,
+                    itemBlueDragonPrice: priceBlueDragon,
                     isBuyable: isBuyable,
                     itemBag: eachCrystalShop.itemBag
                 }
@@ -376,22 +395,14 @@ export default class CrystalController {
 
         storeEntity.segel -= cegelPrice;
 
-        let itemPosition = storeService.findItemInStorentity(itemId, storeEntity);
+        let itemPosition = storeService.findEmptySlotInStorentity(storeEntity);
         if (itemPosition == undefined) {
-            itemPosition = storeService.findEmptySlotInStorentity(storeEntity);
-            if (itemPosition == undefined) {
-                return 'No available slot.';
-            }
+            return 'No available slot.';
         }
 
-        let itemAmountPosition = storeService.findItemAmountPositionInStoreEntity(itemId, storeEntity);
+        let itemAmountPosition = storeService.findEmptySlotAmountInStoreEntity(storeEntity);
         if (itemAmountPosition == undefined) {
-            itemAmountPosition = storeService.findEmptySlotAmountInStoreEntity(storeEntity);
-            if (itemAmountPosition == undefined) {
-                return 'No available slot.';
-            }
-        } else {
-            itemAmount = Number(storeEntity[itemAmountPosition]) + itemAmount;
+            return 'No available slot.';
         }
 
         const itemObj = storeService.setValueIntoStoreEntity(itemPosition, itemId);

@@ -10,7 +10,7 @@ export default class StoreService {
             if (entity[key] == itemId) {
                 return entity[key] == itemId;
             }
-          });
+        });
 
         return result;
 
@@ -25,7 +25,7 @@ export default class StoreService {
                     return entity[key] == 0;
                 }
             }
-          });
+        });
 
         return result;
 
@@ -46,13 +46,43 @@ export default class StoreService {
     public findItemAmountPositionInStoreEntity = (itemId: number, entity: store) => {
 
         const itemPosition = this.findItemInStorentity(itemId, entity);
-            if (itemPosition == undefined) {
-                return undefined;
-            }
+        if (itemPosition == undefined) {
+            return undefined;
+        }
 
-            type ObjectKey = keyof typeof entity;
-            const itemAmountPosition = itemPosition.replace("it", "io") as ObjectKey;
-            return itemAmountPosition;
+        type ObjectKey = keyof typeof entity;
+        const itemAmountPosition = itemPosition.replace("it", "io") as ObjectKey;
+        return itemAmountPosition;
+
+    }
+
+    public countDuplicateItem = (itemId: number, entity: store) => {
+
+        let count = 0;
+        const result = (Object.keys(entity) as (keyof typeof entity)[]).find((key) => {
+
+            if (entity[key] == itemId) {
+                count++;
+            }
+        });
+
+        return count;
+
+    }
+
+    public getAllDuplicatePosition = (itemId: number, entity: store) => {
+
+        let temp: any[] = []
+        const result = (Object.keys(entity) as (keyof typeof entity)[]).find((key) => {
+
+            if (entity[key] == itemId) {
+                if (key.includes("it")) {
+                    temp.push(key)
+                }
+            }
+        });
+
+        return temp;
 
     }
 

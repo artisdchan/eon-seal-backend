@@ -15,6 +15,8 @@ export type CrystalShopResponseDTO = {
     isBuyable: boolean
     itemCrystalPrice: number
     itemCegelPrice: number
+    itemRedDragonPrice: number
+    itemBlueDragonPrice: number
     globalPurchaseLimit: number
     globalPurchaseCount: number
     accountPurchaseLimit: number
