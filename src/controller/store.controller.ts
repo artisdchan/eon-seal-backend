@@ -41,7 +41,8 @@ export default class StoreController {
                 return res.status(200).json({ status: 200, totalRcAmount: 0 });
             }
 
-            const rcAmount = storeService.countDuplicateItem(rcItemId, storeEntity)
+            const rcAmount = Number(storeEntity[rcAmountPosition]) + 1;
+            // const rcAmount = storeService.countDuplicateItem(rcItemId, storeEntity)
 
             return res.status(200).json({ status: 200, totalRcAmount: rcAmount, cashAmount: userEntity.gold });
 
@@ -99,28 +100,40 @@ export default class StoreController {
                     return res.status(400).json({ status: 400, message: 'Insufficient RC Amount.' });
                 }
 
-                const rcAmount = storeService.countDuplicateItem(rcItemId, storeEntity);
+                const rcAmount = Number(storeEntity[rcAmountPosition]) + 1;
+                // const rcAmount = storeService.countDuplicateItem(rcItemId, storeEntity);
 
                 if (request.amount! > rcAmount) {
                     log = await logService.updateLogItemTransaction("PREPARE_RC_AND_CASH", 'Invalid RC Amount.', log);
                     return res.status(400).json({ status: 400, message: 'Invalid RC Amount.' });
-                } else {
+                } else if (request.amount == rcAmount) {
+
                     log = await logService.updateLogItemTransaction("PREPARE_UPDATE_RC", undefined, log);
 
-                    let updateRcObj: store = storeEntity
-                    const getAllDup = storeService.getAllDuplicatePosition(rcItemId, storeEntity);
-                    for (let i = 0; i < request.amount; i++) {
-                        updateRcObj  = {
-                            ...updateRcObj,
-                            ...storeService.setValueIntoStoreEntity(getAllDup[i], 0)
-                        }
-                    }
-
+                    const rcItemObj = storeService.setValueIntoStoreEntity(rcPosition, 0);
+                    const rcAmountObj = storeService.setValueIntoStoreEntity(rcAmountPosition, 0);
+                    
                     await GDB0101DataSource.manager.getRepository(store).save({
                         ...storeEntity,
-                        ...updateRcObj
+                        // ...updateRcObj
+                        ...rcItemObj,
+                        ...rcAmountObj
                     })
+                } else {
+                    log = await logService.updateLogItemTransaction("PREPARE_UPDATE_RC", undefined, log);
+                    await GDB0101DataSource.manager.decrement(store, { user_id: currentUser.gameUserId }, rcAmountPosition, request.amount!);
                 }
+                //  else {
+                    // let updateRcObj: store = storeEntity
+                    // const getAllDup = storeService.getAllDuplicatePosition(rcItemId, storeEntity);
+                    // for (let i = 0; i < request.amount; i++) {
+                    //     updateRcObj  = {
+                    //         ...updateRcObj,
+                    //         ...storeService.setValueIntoStoreEntity(getAllDup[i], 0)
+                    //     }
+                    // }
+
+                // }
 
                 log = await logService.updateLogItemTransaction("PREPARE_UPDATE_CASH", undefined, log);
                 const cashToBeAdd = request.amount! * cashPerRc;
@@ -138,18 +151,32 @@ export default class StoreController {
                     log = await logService.updateLogItemTransaction("PREPARE_CASH_TO_RC", 'Insufficient Cash Point.', log);
                     return res.status(400).json({ status: 400, message: 'Insufficient Cash Point.' });
                 }
-
-                let rcPosition = storeService.findEmptySlotInStorentity(storeEntity);
+                let rcPosition = storeService.findItemInStorentity(rcItemId, storeEntity);
+                let rcAmount = 0;
+                // let rcPosition = storeService.findEmptySlotInStorentity(storeEntity);
                 if (rcPosition == undefined) {
-                    log = await logService.updateLogItemTransaction("PREPARE_CASH_TO_RC", 'No available slot.', log);
-                    return res.status(400).json({ status: 400, message: 'No available slot.' });
+                    // log = await logService.updateLogItemTransaction("PREPARE_CASH_TO_RC", 'No available slot.', log);
+                    // return res.status(400).json({ status: 400, message: 'No available slot.' });
+                    rcPosition = storeService.findEmptySlotInStorentity(storeEntity);
+                    if (rcPosition == undefined) {
+                        log = await logService.updateLogItemTransaction("PREPARE_CASH_TO_RC", 'No available slot.', log);
+                        return res.status(400).json({ status: 400, message: 'No available slot.' });
+                    }
                 }
-                let rcAmount = request.amount;
+                // let rcAmount = request.amount;
 
-                let rcAmountPosition = storeService.findEmptySlotAmountInStoreEntity(storeEntity);
+                let rcAmountPosition = storeService.findItemAmountPositionInStoreEntity(rcItemId, storeEntity);
+                // let rcAmountPosition = storeService.findEmptySlotAmountInStoreEntity(storeEntity);
                 if (rcAmountPosition == undefined) {
-                    log = await logService.updateLogItemTransaction("PREPARE_CASH_TO_RC", 'No available slot.', log);
-                    return res.status(400).json({ status: 400, message: 'No available slot.' });
+                    // log = await logService.updateLogItemTransaction("PREPARE_CASH_TO_RC", 'No available slot.', log);
+                    // return res.status(400).json({ status: 400, message: 'No available slot.' });
+                    rcAmountPosition = storeService.findEmptySlotAmountInStoreEntity(storeEntity);
+                    if (rcAmountPosition == undefined) {
+                        log = await logService.updateLogItemTransaction("PREPARE_CASH_TO_RC", 'No available slot.', log);
+                        return res.status(400).json({ status: 400, message: 'No available slot.' });
+                    }
+                } else {
+                    rcAmount = Number(storeEntity[rcAmountPosition]) + 1;
                 }
 
                 log = await logService.updateLogItemTransaction("PREPARE_UPDATE_CASH", undefined, log);
@@ -157,19 +184,23 @@ export default class StoreController {
                 await SealMemberDataSource.manager.save(userMsgExEntity);
 
                 log = await logService.updateLogItemTransaction("PREPARE_UPDATE_RC", undefined, log);
+                const rcItemObj = storeService.setValueIntoStoreEntity(rcPosition, rcItemId);
+                const rcAmountObj = storeService.setValueIntoStoreEntity(rcAmountPosition, rcAmount + request.amount! - 1);
 
-                let updateRcObj: store = storeEntity
-                const getAllDup = storeService.getAllDuplicatePosition(0, storeEntity);
-                for (let i = 0; i < rcAmount; i++) {
-                    updateRcObj = {
-                        ...updateRcObj,
-                        ...storeService.setValueIntoStoreEntity(getAllDup[i], rcItemId)
-                    }
-                }
+                // let updateRcObj: store = storeEntity
+                // const getAllDup = storeService.getAllDuplicatePosition(0, storeEntity);
+                // for (let i = 0; i < rcAmount; i++) {
+                //     updateRcObj = {
+                //         ...updateRcObj,
+                //         ...storeService.setValueIntoStoreEntity(getAllDup[i], rcItemId)
+                //     }
+                // }
 
                 await GDB0101DataSource.manager.getRepository(store).save({
                     ...storeEntity,
-                    ...updateRcObj
+                    // ...updateRcObj
+                    ...rcItemObj,
+                    ...rcAmountObj
                 })
 
                 log = await logService.updateLogItemTransaction("SUCCESS", `RC Amount: ${request.amount}, Cash Amount: ${cashTobeMinus}`, log);
