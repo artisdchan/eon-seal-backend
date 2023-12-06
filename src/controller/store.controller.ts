@@ -174,6 +174,8 @@ export default class StoreController {
                     if (rcAmountPosition == undefined) {
                         log = await logService.updateLogItemTransaction("PREPARE_CASH_TO_RC", 'No available slot.', log);
                         return res.status(400).json({ status: 400, message: 'No available slot.' });
+                    } else {
+                        rcAmount = Number(storeEntity[rcAmountPosition]) + 1;
                     }
                 } else {
                     rcAmount = Number(storeEntity[rcAmountPosition]) + 1;
