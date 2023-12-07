@@ -1,10 +1,12 @@
-import express from "express";
+// import express from "express";
+const express = require("express")
+const {Application} = require("express")
 import Server from "../src/index";
 import * as dotenv from "dotenv";
 import "reflect-metadata"
 
 dotenv.config();
-const app: express.Application = express();
+const app: typeof Application = express();
 const server: Server = new Server(app);
 const PORT: number = process.env.PORT ? parseInt(process.env.PORT, 10) : 8080;
 
