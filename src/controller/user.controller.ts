@@ -16,6 +16,8 @@ import { WebUserDetail } from "../entity/seal_member/web_user_detail.entity";
 import StoreService from "../service/store.service";
 import { store } from "../entity/gdb0101/store.entity";
 import { WebConfig, WebConfigConstant } from "../entity/seal_member/web_config.entity";
+import { StoreEntity2 } from "../dto/store.dto";
+import Store2Service from "../service/store2.service";
 var fs = require('fs');
 
 export default class UserController {
@@ -388,8 +390,8 @@ export default class UserController {
                 return res.status(400).json({ status: 400, message: 'User ID is not exist.' })
             }
 
-            const storeService = new StoreService();
-            const storeEntity = await GDB0101DataSource.manager.findOneBy(store, { user_id: currentUser.gameUserId });
+            const storeService = new Store2Service();
+            const storeEntity = await GDB0101DataSource.manager.findOneBy(store, { user_id: currentUser.gameUserId }) as StoreEntity2;
             if (storeEntity == null) {
                 return res.status(400).json({ status: 400, message: 'Character is not exist.' })
             }
@@ -397,7 +399,7 @@ export default class UserController {
             let rcAmount = 0;
             const rcItemId = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.RC_ITEM_ID_CONFIG }).getOne())?.configValue));
             const rcAmountPosition = storeService.findItemAmountPositionInStoreEntity(rcItemId, storeEntity);
-            if (rcAmountPosition) {
+            if (rcAmountPosition != undefined) {
                 rcAmount = Number(storeEntity[rcAmountPosition]) + 1
             }
 
@@ -414,17 +416,17 @@ export default class UserController {
             const crystalItemIdConfig = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.CRYSTAL_ITEM_ID_CONFIG }).getOne())?.configValue));
            
             const blueDragonAmountPosition = await storeService.findItemAmountPositionInStoreEntity(blueDragonItemIdConfig, storeEntity);
-            if (blueDragonAmountPosition) {
+            if (blueDragonAmountPosition != undefined) {
                 blueDragonAmount = Number(storeEntity[blueDragonAmountPosition]) + 1
             }
             // blueDragonAmount = storeService.countDuplicateItem(blueDragonItemIdConfig, storeEntity)
             const redDragonAmountPosition = await storeService.findItemAmountPositionInStoreEntity(redDragonItemIdConfig, storeEntity);
-            if (redDragonAmountPosition) {
+            if (redDragonAmountPosition != undefined) {
                 redDragonAmount = Number(storeEntity[redDragonAmountPosition]) + 1
             }
             // redDragonAmount = storeService.countDuplicateItem(redDragonItemIdConfig, storeEntity)
             const crystalAmountPosition = await storeService.findItemAmountPositionInStoreEntity(crystalItemIdConfig, storeEntity);
-            if (crystalAmountPosition) {
+            if (crystalAmountPosition != undefined) {
                 crystalAmount = Number(storeEntity[crystalAmountPosition]) + 1
             }
             // crystalAmount = storeService.countDuplicateItem(crystalItemIdConfig, storeEntity)
