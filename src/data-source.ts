@@ -24,7 +24,7 @@ export const SealMemberDataSource = new DataSource({
     password: SEAL_DB_PASS,
     database: "seal_member",
     synchronize: false,
-    logging: false,
+    logging: true,
     entities: [
         idtable1, idtable2, idtable3, idtable4, idtable5,
         usermsgex, WebUserDetail, WebConfig
@@ -41,7 +41,7 @@ export const GDB0101DataSource = new DataSource({
     password: SEAL_DB_PASS,
     database: "gdb0101",
     synchronize: false,
-    logging: false,
+    logging: true,
     entities: [
         pc, inventory, store, CashInventory, guildinfo, 
         guildstore 
@@ -58,7 +58,7 @@ export const ItemDataSource = new DataSource({
     password: SEAL_DB_PASS,
     database: "item",
     synchronize: false,
-    logging: false,
+    logging: true,
     entities: [
         SealItem, 
         FusionItemConfig, CrystalShop
@@ -74,7 +74,7 @@ export const LogItemDataSource = new DataSource({
     password: SEAL_DB_PASS,
     database: "log_item",
     synchronize: false,
-    logging: false,
+    logging: true,
     entities: [
         log_item_transaction, CrystalShopPurchaseHistory
     ],
