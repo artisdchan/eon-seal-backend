@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { GDB0101DataSource, SealMemberDataSource } from "../data-source";
+import { GDB0101DataSource, LogItemDataSource, SealMemberDataSource } from "../data-source";
 import { AuthenUser } from "../dto/authen.dto";
 import { ConvertCrystalRequestDTO, ConvertRCRequestDTO, ConvertRCType } from "../dto/store.dto";
 import { store } from "../entity/gdb0101/store.entity";
@@ -90,6 +90,14 @@ export default class StoreController {
             const cashPerRc = Number(cashPerRcConfig.configValue);
 
             if (request.convertType == ConvertRCType.RC_TO_CASH) {
+
+                if (!GDB0101DataSource.isInitialized) {
+                    await GDB0101DataSource.initialize();
+                }
+                if (!SealMemberDataSource.isInitialized) {
+                    await SealMemberDataSource.initialize();
+                }
+
                 log = await logService.updateLogItemTransaction("PREPARE_RC_AND_CASH", undefined, log);
 
                 const rcPosition = storeService.findItemInStorentity(rcItemId, storeEntity);
@@ -112,7 +120,7 @@ export default class StoreController {
 
                     const rcItemObj = storeService.setValueIntoStoreEntity(rcPosition, 0);
                     const rcAmountObj = storeService.setValueIntoStoreEntity(rcAmountPosition, 0);
-                    
+
                     await GDB0101DataSource.manager.getRepository(store).save({
                         ...storeEntity,
                         // ...updateRcObj
@@ -124,14 +132,14 @@ export default class StoreController {
                     await GDB0101DataSource.manager.decrement(store, { user_id: currentUser.gameUserId }, rcAmountPosition, request.amount!);
                 }
                 //  else {
-                    // let updateRcObj: store = storeEntity
-                    // const getAllDup = storeService.getAllDuplicatePosition(rcItemId, storeEntity);
-                    // for (let i = 0; i < request.amount; i++) {
-                    //     updateRcObj  = {
-                    //         ...updateRcObj,
-                    //         ...storeService.setValueIntoStoreEntity(getAllDup[i], 0)
-                    //     }
-                    // }
+                // let updateRcObj: store = storeEntity
+                // const getAllDup = storeService.getAllDuplicatePosition(rcItemId, storeEntity);
+                // for (let i = 0; i < request.amount; i++) {
+                //     updateRcObj  = {
+                //         ...updateRcObj,
+                //         ...storeService.setValueIntoStoreEntity(getAllDup[i], 0)
+                //     }
+                // }
 
                 // }
 
@@ -143,6 +151,13 @@ export default class StoreController {
                 log = await logService.updateLogItemTransaction("SUCCESS", `Old RC Amount: ${rcAmount}, New RC Amount: ${request.amount}, Cash Amount: ${cashToBeAdd}`, log);
 
             } else if (request.convertType == ConvertRCType.CASH_TO_RC) {
+
+                if (!GDB0101DataSource.isInitialized) {
+                    await GDB0101DataSource.initialize();
+                }
+                if (!SealMemberDataSource.isInitialized) {
+                    await SealMemberDataSource.initialize();
+                }
 
                 log = await logService.updateLogItemTransaction("PREPARE_CASH_TO_RC", undefined, log);
                 const cashTobeMinus = request.amount! * cashPerRc;
@@ -187,7 +202,7 @@ export default class StoreController {
 
                 log = await logService.updateLogItemTransaction("PREPARE_UPDATE_RC", undefined, log);
                 const rcItemObj = storeService.setValueIntoStoreEntity(rcPosition, rcItemId);
-                const rcAmountObj = storeService.setValueIntoStoreEntity(rcAmountPosition, rcAmount + request.amount!);
+                const rcAmountObj = storeService.setValueIntoStoreEntity(rcAmountPosition, rcAmount + request.amount! - 1);
 
                 // let updateRcObj: store = storeEntity
                 // const getAllDup = storeService.getAllDuplicatePosition(0, storeEntity);
@@ -208,6 +223,13 @@ export default class StoreController {
                 log = await logService.updateLogItemTransaction("SUCCESS", `RC Amount: ${request.amount}, Cash Amount: ${cashTobeMinus}`, log);
 
             } else if (request.convertType == ConvertRCType.CRYSTAL_TO_CP) {
+
+                if (!GDB0101DataSource.isInitialized) {
+                    await GDB0101DataSource.initialize();
+                }
+                if (!SealMemberDataSource.isInitialized) {
+                    await SealMemberDataSource.initialize();
+                }
 
                 const cegelTaxConfig = await SealMemberDataSource.manager.findOneBy(WebConfig, { configKey: WebConfigConstant.CRYSTAL_CONVERT_TAX });
                 if (cegelTaxConfig == null) {
@@ -230,7 +252,7 @@ export default class StoreController {
                     log = await logService.updateLogItemTransaction("PREPARE_CALCULATE_CRYSTAL", 'Insufficient crystal.', log);
                     return res.status(400).json({ status: 400, message: 'Insufficient crystal.' });
                 }
-                const availableCrystalItem = storeEntity[crystalAmountPosition]
+                const availableCrystalItem = Number(storeEntity[crystalAmountPosition]) + 1
                 if (Number(availableCrystalItem) < request.amount) {
                     log = await logService.updateLogItemTransaction("PREPARE_CALCULATE_CRYSTAL", 'Insufficient crystal.', log);
                     return res.status(400).json({ status: 400, message: 'Insufficient crystal.' });
@@ -239,7 +261,7 @@ export default class StoreController {
 
                     const updateCrystalObj: store = storeService.setValueIntoStoreEntity(crystalItemPosition, 0)
                     const updateCrystalObjAmount: store = storeService.setValueIntoStoreEntity(crystalAmountPosition, 0)
-                    
+
 
                     await GDB0101DataSource.manager.getRepository(store).save({
                         ...storeEntity,
@@ -265,6 +287,16 @@ export default class StoreController {
                 log = await logService.updateLogItemTransaction("CONVERT_CRYSTAL_COMPLETE", `Old Crystal Point: ${webUserDetail.crystalPoint - request.amount}, New Crystal Point: ${webUserDetail.crystalPoint}`, log);
 
             } else if (request.convertType == ConvertRCType.CP_TO_CRYSTAL) {
+
+                if (!GDB0101DataSource.isInitialized) {
+                    await GDB0101DataSource.initialize();
+                }
+                if (!SealMemberDataSource.isInitialized) {
+                    await SealMemberDataSource.initialize();
+                }
+                if (!LogItemDataSource.isInitialized) {
+                    await LogItemDataSource.initialize();
+                }
 
                 log = await logService.updateLogItemTransaction("CP_TO_CRYSTAL", undefined, log);
 
@@ -310,7 +342,7 @@ export default class StoreController {
 
                 log = await logService.updateLogItemTransaction("PREPARE_UPDATE_CRYSTAL", undefined, log);
                 const crystalItemObj = storeService.setValueIntoStoreEntity(crystalPosition, crystalItemId);
-                const crystalAmountObj = storeService.setValueIntoStoreEntity(crystalAmountPosition, crystalAmount + request.amount!);
+                const crystalAmountObj = storeService.setValueIntoStoreEntity(crystalAmountPosition, crystalAmount + request.amount! - 1);
 
                 await GDB0101DataSource.manager.getRepository(store).save({
                     ...storeEntity,
