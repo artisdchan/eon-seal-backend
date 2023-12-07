@@ -84,26 +84,26 @@ SealMemberDataSource.initialize()
         console.log("seal_member Data Source has been initialized!")
     })
     .catch((err) => {
-        console.error("Error during Data Source initialization", err)
+        console.error("seal_member Data Source initialization", err)
     })
 GDB0101DataSource.initialize()
     .then(() => {
         console.log("gdb0101 Data Source has been initialized!")
     })
     .catch((err) => {
-        console.error("Error during Data Source initialization", err)
+        console.error("gdb0101 Data Source initialization", err)
     })
 LogItemDataSource.initialize()
     .then(() => {
         console.log("log_item Data Source has been initialized!")
     })
     .catch((err) => {
-        console.error("Error during Data Source initialization", err)
+        console.error("log_item Data Source initialization", err)
     })
 ItemDataSource.initialize()
     .then(() => {
         console.log("item Data Source has been initialized!")
     })
     .catch((err) => {
-        console.error("Error during Data Source initialization", err)
+        console.error("item data Data Source initialization", err)
     })

@@ -374,6 +374,9 @@ export default class UserController {
             if (!SealMemberDataSource.isInitialized) {
                 await SealMemberDataSource.initialize();
             }
+            if (!GDB0101DataSource.isInitialized) {
+                await GDB0101DataSource.initialize();
+            }
 
             const userDetail = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: currentUser.gameUserId });
             if (userDetail == null) {
