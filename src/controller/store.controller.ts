@@ -223,29 +223,33 @@ export default class StoreController {
                 const crystalItemIdQuery = await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config').where('config.config_key = :key', { key: WebConfigConstant.CRYSTAL_ITEM_ID_CONFIG }).getOne();
                 const crystalItemId = Number(crystalItemIdQuery?.configValue);
 
-                const availableCrystalItem = storeService.countDuplicateItem(crystalItemId, storeEntity);
-                if (availableCrystalItem < request.amount) {
+                // const availableCrystalItem = storeService.countDuplicateItem(crystalItemId, storeEntity);
+                const crystalItemPosition = storeService.findItemInStorentity(crystalItemId, storeEntity);
+                const crystalAmountPosition = storeService.findItemAmountPositionInStoreEntity(crystalItemId, storeEntity)
+                if (crystalAmountPosition == undefined || crystalItemPosition == undefined) {
                     log = await logService.updateLogItemTransaction("PREPARE_CALCULATE_CRYSTAL", 'Insufficient crystal.', log);
                     return res.status(400).json({ status: 400, message: 'Insufficient crystal.' });
-                } else {
+                }
+                const availableCrystalItem = storeEntity[crystalAmountPosition]
+                if (Number(availableCrystalItem) < request.amount) {
+                    log = await logService.updateLogItemTransaction("PREPARE_CALCULATE_CRYSTAL", 'Insufficient crystal.', log);
+                    return res.status(400).json({ status: 400, message: 'Insufficient crystal.' });
+                } else if (availableCrystalItem == request.amount) {
                     log = await logService.updateLogItemTransaction("UPDATE_CRYSTAL_ITEM", undefined, log);
 
-                    let updateCrystalObj: store = storeEntity
-                    const getAllDup = storeService.getAllDuplicatePosition(crystalItemId, storeEntity);
-                    for (let i = 0; i < request.amount; i++) {
-                        // updateCrystalObj.push(storeService.setValueIntoStoreEntity(getAllDup[i], 0))
-                        updateCrystalObj = {
-                            ...updateCrystalObj,
-                            ...storeService.setValueIntoStoreEntity(getAllDup[i], 0)
-                        } 
-                        
-                    }
+                    const updateCrystalObj: store = storeService.setValueIntoStoreEntity(crystalItemPosition, 0)
+                    const updateCrystalObjAmount: store = storeService.setValueIntoStoreEntity(crystalAmountPosition, 0)
+                    
 
                     await GDB0101DataSource.manager.getRepository(store).save({
                         ...storeEntity,
-                        ...updateCrystalObj!
+                        ...updateCrystalObj,
+                        ...updateCrystalObjAmount
                     })
 
+                } else {
+                    log = await logService.updateLogItemTransaction("PREPARE_UPDATE_RC", undefined, log);
+                    await GDB0101DataSource.manager.decrement(store, { user_id: currentUser.gameUserId }, crystalAmountPosition, request.amount!);
                 }
 
                 log = await logService.updateLogItemTransaction("UPDATE_CRYSTAL_POINT", undefined, log);
@@ -277,31 +281,44 @@ export default class StoreController {
                 }
                 const crystalItemId = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.CRYSTAL_ITEM_ID_CONFIG }).getOne())?.configValue));
 
-                let availableSlot = storeService.getAllDuplicatePosition(0, storeEntity);
-                if (availableSlot.length == 0) {
-                    log = await logService.updateLogItemTransaction("CP_TO_CRYSTAL", 'Storage is full.', log);
-                    return res.status(400).json({ status: 400, message: 'Storage is full.' });
-                }
-
-                log = await logService.updateLogItemTransaction("PREPARE_UPDATE_CP", undefined, log);
-                webUserDetail.crystalPoint -= cpTobeMinus;
-                await SealMemberDataSource.manager.save(webUserDetail);
-
-                log = await logService.updateLogItemTransaction("PREPARE_UPDATE_CRYSTAL", undefined, log);
-                
-                let updateRcObj: store = storeEntity
-                // const getAllDup = storeService.getAllDuplicatePosition(0, storeEntity);
-                for (let i = 0; i < request.amount; i++) {
-                    updateRcObj = {
-                        ...updateRcObj,
-                        ...storeService.setValueIntoStoreEntity(availableSlot[i], crystalItemId)
+                let crystalPosition = storeService.findItemInStorentity(crystalItemId, storeEntity);
+                let crystalAmount = 0;
+                if (crystalPosition == undefined) {
+                    crystalPosition = storeService.findEmptySlotInStorentity(storeEntity);
+                    if (crystalPosition == undefined) {
+                        log = await logService.updateLogItemTransaction("CP_TO_CRYSTAL", 'No available slot.', log);
+                        return res.status(400).json({ status: 400, message: 'No available slot.' });
                     }
                 }
 
+                let crystalAmountPosition = storeService.findItemAmountPositionInStoreEntity(crystalItemId, storeEntity);
+                if (crystalAmountPosition == undefined) {
+                    crystalAmountPosition = storeService.findEmptySlotAmountInStoreEntity(storeEntity);
+                    if (crystalAmountPosition == undefined) {
+                        log = await logService.updateLogItemTransaction("CP_TO_CRYSTAL", 'No available slot.', log);
+                        return res.status(400).json({ status: 400, message: 'No available slot.' });
+                    } else {
+                        crystalAmount = Number(storeEntity[crystalAmountPosition]);
+                    }
+                } else {
+                    crystalAmount = Number(storeEntity[crystalAmountPosition]);
+                }
+
+                log = await logService.updateLogItemTransaction("PREPARE_UPDATE_CP", undefined, log);
+                webUserDetail.crystalPoint! -= cpTobeMinus;
+                await SealMemberDataSource.manager.save(webUserDetail);
+
+                log = await logService.updateLogItemTransaction("PREPARE_UPDATE_CRYSTAL", undefined, log);
+                const crystalItemObj = storeService.setValueIntoStoreEntity(crystalPosition, crystalItemId);
+                const crystalAmountObj = storeService.setValueIntoStoreEntity(crystalAmountPosition, crystalAmount + request.amount!);
+
                 await GDB0101DataSource.manager.getRepository(store).save({
                     ...storeEntity,
-                    ...updateRcObj
+                    // ...updateRcObj
+                    ...crystalItemObj,
+                    ...crystalAmountObj
                 })
+
 
                 log = await logService.updateLogItemTransaction("SUCCESS", `Crystal Amount: ${request.amount}, CP Amount: ${cpTobeMinus}`, log);
 
