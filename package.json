@@ -3,14 +3,13 @@
   "version": "1.0.0",
   "description": "",
   "main": "./api/index.ts",
-  "start": "ts-node ./api/index.ts",
+  "start": "node ./build/api/index.js",
   "dev": "nodemon ./api/index.ts",
   "build": "npx tsc -p .",
   "scripts": {
     "dev": "nodemon ./api/index.ts",
-    "start": "ts-node ./api/index.ts",
-    "build": "npx tsc -p .",
-    "vercel-build": "echo hello"
+    "start": "node ./build/api/index.js",
+    "build": "npx tsc -p ."
   },
   "author": "",
   "license": "ISC",
