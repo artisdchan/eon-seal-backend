@@ -2,13 +2,13 @@
   "name": "eonseal-backend",
   "version": "1.0.0",
   "description": "",
-  "main": "./api/index.ts",
-  "start": "node ./build/api/index.js",
-  "dev": "nodemon ./api/index.ts",
+  "main": "./index.ts",
+  "start": "node ./build/index.js",
+  "dev": "nodemon ./index.ts",
   "build": "npx tsc -p .",
   "scripts": {
-    "dev": "nodemon ./api/index.ts",
-    "start": "node ./build/api/index.js",
+    "dev": "npx tsc -p . && nodemon ./index.ts",
+    "start": "node ./build/index.js",
     "build": "npx tsc -p ."
   },
   "author": "",
