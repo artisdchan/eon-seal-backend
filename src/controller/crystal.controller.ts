@@ -15,6 +15,7 @@ import LogService from "../service/log.service";
 import StoreService from "../service/store.service";
 import { startOfToday, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns'
 import { Between, LessThan, MoreThan } from "typeorm";
+import { FusionItemConfig, ItemLevel, ItemType } from "../entity/item/fusion_item.entity";
 
 export default class CrystalController {
 
@@ -211,6 +212,20 @@ export default class CrystalController {
                 //     log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_INVENTORY", errMsg, log);
                 //     return res.status(400).json({ status: 400, message: errMsg });
                 // }
+            } else if (crystalShop.itemBag == CrystalItemBag.RANDOM_COSTUME_RARE) {
+                const randomItem = await this.randomCostume(ItemLevel.RARE);
+                errMsg = await this.insertAccountCashInventory(currentUser.gameUserId, randomItem.itemId, 1);
+                if (errMsg != "") {
+                    log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_INVENTORY", errMsg, log);
+                    return res.status(400).json({ status: 400, message: errMsg });
+                }
+            } else if (crystalShop.itemBag == CrystalItemBag.RANDOM_COSTUME_EPIC) {
+                const randomItem = await this.randomCostume(ItemLevel.EPIC);
+                errMsg = await this.insertAccountCashInventory(currentUser.gameUserId, randomItem.itemId, 1);
+                if (errMsg != "") {
+                    log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_INVENTORY", errMsg, log);
+                    return res.status(400).json({ status: 400, message: errMsg });
+                }
             } else {
                 // DO NOTHING
             }
@@ -238,6 +253,17 @@ export default class CrystalController {
             // log = await logService.updateLogItemTransaction("FAIL", 'internal server error.', log);
             return res.status(500).json({ status: 500, message: 'internal server error' });
         }
+    }
+
+    private randomCostume = async (level: ItemLevel): Promise<FusionItemConfig> => {
+        const fusionItemEntityList = await ItemDataSource.manager.findBy(FusionItemConfig, {
+            itemType: ItemType.COSTUME,
+            itemLevel: level
+        });
+
+        const ranNum = Math.floor(Math.random() * (fusionItemEntityList.length - 1 + 1) + 1)
+
+        return fusionItemEntityList[ranNum - 1];
     }
 
     public getCystalShopList = async (req: Request, res: Response) => {
