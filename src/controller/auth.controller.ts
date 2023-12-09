@@ -51,7 +51,7 @@ export default class AuthController {
                         userStatus: user[0].Status
                     }
                 }, JWT_SECRET, { expiresIn: "1h" });
-                // res.cookie("token", token, {expires: new Date(Date.now() + 86400 * 1000), httpOnly: true});
+                res.cookie("token", token, {expires: new Date(Date.now() + 86400 * 1000), httpOnly: true});
                 return res.status(200).json({ token });
             }
 

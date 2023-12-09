@@ -405,14 +405,14 @@ export default class CrystalController {
             }
 
             let storeEntity = await GDB0101DataSource.manager.findOneBy(store, { user_id: currentUser.gameUserId });
-            if (storeEntity == null) {
-                return res.status(400).json({ status: 400, message: 'User is not found.' });
-            }
+            // if (storeEntity == null) {
+            //     return res.status(400).json({ status: 400, message: 'User is not found.' });
+            // }
 
             return res.status(200).json({
                 status: 200, data: {
                     crystalPoint: webUserDetail.crystalPoint,
-                    cegel: storeEntity.segel
+                    cegel: storeEntity == null ? 0 : storeEntity.segel
                 }
             })
 
