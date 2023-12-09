@@ -100,16 +100,13 @@ export default class StoreController {
 
                 log = await logService.updateLogItemTransaction("PREPARE_RC_AND_CASH", undefined, log);
 
-                const rcPosition = storeService.findItemInStorentity(rcItemId, storeEntity);
-                const rcAmountPosition = storeService.findItemAmountPositionInStoreEntity(rcItemId, storeEntity);
-
-                if (rcPosition == undefined || rcAmountPosition == undefined) {
-                    log = await logService.updateLogItemTransaction("PREPARE_RC_AND_CASH", 'Insufficient RC Amount.', log);
-                    return res.status(400).json({ status: 400, message: 'Insufficient RC Amount.' });
+                let rcAmount = 0;
+                const rcItemId = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.RC_ITEM_ID_CONFIG }).getOne())?.configValue));
+                const rcPosition = await storeService.getAllDuplicatePosition(rcItemId, storeEntity);
+                for (let each of rcPosition) {
+                    const amountPos = storeService.findItemAmountPositionFromItemPosition(each, storeEntity);
+                    rcAmount += Number(storeEntity[amountPos]) + 1
                 }
-
-                const rcAmount = Number(storeEntity[rcAmountPosition]) + 1;
-                // const rcAmount = storeService.countDuplicateItem(rcItemId, storeEntity);
 
                 if (request.amount! > rcAmount) {
                     log = await logService.updateLogItemTransaction("PREPARE_RC_AND_CASH", 'Invalid RC Amount.', log);
@@ -118,18 +115,56 @@ export default class StoreController {
 
                     log = await logService.updateLogItemTransaction("PREPARE_UPDATE_RC", undefined, log);
 
-                    const rcItemObj = storeService.setValueIntoStoreEntity(rcPosition, 0);
-                    const rcAmountObj = storeService.setValueIntoStoreEntity(rcAmountPosition, 0);
+                    let updateRcObj: store = storeEntity
+                    for (let each of rcPosition) {
+                        const amountPos = storeService.findItemAmountPositionFromItemPosition(each, storeEntity);
+                        updateRcObj = {
+                            ...updateRcObj,
+                            ...storeService.setValueIntoStoreEntity(each, 0),
+                            ...storeService.setValueIntoStoreEntity(amountPos, 0)
+                        }
+                    }
 
                     await GDB0101DataSource.manager.getRepository(store).save({
-                        ...storeEntity,
-                        // ...updateRcObj
-                        ...rcItemObj,
-                        ...rcAmountObj
+                        // ...storeEntity,
+                        ...updateRcObj
+                        // ...rcItemObj,
+                        // ...rcAmountObj
                     })
+
                 } else {
                     log = await logService.updateLogItemTransaction("PREPARE_UPDATE_RC", undefined, log);
-                    await GDB0101DataSource.manager.decrement(store, { user_id: currentUser.gameUserId }, rcAmountPosition, request.amount!);
+                    let leftAmount = request.amount
+                    let updateRcObj: store = storeEntity
+
+                    for (let each of rcPosition) {
+                        const amountPos = storeService.findItemAmountPositionFromItemPosition(each, storeEntity);
+                        if (Number(storeEntity[amountPos]) + 1 == leftAmount) {
+                            updateRcObj = {
+                                ...updateRcObj,
+                                ...storeService.setValueIntoStoreEntity(each, 0),
+                                ...storeService.setValueIntoStoreEntity(amountPos, 0)
+                            }
+                        } else if (Number(storeEntity[amountPos]) + 1 > leftAmount) {
+                            leftAmount = 0;
+                            updateRcObj = {
+                                ...updateRcObj,
+                                ...storeService.setValueIntoStoreEntity(amountPos, (Number(storeEntity[amountPos]) - request.amount))
+                            }
+                        } else if (Number(storeEntity[amountPos]) + 1 < leftAmount) {
+                            leftAmount -= (Number(storeEntity[amountPos]) + 1)
+                            updateRcObj = {
+                                ...updateRcObj,
+                                ...storeService.setValueIntoStoreEntity(each, 0),
+                                ...storeService.setValueIntoStoreEntity(amountPos, 0)
+                            }
+                        }
+                    }
+
+                    await GDB0101DataSource.manager.getRepository(store).save({
+                        ...updateRcObj
+                    })
+
                 }
                 //  else {
                 // let updateRcObj: store = storeEntity
@@ -245,33 +280,67 @@ export default class StoreController {
                 const crystalItemIdQuery = await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config').where('config.config_key = :key', { key: WebConfigConstant.CRYSTAL_ITEM_ID_CONFIG }).getOne();
                 const crystalItemId = Number(crystalItemIdQuery?.configValue);
 
-                // const availableCrystalItem = storeService.countDuplicateItem(crystalItemId, storeEntity);
-                const crystalItemPosition = storeService.findItemInStorentity(crystalItemId, storeEntity);
-                const crystalAmountPosition = storeService.findItemAmountPositionInStoreEntity(crystalItemId, storeEntity)
-                if (crystalAmountPosition == undefined || crystalItemPosition == undefined) {
-                    log = await logService.updateLogItemTransaction("PREPARE_CALCULATE_CRYSTAL", 'Insufficient crystal.', log);
-                    return res.status(400).json({ status: 400, message: 'Insufficient crystal.' });
+                let availableCrystalItem = 0
+                const crystalItemPosition = await storeService.getAllDuplicatePosition(crystalItemId, storeEntity);
+                for (let each of crystalItemPosition) {
+                    const amountPos = storeService.findItemAmountPositionFromItemPosition(each, storeEntity);
+                    availableCrystalItem += Number(storeEntity[amountPos]) + 1
                 }
-                const availableCrystalItem = Number(storeEntity[crystalAmountPosition]) + 1
+                
                 if (Number(availableCrystalItem) < request.amount) {
                     log = await logService.updateLogItemTransaction("PREPARE_CALCULATE_CRYSTAL", 'Insufficient crystal.', log);
                     return res.status(400).json({ status: 400, message: 'Insufficient crystal.' });
                 } else if (availableCrystalItem == request.amount) {
+
                     log = await logService.updateLogItemTransaction("UPDATE_CRYSTAL_ITEM", undefined, log);
 
-                    const updateCrystalObj: store = storeService.setValueIntoStoreEntity(crystalItemPosition, 0)
-                    const updateCrystalObjAmount: store = storeService.setValueIntoStoreEntity(crystalAmountPosition, 0)
-
+                    let updateRcObj: store = storeEntity
+                    for (let each of crystalItemPosition) {
+                        const amountPos = storeService.findItemAmountPositionFromItemPosition(each, storeEntity);
+                        updateRcObj = {
+                            ...updateRcObj,
+                            ...storeService.setValueIntoStoreEntity(each, 0),
+                            ...storeService.setValueIntoStoreEntity(amountPos, 0)
+                        }
+                    }
 
                     await GDB0101DataSource.manager.getRepository(store).save({
-                        ...storeEntity,
-                        ...updateCrystalObj,
-                        ...updateCrystalObjAmount
+                        ...updateRcObj
                     })
 
                 } else {
                     log = await logService.updateLogItemTransaction("PREPARE_UPDATE_RC", undefined, log);
-                    await GDB0101DataSource.manager.decrement(store, { user_id: currentUser.gameUserId }, crystalAmountPosition, request.amount!);
+                    let leftAmount = request.amount
+                    let updateRcObj: store = storeEntity
+
+                    for (let each of crystalItemPosition) {
+                        const amountPos = storeService.findItemAmountPositionFromItemPosition(each, storeEntity);
+                        if (Number(storeEntity[amountPos]) + 1 == leftAmount) {
+                            updateRcObj = {
+                                ...updateRcObj,
+                                ...storeService.setValueIntoStoreEntity(each, 0),
+                                ...storeService.setValueIntoStoreEntity(amountPos, 0)
+                            }
+                        } else if (Number(storeEntity[amountPos]) + 1 > leftAmount) {
+                            leftAmount = 0;
+                            updateRcObj = {
+                                ...updateRcObj,
+                                ...storeService.setValueIntoStoreEntity(amountPos, (Number(storeEntity[amountPos]) - request.amount))
+                            }
+                        } else if (Number(storeEntity[amountPos]) + 1 < leftAmount) {
+                            leftAmount -= (Number(storeEntity[amountPos]) + 1)
+                            updateRcObj = {
+                                ...updateRcObj,
+                                ...storeService.setValueIntoStoreEntity(each, 0),
+                                ...storeService.setValueIntoStoreEntity(amountPos, 0)
+                            }
+                        }
+                    }
+
+                    await GDB0101DataSource.manager.getRepository(store).save({
+                        ...updateRcObj
+                    })
+
                 }
 
                 log = await logService.updateLogItemTransaction("UPDATE_CRYSTAL_POINT", undefined, log);
