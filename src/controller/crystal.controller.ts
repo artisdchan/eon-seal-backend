@@ -490,7 +490,7 @@ export default class CrystalController {
         }
 
         const itemObj = storeService.setValueIntoStoreEntity(itemPosition, itemId);
-        const itemAmountObj = storeService.setValueIntoStoreEntity(itemAmountPosition, itemAmount);
+        const itemAmountObj = storeService.setValueIntoStoreEntity(itemAmountPosition, itemAmount - 1);
 
         await GDB0101DataSource.manager.getRepository(store).save({
             ...storeEntity,
