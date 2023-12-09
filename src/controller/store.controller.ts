@@ -237,7 +237,7 @@ export default class StoreController {
 
                 log = await logService.updateLogItemTransaction("PREPARE_UPDATE_RC", undefined, log);
                 const rcItemObj = storeService.setValueIntoStoreEntity(rcPosition, rcItemId);
-                const rcAmountObj = storeService.setValueIntoStoreEntity(rcAmountPosition, rcAmount + request.amount!);
+                const rcAmountObj = storeService.setValueIntoStoreEntity(rcAmountPosition, rcAmount == 0 ? request.amount - 1 : rcAmount + request.amount!);
 
                 // let updateRcObj: store = storeEntity
                 // const getAllDup = storeService.getAllDuplicatePosition(0, storeEntity);
