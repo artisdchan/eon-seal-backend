@@ -38,7 +38,7 @@ export default class StoreController {
 
             const rcAmountPosition = storeService.findItemAmountPositionInStoreEntity(rcItemId, storeEntity);
             if (rcAmountPosition == undefined) {
-                return res.status(200).json({ status: 200, totalRcAmount: 0 });
+                return res.status(200).json({ status: 200, totalRcAmount: 0, cashAmount: userEntity.gold });
             }
 
             const rcAmount = Number(storeEntity[rcAmountPosition]) + 1;
