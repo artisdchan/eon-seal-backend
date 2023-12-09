@@ -146,10 +146,10 @@ export default class StoreController {
                                 ...storeService.setValueIntoStoreEntity(amountPos, 0)
                             }
                         } else if (Number(storeEntity[amountPos]) + 1 > leftAmount) {
-                            leftAmount = 0;
+                            // leftAmount = 0;
                             updateRcObj = {
                                 ...updateRcObj,
-                                ...storeService.setValueIntoStoreEntity(amountPos, (Number(storeEntity[amountPos]) - request.amount))
+                                ...storeService.setValueIntoStoreEntity(amountPos, (Number(storeEntity[amountPos]) - leftAmount))
                             }
                         } else if (Number(storeEntity[amountPos]) + 1 < leftAmount) {
                             leftAmount -= (Number(storeEntity[amountPos]) + 1)
@@ -237,7 +237,7 @@ export default class StoreController {
 
                 log = await logService.updateLogItemTransaction("PREPARE_UPDATE_RC", undefined, log);
                 const rcItemObj = storeService.setValueIntoStoreEntity(rcPosition, rcItemId);
-                const rcAmountObj = storeService.setValueIntoStoreEntity(rcAmountPosition, rcAmount + request.amount! - 1);
+                const rcAmountObj = storeService.setValueIntoStoreEntity(rcAmountPosition, rcAmount + request.amount!);
 
                 // let updateRcObj: store = storeEntity
                 // const getAllDup = storeService.getAllDuplicatePosition(0, storeEntity);
