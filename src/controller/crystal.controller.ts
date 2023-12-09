@@ -398,6 +398,7 @@ export default class CrystalController {
             }
 
             const currentUser = req.user as AuthenUser;
+            const storeService = new StoreService();
 
             const webUserDetail = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: currentUser.gameUserId });
             if (webUserDetail == null) {
@@ -405,14 +406,54 @@ export default class CrystalController {
             }
 
             let storeEntity = await GDB0101DataSource.manager.findOneBy(store, { user_id: currentUser.gameUserId });
-            // if (storeEntity == null) {
-            //     return res.status(400).json({ status: 400, message: 'User is not found.' });
-            // }
+            if (storeEntity == null) {
+                return res.status(400).json({ status: 400, message: 'User is not found.' });
+            }
 
+            let rcAmount = 0;
+            const rcItemId = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.RC_ITEM_ID_CONFIG }).getOne())?.configValue));
+            const rcAmountPosition = await storeService.getAllDuplicatePosition(rcItemId, storeEntity);
+            for (let each of rcAmountPosition) {
+                const amountPos = storeService.findItemAmountPositionFromItemPosition(each, storeEntity);
+                rcAmount += Number(storeEntity[amountPos]) + 1
+            }
+
+            const cegelAmount = storeEntity.segel;
+
+            let blueDragonAmount = 0;
+            let redDragonAmount = 0;
+            let crystalAmount = 0;
+
+            const blueDragonItemIdConfig = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.BLUE_DRAGON_ITEM_ID_CONFIG }).getOne())?.configValue));
+            const redDragonItemIdConfig = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.RED_DRAGON_ITEM_ID_CONFIG }).getOne())?.configValue));
+            const crystalItemIdConfig = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.CRYSTAL_ITEM_ID_CONFIG }).getOne())?.configValue));
+           
+            const blueDragonAmountPosition = await storeService.getAllDuplicatePosition(blueDragonItemIdConfig, storeEntity);
+            for (let each of blueDragonAmountPosition) {
+                const amountPos = storeService.findItemAmountPositionFromItemPosition(each, storeEntity);
+                blueDragonAmount += Number(storeEntity[amountPos]) + 1
+            }
+
+            const redDragonAmountPosition = await storeService.getAllDuplicatePosition(redDragonItemIdConfig, storeEntity);
+            for (let each of redDragonAmountPosition) {
+                const amountPos = storeService.findItemAmountPositionFromItemPosition(each, storeEntity);
+                redDragonAmount += Number(storeEntity[amountPos]) + 1
+            }
+
+            const crystalAmountPosition = await storeService.getAllDuplicatePosition(crystalItemIdConfig, storeEntity);
+            for (let each of crystalAmountPosition) {
+                const amountPos = storeService.findItemAmountPositionFromItemPosition(each, storeEntity);
+                crystalAmount += Number(storeEntity[amountPos]) + 1
+            }
+            
             return res.status(200).json({
                 status: 200, data: {
                     crystalPoint: webUserDetail.crystalPoint,
-                    cegel: storeEntity == null ? 0 : storeEntity.segel
+                    cegel: cegelAmount,
+                    rcAmount: rcAmount,
+                    redDragonAmount: redDragonAmount,
+                    blueDragonAmount: blueDragonAmount,
+                    crystalAmount: crystalAmount
                 }
             })
 

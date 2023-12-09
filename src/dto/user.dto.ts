@@ -37,11 +37,11 @@ export type UserDetailResponseDTO = {
     crystalPoint: number
     cashSpendPoint: number
     cashPoint: number
-    rcAmount: number
-    cegelAmount: number
-    blueDragonAmount: number
-    redDragonAmount: number
     userLevel: number
     userStatus: string
-    crystalAmount: number
+}
+
+export type UserInfoResponseDTO = {
+    gameUserId: string
+    characterNames: string[]
 }

@@ -56,6 +56,45 @@ export default class StoreService {
 
     }
 
+    public findItemAmountPositionFromItemPosition = (itemPosition: keyof store, entity: store) => {
+
+        // const itemPosition = this.findItemInStorentity(itemId, entity);
+        // if (itemPosition == undefined) {
+        //     return undefined;
+        // }
+
+        type ObjectKey = keyof typeof entity;
+        const itemAmountPosition = itemPosition.replace("it", "io") as ObjectKey;
+        return itemAmountPosition;
+
+    }
+
+    public findItemEffectPositionInStoreEntity = (itemPosition: keyof store, entity: store) => {
+
+        // const itemPosition = this.findItemInStorentity(itemId, entity);
+        // if (itemPosition == undefined) {
+        //     return undefined;
+        // }
+
+        type ObjectKey = keyof typeof entity;
+        const itemEffectPosition = itemPosition.replace("it", "ioo") as ObjectKey;
+        return itemEffectPosition;
+
+    }
+
+    public findItemRefinePositionInStoreEntity = (itemPosition: keyof store, entity: store) => {
+
+        // const itemPosition = this.findItemInStorentity(itemId, entity);
+        // if (itemPosition == undefined) {
+        //     return undefined;
+        // }
+
+        type ObjectKey = keyof typeof entity;
+        const itemRefinePosition = itemPosition.replace("it", "is") as ObjectKey;
+        return itemRefinePosition;
+
+    }
+
     public countDuplicateItem = (itemId: number, entity: store) => {
 
         let count = 0;

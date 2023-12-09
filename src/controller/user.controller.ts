@@ -3,7 +3,7 @@ import handlebars from "handlebars";
 import path from "path";
 import { GDB0101DataSource, ItemDataSource, SealMemberDataSource } from "../data-source";
 import { AuthenUser } from "../dto/authen.dto";
-import { CharacterNameResponseDTO, ForgetPasswordRequestDTO, HashPasswordDTO, RegisterRequestDTO, ResetPasswordDTO, TopupCashRequestDTO, UserDetailResponseDTO } from "../dto/user.dto";
+import { CharacterNameResponseDTO, ForgetPasswordRequestDTO, HashPasswordDTO, RegisterRequestDTO, ResetPasswordDTO, TopupCashRequestDTO, UserDetailResponseDTO, UserInfoResponseDTO } from "../dto/user.dto";
 import { idtable1, idtable2, idtable3, idtable4, idtable5 } from "../entity/seal_member/idtable.entity";
 import { pc } from "../entity/gdb0101/pc.entity";
 import { usermsgex } from "../entity/seal_member/usermsgex.entity";
@@ -18,6 +18,11 @@ import { store } from "../entity/gdb0101/store.entity";
 import { WebConfig, WebConfigConstant } from "../entity/seal_member/web_config.entity";
 import { StoreEntity2 } from "../dto/store.dto";
 import Store2Service from "../service/store2.service";
+import CashInventoryService from "../service/cash_inventory.service";
+import { CashInventory } from "../entity/gdb0101/cash_inventory.entity";
+import { SealItem } from "../entity/item/seal_item.entity";
+import { MarketWhiteList, WhiteListItemBag, WhiteListItemType } from "../entity/item/market_white_list.entity";
+import { ItemDetail } from "../dto/market.dto";
 var fs = require('fs');
 
 export default class UserController {
@@ -390,47 +395,6 @@ export default class UserController {
                 return res.status(400).json({ status: 400, message: 'User ID is not exist.' })
             }
 
-            const storeService = new Store2Service();
-            const storeEntity = await GDB0101DataSource.manager.findOneBy(store, { user_id: currentUser.gameUserId }) as StoreEntity2;
-            if (storeEntity == null) {
-                return res.status(400).json({ status: 400, message: 'Character is not exist.' })
-            }
-
-            let rcAmount = 0;
-            const rcItemId = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.RC_ITEM_ID_CONFIG }).getOne())?.configValue));
-            const rcAmountPosition = storeService.findItemAmountPositionInStoreEntity(rcItemId, storeEntity);
-            if (rcAmountPosition != undefined) {
-                rcAmount = Number(storeEntity[rcAmountPosition]) + 1
-            }
-
-            // rcAmount = storeService.countDuplicateItem(rcItemId, storeEntity)
-
-            const cegelAmount = storeEntity.segel;
-
-            let blueDragonAmount = 0;
-            let redDragonAmount = 0;
-            let crystalAmount = 0;
-
-            const blueDragonItemIdConfig = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.BLUE_DRAGON_ITEM_ID_CONFIG }).getOne())?.configValue));
-            const redDragonItemIdConfig = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.RED_DRAGON_ITEM_ID_CONFIG }).getOne())?.configValue));
-            const crystalItemIdConfig = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.CRYSTAL_ITEM_ID_CONFIG }).getOne())?.configValue));
-           
-            const blueDragonAmountPosition = await storeService.findItemAmountPositionInStoreEntity(blueDragonItemIdConfig, storeEntity);
-            if (blueDragonAmountPosition != undefined) {
-                blueDragonAmount = Number(storeEntity[blueDragonAmountPosition]) + 1
-            }
-            // blueDragonAmount = storeService.countDuplicateItem(blueDragonItemIdConfig, storeEntity)
-            const redDragonAmountPosition = await storeService.findItemAmountPositionInStoreEntity(redDragonItemIdConfig, storeEntity);
-            if (redDragonAmountPosition != undefined) {
-                redDragonAmount = Number(storeEntity[redDragonAmountPosition]) + 1
-            }
-            // redDragonAmount = storeService.countDuplicateItem(redDragonItemIdConfig, storeEntity)
-            const crystalAmountPosition = await storeService.findItemAmountPositionInStoreEntity(crystalItemIdConfig, storeEntity);
-            if (crystalAmountPosition != undefined) {
-                crystalAmount = Number(storeEntity[crystalAmountPosition]) + 1
-            }
-            // crystalAmount = storeService.countDuplicateItem(crystalItemIdConfig, storeEntity)
-
             let userStatus = 'ACTIVE'
             // if (currentUser.userStatus != 1) {
             //     userStatus = 'INACTIVE'
@@ -444,17 +408,164 @@ export default class UserController {
                 shardLegendaryPoint: userDetail.shardLegenPoint,
                 crystalPoint: userDetail.crystalPoint,
                 cashSpendPoint: userDetail.cashSpendPoint,
-                rcAmount: rcAmount,
-                cegelAmount: cegelAmount,
                 cashPoint: Number(userEntity.gold),
-                blueDragonAmount: blueDragonAmount,
-                redDragonAmount: redDragonAmount,
                 userLevel: userDetail.userLevel,
                 userStatus: userStatus,
-                crystalAmount: crystalAmount
             }
 
             return res.status(200).json({ status: 200, data: response });
+
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ status: 500, message: 'internal server error' });
+        }
+    }
+
+    public userInfo = async (req: Request, res: Response) => {
+        try {
+           
+            if (!SealMemberDataSource.isInitialized) {
+                await SealMemberDataSource.initialize();
+            }
+            if (!GDB0101DataSource.isInitialized) {
+                await GDB0101DataSource.initialize();
+            }
+
+            const { email } = req.query
+
+            const requestApiKey = req.get('API-KEY') as string;
+            if (requestApiKey != EONHUB_API_KEY) {
+                console.error('Invalid API-KEY.');
+                return res.sendStatus(401);
+            }
+
+            const usr = await SealMemberDataSource.manager.findOneBy(usermsgex, { email: String(email) })
+            if (usr == null) {
+                return res.status(400).json({ status: 400, message: 'Game ID is not found' })
+            }
+             
+            const pcEntity = await GDB0101DataSource.manager.findBy(pc, { user_id: usr?.userId });
+            let charNames: string[] = []
+            for (let each of pcEntity) {
+                charNames.push(each.char_name)
+            }
+
+            const response: UserInfoResponseDTO = {
+                gameUserId: usr.userId,
+                characterNames: charNames
+            }
+
+            return res.status(200).json({status: 200, data: response })
+
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ status: 500, message: 'internal server error' });
+        }
+    }
+
+    public getUserItem = async (req: Request, res: Response) => {
+        try {
+           
+            const storeService = new StoreService();
+            const  cashInventoryService = new CashInventoryService();
+            if (!GDB0101DataSource.isInitialized) {
+                await GDB0101DataSource.initialize();
+            }
+            if (!SealMemberDataSource.isInitialized) {
+                await SealMemberDataSource.initialize();
+            }
+            if (!ItemDataSource.isInitialized) {
+                await ItemDataSource.initialize();
+            }
+            const { email } = req.query
+
+            const requestApiKey = req.get('API-KEY') as string;
+            if (requestApiKey != EONHUB_API_KEY) {
+                console.error('Invalid API-KEY.');
+                return res.sendStatus(401);
+            }
+
+            const userMsgExEntity = await SealMemberDataSource.manager.findOneBy(usermsgex, { email: String(email) })
+            if (userMsgExEntity == null) {
+                return res.status(400).json({ status: 400, message: 'Game ID is not found' })
+            }
+             
+            // Find Character name
+            const pcEntityList = await GDB0101DataSource.manager.findBy(pc, { user_id: userMsgExEntity.userId });
+            if (pcEntityList == null) {
+                return res.status(400).json({ status: 400, message: 'Character is not found.' });
+            }
+
+            const characterName: string[] = [];
+            pcEntityList.map((each) => characterName.push(each.char_name));
+
+            // Find cash item in cash_inventory by character names
+            const cashInventoryEntity = await GDB0101DataSource.manager.createQueryBuilder()
+                .select("cashInventory")
+                .from(CashInventory, "cashInventory")
+                .where("cashInventory.char_name IN (:...charNames)", { charNames: characterName })
+                .getMany();
+
+            // const sealItemEntity = await ItemDataSource.manager.findBy(SealItem, { userId: userMsgExEntity.userId });
+            // if (cashInventoryEntity == null && sealItemEntity == null) {
+            //     return res.status(400).json({ status: 400, message: 'Inventory is not exist.' })
+            // }
+             
+            let storeEntity = await GDB0101DataSource.manager.findOneBy(store, { user_id: userMsgExEntity.userId });
+            if (storeEntity == null) {
+                return res.status(400).json({ status: 400, message: 'Character is not exist.' })
+            }
+
+            let charBag: ItemDetail[] = []
+            let accountBag: ItemDetail[] = []
+
+            const whiteListItem = await ItemDataSource.manager.find(MarketWhiteList);
+
+            for (let eachWhiteList of whiteListItem) {
+
+                if (eachWhiteList.itemBag == WhiteListItemBag.ACCOUNT_CASH_INVENTORY) {
+
+                    const sealItemEntity = await ItemDataSource.manager.findBy(SealItem, { userId: userMsgExEntity.userId });
+                    for (let each of sealItemEntity) {
+                        if (each.itemId == eachWhiteList.itemId) {
+                            accountBag.push({
+                                itemId: eachWhiteList.itemId,
+                                itemName: eachWhiteList.itemName,
+                                refineLevel: 0,
+                                itemEffectCode: String(each.ItemOp2),
+                                itemEffectMessage: '',
+                                itemPictureUrl: eachWhiteList.itemPictureUrl,
+                                itemBag: eachWhiteList.itemBag,
+                                itemType: eachWhiteList.itemType,
+                                itemAmount: each.ItemOp1
+                            })
+                        }
+                    }
+
+                } else if (eachWhiteList.itemBag == WhiteListItemBag.IN_GAME_ITEM_INVENTORY) {
+                    const itemPosition = storeService.getAllDuplicatePosition(eachWhiteList.itemId, storeEntity);
+                    for (let eachItemPos of itemPosition) {
+                        const tmp: keyof store = eachItemPos
+                        const itemEffectPos = storeService.findItemEffectPositionInStoreEntity(tmp, storeEntity);
+                        const itemRefinePos = storeService.findItemRefinePositionInStoreEntity(tmp, storeEntity);
+                        const itemAmountPos = storeService.findItemAmountPositionFromItemPosition(tmp, storeEntity);
+                        accountBag.push({
+                            itemId: eachWhiteList.itemId,
+                            itemName: eachWhiteList.itemName,
+                            refineLevel: Number(storeEntity[itemRefinePos]),
+                            itemEffectCode: String(storeEntity[itemEffectPos]),
+                            itemEffectMessage: '',
+                            itemPictureUrl: eachWhiteList.itemPictureUrl,
+                            itemBag: eachWhiteList.itemBag,
+                            itemType: eachWhiteList.itemType,
+                            itemAmount: Number(storeEntity[itemAmountPos])
+                        })
+                    }
+                } else if (eachWhiteList.itemBag == WhiteListItemBag.CHARACTER_CASH_INVENTORY) {
+                    // const cashItemPosition = cashInventoryService.
+                }
+
+            }
 
         } catch (error) {
             console.error(error);
