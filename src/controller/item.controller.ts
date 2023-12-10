@@ -46,7 +46,7 @@ export default class ItemController {
                 return res.status(400).send({ status: 400, message: errMsg })
             }
 
-            return res.status(200).send({ satus: 200, data: null })
+            return res.status(200).send({ staus: 200, data: null })
 
         } catch (error) {
             console.error(error);
