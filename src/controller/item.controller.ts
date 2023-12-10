@@ -37,9 +37,9 @@ export default class ItemController {
             let errMsg = ""
             
             if (type == "cash") {
-                errMsg = await itemService.insertAccountCashInventory(userMsgExEntity.userId, request.itemId, request.itemAmount)
+                errMsg = await itemService.insertAccountCashInventory(userMsgExEntity.userId, request.itemId, request.itemAmount, request.itemEffectCode, request.itemRefine)
             } else if (type == "bank") {
-                errMsg = await itemService.insertBackInventory(userMsgExEntity.userId, request.itemId, request.itemAmount)
+                errMsg = await itemService.insertBackInventory(userMsgExEntity.userId, request.itemId, request.itemAmount, request.itemEffectCode, request.itemRefine)
             }
 
             if (errMsg != "") {

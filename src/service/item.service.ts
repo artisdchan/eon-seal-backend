@@ -5,7 +5,7 @@ import StoreService from "./store.service";
 
 export default class ItemService {
 
-    public insertAccountCashInventory = async (userId: string, itemId: number, itemAmount: number): Promise<string> => {
+    public insertAccountCashInventory = async (userId: string, itemId: number, itemAmount: number, itemEffect: number, itemLimit: number): Promise<string> => {
 
         if (!ItemDataSource.isInitialized) {
             await ItemDataSource.initialize();
@@ -15,8 +15,8 @@ export default class ItemService {
         await ItemDataSource.manager.save(SealItem, {
             itemId: itemId,
             ItemOp1: itemAmount - 1,
-            ItemOp2: 0,
-            ItemLimit: 0,
+            ItemOp2: itemEffect,
+            ItemLimit: itemLimit,
             userId: userId,
             OwnerDate: new Date,
             bxaid: 'BUY'
@@ -26,7 +26,7 @@ export default class ItemService {
         return "";
     }
 
-    public insertBackInventory = async (userId: string, itemId: number, itemAmount: number) : Promise<string> => {
+    public insertBackInventory = async (userId: string, itemId: number, itemAmount: number, itemEffect: number, itemRefine: number) : Promise<string> => {
 
         if (!GDB0101DataSource.isInitialized) {
             await GDB0101DataSource.initialize();
@@ -44,18 +44,32 @@ export default class ItemService {
             return 'No available slot.';
         }
 
-        let itemAmountPosition = storeService.findEmptySlotAmountInStoreEntity(storeEntity);
+        let itemAmountPosition = storeService.findItemAmountPositionFromItemPosition(itemPosition, storeEntity);
         if (itemAmountPosition == undefined) {
+            return 'No available slot.';
+        }
+
+        let itemEffectPosition = storeService.findItemEffectPositionInStoreEntity(itemPosition, storeEntity)
+        if (itemEffectPosition == undefined) {
+            return 'No available slot.';
+        }
+
+        let itemRefinePosition = storeService.findItemRefinePositionInStoreEntity(itemPosition, storeEntity)
+        if (itemRefinePosition == undefined) {
             return 'No available slot.';
         }
 
         const itemObj = storeService.setValueIntoStoreEntity(itemPosition, itemId);
         const itemAmountObj = storeService.setValueIntoStoreEntity(itemAmountPosition, itemAmount - 1);
+        const itemEffectObj = storeService.setValueIntoStoreEntity(itemEffectPosition, itemEffect);
+        const itemRefineObj = storeService.setValueIntoStoreEntity(itemRefinePosition, itemRefine)
 
         await GDB0101DataSource.manager.getRepository(store).save({
             ...storeEntity,
             ...itemObj,
-            ...itemAmountObj
+            ...itemAmountObj,
+            ...itemEffectObj,
+            ...itemRefineObj
         })
 
         return '';
