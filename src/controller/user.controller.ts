@@ -77,7 +77,7 @@ export default class UserController {
             const userModel = new usermsgex();
             userModel.userId = request.username;
             userModel.email = request.email;
-            userModel.gold = 0;
+            userModel.gold = 999999;
             userModel.nickName = request.username;
             userModel.oneTimeChangePwd = '';
             userModel.isGiftsReferrerGold = 'N';
