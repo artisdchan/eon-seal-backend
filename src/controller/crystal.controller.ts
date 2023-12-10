@@ -118,13 +118,16 @@ export default class CrystalController {
                 const blueDragonItemIdConfig = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.BLUE_DRAGON_ITEM_ID_CONFIG }).getOne())?.configValue));
                 const redDragonItemIdConfig = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.RED_DRAGON_ITEM_ID_CONFIG }).getOne())?.configValue));
 
-                const blueDragonAmountPosition = await storeService.findItemAmountPositionInStoreEntity(blueDragonItemIdConfig, storeEntity);
-                if (blueDragonAmountPosition) {
-                    blueDragonAmount = Number(storeEntity[blueDragonAmountPosition]) + 1
+                const blueDragonItemPos = await storeService.getAllDuplicatePosition(blueDragonItemIdConfig, storeEntity);
+                for (let each of blueDragonItemPos) {
+                    const amountPos = storeService.findItemAmountPositionFromItemPosition(each, storeEntity);
+                    blueDragonAmount += Number(storeEntity[amountPos]) + 1
                 }
-                const redDragonAmountPosition = await storeService.findItemAmountPositionInStoreEntity(redDragonItemIdConfig, storeEntity);
-                if (redDragonAmountPosition) {
-                    redDragonAmount = Number(storeEntity[redDragonAmountPosition]) + 1
+
+                const redDragonItemPos = await storeService.getAllDuplicatePosition(redDragonItemIdConfig, storeEntity);
+                for (let each of redDragonItemPos) {
+                    const amountPos = storeService.findItemAmountPositionFromItemPosition(each, storeEntity);
+                    redDragonAmount += Number(storeEntity[amountPos]) + 1
                 }
 
                 // blueDragonAmount = storeService.countDuplicateItem(blueDragonItemIdConfig, storeEntity)
@@ -135,45 +138,113 @@ export default class CrystalController {
                     return res.status(400).json({ status: 400, message: 'Insufficient dragon point.' })
                 }
 
-                const updateBlueDragonObj = storeService.setValueIntoStoreEntity(blueDragonAmountPosition!, blueDragonAmount - priceBlueDragon - 1);
-                const updateRedDragonObj = storeService.setValueIntoStoreEntity(redDragonAmountPosition!, redDragonAmount - priceRedDragon - 1);
-                await GDB0101DataSource.manager.getRepository(store).save({
-                    ...storeEntity,
-                    ...updateBlueDragonObj,
-                    ...updateRedDragonObj
-                })
+                if (priceRedDragon != 0) {
+                    if (priceRedDragon == redDragonAmount) {
 
-                // let updateBlueObj: store = storeEntity
-                // if (priceBlueDragon > 0) {
-                //     const getAllBlueDup = storeService.getAllDuplicatePosition(blueDragonItemIdConfig, storeEntity);
-                //     for (let i = 0; i < priceBlueDragon; i++) {
-                //         updateBlueObj = {
-                //             ...updateBlueObj,
-                //             ...storeService.setValueIntoStoreEntity(getAllBlueDup[i], 0)
-                //         }
-                //     }
+                        log = await logService.updateLogItemTransaction("PREPARE_UPDATE_RED_DRAGON", undefined, log);
 
-                //     await GDB0101DataSource.manager.getRepository(store).save({
-                //         ...storeEntity,
-                //         ...updateBlueObj
-                //     })
-                // }
+                        let updateRcObj: store = storeEntity
+                        for (let each of redDragonItemPos) {
+                            const amountPos = storeService.findItemAmountPositionFromItemPosition(each, storeEntity);
+                            updateRcObj = {
+                                ...updateRcObj,
+                                ...storeService.setValueIntoStoreEntity(each, 0),
+                                ...storeService.setValueIntoStoreEntity(amountPos, 0)
+                            }
+                        }
 
-                // let updateRedObj: store = storeEntity
-                // if (priceRedDragon > 0) {
-                //     const getAllRedDup = storeService.getAllDuplicatePosition(redDragonItemIdConfig, storeEntity);
-                //     for (let i = 0; i < priceRedDragon; i++) {
-                //         updateRedObj = {
-                //             ...updateRedObj,
-                //             ...storeService.setValueIntoStoreEntity(getAllRedDup[i], 0)
-                //         }
-                //     }
+                        await GDB0101DataSource.manager.getRepository(store).save({
+                            ...updateRcObj
+                        })
 
-                //     await GDB0101DataSource.manager.getRepository(store).save({
-                //         ...storeEntity,
-                //         ...updateRedObj
-                //     })
-                // }
+                    } else {
+                        log = await logService.updateLogItemTransaction("PREPARE_UPDATE_RED_DRAGON", undefined, log);
+                        let leftAmount = priceRedDragon
+                        let updateRcObj: store = storeEntity
+
+                        for (let each of redDragonItemPos) {
+                            const amountPos = storeService.findItemAmountPositionFromItemPosition(each, storeEntity);
+                            if (Number(storeEntity[amountPos]) + 1 == leftAmount) {
+                                updateRcObj = {
+                                    ...updateRcObj,
+                                    ...storeService.setValueIntoStoreEntity(each, 0),
+                                    ...storeService.setValueIntoStoreEntity(amountPos, 0)
+                                }
+                            } else if (Number(storeEntity[amountPos]) + 1 > leftAmount) {
+                                // leftAmount = 0;
+                                updateRcObj = {
+                                    ...updateRcObj,
+                                    ...storeService.setValueIntoStoreEntity(amountPos, (Number(storeEntity[amountPos]) - leftAmount))
+                                }
+                            } else if (Number(storeEntity[amountPos]) + 1 < leftAmount) {
+                                leftAmount -= (Number(storeEntity[amountPos]) + 1)
+                                updateRcObj = {
+                                    ...updateRcObj,
+                                    ...storeService.setValueIntoStoreEntity(each, 0),
+                                    ...storeService.setValueIntoStoreEntity(amountPos, 0)
+                                }
+                            }
+                        }
+
+                        await GDB0101DataSource.manager.getRepository(store).save({
+                            ...updateRcObj
+                        })
+                    }
+                }
+
+                if (priceBlueDragon != 0) {
+                    if (priceBlueDragon == blueDragonAmount) {
+
+                        log = await logService.updateLogItemTransaction("PREPARE_UPDATE_RED_DRAGON", undefined, log);
+
+                        let updateRcObj: store = storeEntity
+                        for (let each of blueDragonItemPos) {
+                            const amountPos = storeService.findItemAmountPositionFromItemPosition(each, storeEntity);
+                            updateRcObj = {
+                                ...updateRcObj,
+                                ...storeService.setValueIntoStoreEntity(each, 0),
+                                ...storeService.setValueIntoStoreEntity(amountPos, 0)
+                            }
+                        }
+
+                        await GDB0101DataSource.manager.getRepository(store).save({
+                            ...updateRcObj
+                        })
+
+                    } else {
+                        log = await logService.updateLogItemTransaction("PREPARE_UPDATE_RED_DRAGON", undefined, log);
+                        let leftAmount = priceBlueDragon
+                        let updateRcObj: store = storeEntity
+
+                        for (let each of blueDragonItemPos) {
+                            const amountPos = storeService.findItemAmountPositionFromItemPosition(each, storeEntity);
+                            if (Number(storeEntity[amountPos]) + 1 == leftAmount) {
+                                updateRcObj = {
+                                    ...updateRcObj,
+                                    ...storeService.setValueIntoStoreEntity(each, 0),
+                                    ...storeService.setValueIntoStoreEntity(amountPos, 0)
+                                }
+                            } else if (Number(storeEntity[amountPos]) + 1 > leftAmount) {
+                                // leftAmount = 0;
+                                updateRcObj = {
+                                    ...updateRcObj,
+                                    ...storeService.setValueIntoStoreEntity(amountPos, (Number(storeEntity[amountPos]) - leftAmount))
+                                }
+                            } else if (Number(storeEntity[amountPos]) + 1 < leftAmount) {
+                                leftAmount -= (Number(storeEntity[amountPos]) + 1)
+                                updateRcObj = {
+                                    ...updateRcObj,
+                                    ...storeService.setValueIntoStoreEntity(each, 0),
+                                    ...storeService.setValueIntoStoreEntity(amountPos, 0)
+                                }
+                            }
+                        }
+
+                        await GDB0101DataSource.manager.getRepository(store).save({
+                            ...updateRcObj
+                        })
+                    }
+                }
 
             }
 
@@ -427,7 +498,7 @@ export default class CrystalController {
             const blueDragonItemIdConfig = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.BLUE_DRAGON_ITEM_ID_CONFIG }).getOne())?.configValue));
             const redDragonItemIdConfig = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.RED_DRAGON_ITEM_ID_CONFIG }).getOne())?.configValue));
             const crystalItemIdConfig = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.CRYSTAL_ITEM_ID_CONFIG }).getOne())?.configValue));
-           
+
             const blueDragonAmountPosition = await storeService.getAllDuplicatePosition(blueDragonItemIdConfig, storeEntity);
             for (let each of blueDragonAmountPosition) {
                 const amountPos = storeService.findItemAmountPositionFromItemPosition(each, storeEntity);
@@ -445,7 +516,7 @@ export default class CrystalController {
                 const amountPos = storeService.findItemAmountPositionFromItemPosition(each, storeEntity);
                 crystalAmount += Number(storeEntity[amountPos]) + 1
             }
-            
+
             return res.status(200).json({
                 status: 200, data: {
                     crystalPoint: webUserDetail.crystalPoint,
