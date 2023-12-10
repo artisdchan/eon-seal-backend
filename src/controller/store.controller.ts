@@ -33,15 +33,21 @@ export default class StoreController {
             }
 
             const storeService = new StoreService();
-            const rcItemConfig = await SealMemberDataSource.manager.findOneBy(WebConfig, { configKey: WebConfigConstant.RC_ITEM_ID_CONFIG });
-            const rcItemId: number = Number(rcItemConfig?.configValue);
 
-            const rcAmountPosition = storeService.findItemAmountPositionInStoreEntity(rcItemId, storeEntity);
-            if (rcAmountPosition == undefined) {
-                return res.status(200).json({ status: 200, totalRcAmount: 0, cashAmount: userEntity.gold });
+            let rcAmount = 0;
+            const rcItemId = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.RC_ITEM_ID_CONFIG }).getOne())?.configValue));
+            const rcAmountPosition = await storeService.getAllDuplicatePosition(rcItemId, storeEntity);
+            for (let each of rcAmountPosition) {
+                const amountPos = storeService.findItemAmountPositionFromItemPosition(each, storeEntity);
+                rcAmount += Number(storeEntity[amountPos]) + 1
             }
 
-            const rcAmount = Number(storeEntity[rcAmountPosition]) + 1;
+            // const rcAmountPosition = storeService.findItemAmountPositionInStoreEntity(rcItemId, storeEntity);
+            // if (rcAmountPosition == undefined) {
+            //     return res.status(200).json({ status: 200, totalRcAmount: 0, cashAmount: userEntity.gold });
+            // }
+
+            // const rcAmount = Number(storeEntity[rcAmountPosition]) + 1;
             // const rcAmount = storeService.countDuplicateItem(rcItemId, storeEntity)
 
             return res.status(200).json({ status: 200, totalRcAmount: rcAmount, cashAmount: userEntity.gold });
@@ -271,7 +277,7 @@ export default class StoreController {
                     const amountPos = storeService.findItemAmountPositionFromItemPosition(each, storeEntity);
                     availableCrystalItem += Number(storeEntity[amountPos]) + 1
                 }
-                
+
                 if (Number(availableCrystalItem) < request.amount) {
                     log = await logService.updateLogItemTransaction("PREPARE_CALCULATE_CRYSTAL", 'Insufficient crystal.', log);
                     return res.status(400).json({ status: 400, message: 'Insufficient crystal.' });
@@ -376,7 +382,7 @@ export default class StoreController {
 
                 let crystalAmountPosition = storeService.findItemAmountPositionFromItemPosition(crystalPosition, storeEntity);
                 if (crystalAmountPosition == undefined) {
-                    
+
                     log = await logService.updateLogItemTransaction("CP_TO_CRYSTAL", 'No available slot.', log);
                     return res.status(400).json({ status: 400, message: 'No available slot.' });
                 } else {
