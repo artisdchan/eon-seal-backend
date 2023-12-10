@@ -38,6 +38,8 @@ export default class ItemController {
             
             if (type == "cash") {
                 errMsg = await itemService.insertAccountCashInventory(userMsgExEntity.userId, request.itemId, request.itemAmount)
+            } else if (type == "bank") {
+                errMsg = await itemService.insertBackInventory(userMsgExEntity.userId, request.itemId, request.itemAmount)
             }
 
             if (errMsg != "") {
