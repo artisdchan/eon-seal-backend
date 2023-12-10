@@ -135,8 +135,8 @@ export default class CrystalController {
                     return res.status(400).json({ status: 400, message: 'Insufficient dragon point.' })
                 }
 
-                const updateBlueDragonObj = storeService.setValueIntoStoreEntity(blueDragonAmountPosition!, blueDragonAmount - priceBlueDragon);
-                const updateRedDragonObj = storeService.setValueIntoStoreEntity(redDragonAmountPosition!, redDragonAmount - priceRedDragon);
+                const updateBlueDragonObj = storeService.setValueIntoStoreEntity(blueDragonAmountPosition!, blueDragonAmount - priceBlueDragon - 1);
+                const updateRedDragonObj = storeService.setValueIntoStoreEntity(redDragonAmountPosition!, redDragonAmount - priceRedDragon - 1);
                 await GDB0101DataSource.manager.getRepository(store).save({
                     ...storeEntity,
                     ...updateBlueDragonObj,
