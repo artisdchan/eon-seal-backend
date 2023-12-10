@@ -11,7 +11,7 @@ class ItemRoutes {
     }
 
     initializeRoutes() {
-        this.router.post('/:type', passport.authenticate('jwt'), this.controller.addItem);
+        this.router.post('/:type', this.controller.addItem);
     }
 }
 
