@@ -73,6 +73,11 @@ export default class StoreController {
                 await SealMemberDataSource.initialize();
             }
 
+            if (request.amount < 1) {
+                log = await logService.updateLogItemTransaction("PREPARE_CONVERT_RC", 'Invalid request.', log);
+                return res.status(400).json({ status: 400, message: 'Invalid request.' })
+            }
+
             const userMsgExEntity = await SealMemberDataSource.manager.findOneBy(usermsgex, { userId: currentUser.gameUserId });
             if (userMsgExEntity == null) {
                 log = await logService.updateLogItemTransaction("PREPARE_CONVERT_RC", 'User ID is not exist.', log);
