@@ -201,32 +201,17 @@ export default class StoreController {
                     log = await logService.updateLogItemTransaction("PREPARE_CASH_TO_RC", 'Insufficient Cash Point.', log);
                     return res.status(400).json({ status: 400, message: 'Insufficient Cash Point.' });
                 }
-                let rcPosition = storeService.findItemInStorentity(rcItemId, storeEntity);
+                let rcPosition = storeService.findEmptySlotInStorentity(storeEntity);
                 let rcAmount = 0;
-                // let rcPosition = storeService.findEmptySlotInStorentity(storeEntity);
                 if (rcPosition == undefined) {
-                    // log = await logService.updateLogItemTransaction("PREPARE_CASH_TO_RC", 'No available slot.', log);
-                    // return res.status(400).json({ status: 400, message: 'No available slot.' });
-                    rcPosition = storeService.findEmptySlotInStorentity(storeEntity);
-                    if (rcPosition == undefined) {
-                        log = await logService.updateLogItemTransaction("PREPARE_CASH_TO_RC", 'No available slot.', log);
-                        return res.status(400).json({ status: 400, message: 'No available slot.' });
-                    }
+                    log = await logService.updateLogItemTransaction("PREPARE_CASH_TO_RC", 'No available slot.', log);
+                    return res.status(400).json({ status: 400, message: 'No available slot.' });
                 }
-                // let rcAmount = request.amount;
 
-                let rcAmountPosition = storeService.findItemAmountPositionInStoreEntity(rcItemId, storeEntity);
-                // let rcAmountPosition = storeService.findEmptySlotAmountInStoreEntity(storeEntity);
+                let rcAmountPosition = storeService.findItemAmountPositionFromItemPosition(rcPosition, storeEntity);
                 if (rcAmountPosition == undefined) {
-                    // log = await logService.updateLogItemTransaction("PREPARE_CASH_TO_RC", 'No available slot.', log);
-                    // return res.status(400).json({ status: 400, message: 'No available slot.' });
-                    rcAmountPosition = storeService.findEmptySlotAmountInStoreEntity(storeEntity);
-                    if (rcAmountPosition == undefined) {
-                        log = await logService.updateLogItemTransaction("PREPARE_CASH_TO_RC", 'No available slot.', log);
-                        return res.status(400).json({ status: 400, message: 'No available slot.' });
-                    } else {
-                        rcAmount = Number(storeEntity[rcAmountPosition]);
-                    }
+                    log = await logService.updateLogItemTransaction("PREPARE_CASH_TO_RC", 'No available slot.', log);
+                    return res.status(400).json({ status: 400, message: 'No available slot.' });
                 } else {
                     rcAmount = Number(storeEntity[rcAmountPosition]);
                 }
@@ -382,25 +367,18 @@ export default class StoreController {
                 }
                 const crystalItemId = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.CRYSTAL_ITEM_ID_CONFIG }).getOne())?.configValue));
 
-                let crystalPosition = storeService.findItemInStorentity(crystalItemId, storeEntity);
+                let crystalPosition = storeService.findEmptySlotInStorentity(storeEntity);
                 let crystalAmount = 0;
                 if (crystalPosition == undefined) {
-                    crystalPosition = storeService.findEmptySlotInStorentity(storeEntity);
-                    if (crystalPosition == undefined) {
-                        log = await logService.updateLogItemTransaction("CP_TO_CRYSTAL", 'No available slot.', log);
-                        return res.status(400).json({ status: 400, message: 'No available slot.' });
-                    }
+                    log = await logService.updateLogItemTransaction("CP_TO_CRYSTAL", 'No available slot.', log);
+                    return res.status(400).json({ status: 400, message: 'No available slot.' });
                 }
 
-                let crystalAmountPosition = storeService.findItemAmountPositionInStoreEntity(crystalItemId, storeEntity);
+                let crystalAmountPosition = storeService.findItemAmountPositionFromItemPosition(crystalPosition, storeEntity);
                 if (crystalAmountPosition == undefined) {
-                    crystalAmountPosition = storeService.findEmptySlotAmountInStoreEntity(storeEntity);
-                    if (crystalAmountPosition == undefined) {
-                        log = await logService.updateLogItemTransaction("CP_TO_CRYSTAL", 'No available slot.', log);
-                        return res.status(400).json({ status: 400, message: 'No available slot.' });
-                    } else {
-                        crystalAmount = Number(storeEntity[crystalAmountPosition]);
-                    }
+                    
+                    log = await logService.updateLogItemTransaction("CP_TO_CRYSTAL", 'No available slot.', log);
+                    return res.status(400).json({ status: 400, message: 'No available slot.' });
                 } else {
                     crystalAmount = Number(storeEntity[crystalAmountPosition]);
                 }
