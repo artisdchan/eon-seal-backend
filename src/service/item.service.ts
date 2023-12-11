@@ -39,7 +39,7 @@ export default class ItemService {
             return 'Character is not exist.';
         }
 
-        const emptyPosList = storeService.findItemInStorentity(0, storeEntity);
+        const emptyPosList = storeService.getAllDuplicatePosition(0, storeEntity);
         if (emptyPosList == null || emptyPosList.length < itemAmount) {
             return 'No available slot.'
         }
@@ -47,27 +47,27 @@ export default class ItemService {
         let updateObj = storeEntity
         for (let i = 0; i < itemAmount; i++) {
 
-            let itemPosition = storeService.findEmptySlotInStorentity(storeEntity);
-            if (itemPosition == undefined) {
-                return 'No available slot.';
-            }
+            // let itemPosition = storeService.findEmptySlotInStorentity(storeEntity);
+            // if (itemPosition == undefined) {
+            //     return 'No available slot.';
+            // }
     
-            let itemAmountPosition = storeService.findItemAmountPositionFromItemPosition(itemPosition, storeEntity);
+            let itemAmountPosition = storeService.findItemAmountPositionFromItemPosition(emptyPosList[i], storeEntity);
             if (itemAmountPosition == undefined) {
                 return 'No available slot.';
             }
     
-            let itemEffectPosition = storeService.findItemEffectPositionInStoreEntity(itemPosition, storeEntity)
+            let itemEffectPosition = storeService.findItemEffectPositionInStoreEntity(emptyPosList[i], storeEntity)
             if (itemEffectPosition == undefined) {
                 return 'No available slot.';
             }
     
-            let itemRefinePosition = storeService.findItemRefinePositionInStoreEntity(itemPosition, storeEntity)
+            let itemRefinePosition = storeService.findItemRefinePositionInStoreEntity(emptyPosList[i], storeEntity)
             if (itemRefinePosition == undefined) {
                 return 'No available slot.';
             }
     
-            const itemObj = storeService.setValueIntoStoreEntity(itemPosition, itemId);
+            const itemObj = storeService.setValueIntoStoreEntity(emptyPosList[i], itemId);
             const itemAmountObj = storeService.setValueIntoStoreEntity(itemAmountPosition, 0);
             const itemEffectObj = storeService.setValueIntoStoreEntity(itemEffectPosition, itemEffect);
             const itemRefineObj = storeService.setValueIntoStoreEntity(itemRefinePosition, itemRefine)
