@@ -13,18 +13,11 @@ export default class RankingController {
         
         const {classId} = req.query;
 
-        const query = await GDB0101DataSource.manager.getRepository(pc).createQueryBuilder('pc')
+        const pcEntityList = await GDB0101DataSource.manager.getRepository(pc).createQueryBuilder('pc')
         .select('pc.char_name', 'char_name').addSelect('pc.level', 'level').addSelect('pc.fame', 'fame').addSelect('pc.job', 'job').addSelect('pc.money', 'money')
         .where('pc.job = :classId', { classId: classId}).orderBy('level', 'DESC').limit(10).getRawMany() as unknown as RankingResponseDTO[];
 
-        // if (Number(classId) != 99) {
-        //     query
-        //     query
-        // } else {
-        //     query.groupBy('pc.job').getRawMany() as unknown as RankingResponseDTO[]
-        // }
-            
-        res.status(200).json({status: 200, data: query});
+        res.status(200).json({status: 200, data: pcEntityList});
     }
 
 }
