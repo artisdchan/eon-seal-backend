@@ -77,7 +77,7 @@ export default class UserController {
             const userModel = new usermsgex();
             userModel.userId = request.username;
             userModel.email = request.email;
-            userModel.gold = 999999;
+            userModel.gold = 0;
             userModel.nickName = request.username;
             userModel.oneTimeChangePwd = '';
             userModel.isGiftsReferrerGold = 'N';
@@ -127,9 +127,13 @@ export default class UserController {
                     // DO NOTHING
                 }
 
+                let storePass = request.storePass
+                if (storePass < 0) {
+                    storePass = 123456
+                }
                 await queryRunner.manager.save(userModel);
                 await queryRunner.manager.save(webUserDetailEntity);
-                await GDB0101DataSource.manager.query(storeService.initialStoreQueryString(request.username, request.storePass));
+                await GDB0101DataSource.manager.query(storeService.initialStoreQueryString(request.username, storePass));
 
                 await queryRunner.commitTransaction()
             } catch (error) {
@@ -554,6 +558,7 @@ export default class UserController {
                             itemName: eachWhiteList.itemName,
                             refineLevel: Number(storeEntity[itemRefinePos]),
                             itemEffectCode: String(storeEntity[itemEffectPos]),
+                            // TODO translate effect code
                             itemEffectMessage: '',
                             itemPictureUrl: eachWhiteList.itemPictureUrl,
                             itemBag: eachWhiteList.itemBag,

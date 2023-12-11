@@ -165,6 +165,7 @@ export default class CrystalController {
                         for (let each of redDragonItemPos) {
                             const amountPos = storeService.findItemAmountPositionFromItemPosition(each, storeEntity);
                             if (Number(storeEntity[amountPos]) + 1 == leftAmount) {
+                                leftAmount = 0;
                                 updateRcObj = {
                                     ...updateRcObj,
                                     ...storeService.setValueIntoStoreEntity(each, 0),
@@ -219,6 +220,7 @@ export default class CrystalController {
                         for (let each of blueDragonItemPos) {
                             const amountPos = storeService.findItemAmountPositionFromItemPosition(each, storeEntity);
                             if (Number(storeEntity[amountPos]) + 1 == leftAmount) {
+                                leftAmount = 0;
                                 updateRcObj = {
                                     ...updateRcObj,
                                     ...storeService.setValueIntoStoreEntity(each, 0),

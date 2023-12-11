@@ -151,6 +151,7 @@ export default class StoreController {
                     for (let each of rcPosition) {
                         const amountPos = storeService.findItemAmountPositionFromItemPosition(each, storeEntity);
                         if (Number(storeEntity[amountPos]) + 1 == leftAmount) {
+                            leftAmount = 0;
                             updateRcObj = {
                                 ...updateRcObj,
                                 ...storeService.setValueIntoStoreEntity(each, 0),
@@ -312,13 +313,14 @@ export default class StoreController {
                     for (let each of crystalItemPosition) {
                         const amountPos = storeService.findItemAmountPositionFromItemPosition(each, storeEntity);
                         if (Number(storeEntity[amountPos]) + 1 == leftAmount) {
+                            leftAmount = 0;
                             updateRcObj = {
                                 ...updateRcObj,
                                 ...storeService.setValueIntoStoreEntity(each, 0),
                                 ...storeService.setValueIntoStoreEntity(amountPos, 0)
                             }
                         } else if (Number(storeEntity[amountPos]) + 1 > leftAmount) {
-                            leftAmount = 0;
+                            // leftAmount = 0;
                             updateRcObj = {
                                 ...updateRcObj,
                                 ...storeService.setValueIntoStoreEntity(amountPos, (Number(storeEntity[amountPos]) - request.amount))
