@@ -215,7 +215,8 @@ export class PackageController {
 
                 historyEntity.status = PackageHistoryStatus.DONE
                 webUserDetailEntity.topupCredit -= packageEntity.priceTopupCredit
-                await ItemDataSource.manager.save([historyEntity, webUserDetailEntity])
+                await ItemDataSource.manager.save(historyEntity)
+                await SealMemberDataSource.manager.save(webUserDetailEntity)
 
                 return res.status(200).json({ status: 200, data: { puchaseId: historyEntity.purchaseId } })
 
