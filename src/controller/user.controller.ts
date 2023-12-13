@@ -491,6 +491,8 @@ export default class UserController {
             webUser.topupCredit += request.creditAmount
             await SealMemberDataSource.manager.getRepository(WebUserDetail).save(webUser)
 
+            return res.status(200).json({ status: 200, data: 'success'})
+
         } catch (error) {
             console.error(error);
             return res.status(500).json({ status: 500, message: 'internal server error' });
