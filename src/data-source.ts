@@ -15,6 +15,9 @@ import { CrystalShop } from "./entity/item/crystal_shop.entity";
 import { CrystalShopPurchaseHistory } from "./entity/log_item/log_crystal_purchase.entity";
 import { guildinfo } from "./entity/gdb0101/guild_info.entity";
 import { guildstore } from "./entity/gdb0101/guild_store.entity";
+import { Package } from "./entity/item/package.entity";
+import { PackageDetail } from "./entity/item/package_detail.entity";
+import { PurchasePackageHistory } from "./entity/item/purchase_package_history.entity";
 
 export const SealMemberDataSource = new DataSource({
     type: "mariadb",
@@ -61,7 +64,7 @@ export const ItemDataSource = new DataSource({
     logging: true,
     entities: [
         SealItem, 
-        FusionItemConfig, CrystalShop
+        FusionItemConfig, CrystalShop, Package, PackageDetail, PurchasePackageHistory
     ],
     connectTimeout: 6000
 })
