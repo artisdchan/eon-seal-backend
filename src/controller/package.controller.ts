@@ -241,9 +241,8 @@ export class PackageController {
             const currentUser = req.user as AuthenUser; 
             let response: PackagePurchaseHistoryResponseDTO[] = []
 
-            const historyList = await ItemDataSource.createQueryBuilder()
+            const historyList = await ItemDataSource.getRepository(PurchasePackageHistory).createQueryBuilder()
                 .select()
-                .from(PurchasePackageHistory, 'purchasedHistory')
                 .where('purchaseHistory.purchased_by_user_id = :userId', { userId: currentUser.gameUserId })
                 .orderBy('purchaseHistory.purchased_time', 'DESC').getMany();
             
