@@ -39,6 +39,7 @@ export type UserDetailResponseDTO = {
     cashPoint: number
     userLevel: number
     userStatus: string
+    topupCredit: number
 }
 
 export type UserInfoResponseDTO = {
