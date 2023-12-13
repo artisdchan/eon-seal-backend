@@ -243,8 +243,8 @@ export class PackageController {
 
             const historyList = await ItemDataSource.getRepository(PurchasePackageHistory).createQueryBuilder()
                 .select()
-                .where('purchaseHistory.purchased_by_user_id = :userId', { userId: currentUser.gameUserId })
-                .orderBy('purchaseHistory.purchased_time', 'DESC').getMany();
+                .where('purchased_by_user_id = :userId', { userId: currentUser.gameUserId })
+                .orderBy('purchased_time', 'DESC').getMany();
             
             for (let eachHistory of historyList) {
                 const packageEntity = await ItemDataSource.manager.findOneBy(Package, { packageId: eachHistory.packageId })
