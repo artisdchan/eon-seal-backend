@@ -12,6 +12,7 @@ class PackageRoutes {
 
     initializeRoutes() {
         this.router.get('/shop', passport.authenticate('jwt'), this.creditShopController.getPackageList)
+        this.router.get('/shop/history', passport.authenticate('jwt'), this.creditShopController.getPurchaseHistory)
         this.router.post('/shop/purchase/:packageId', passport.authenticate('jwt'), this.creditShopController.purchasePackage)
     }
 }

@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
 import { GDB0101DataSource, ItemDataSource, LogItemDataSource, SealMemberDataSource } from "../data-source";
 import { AuthenUser } from "../dto/authen.dto";
-import { PackageDetailResponse, PackageResponse } from "../dto/package.dto";
+import { PackageDetailResponse, PackagePurchaseHistoryResponseDTO, PackageResponse } from "../dto/package.dto";
 import { getOffSet, getPageination, PaginationAndDataResponse } from "../dto/pagination.dto";
 import { ItemLevel } from "../entity/item/fusion_item.entity";
-import { Package } from "../entity/item/package.entity";
+import { Package, PackageStatus } from "../entity/item/package.entity";
 import { PackageDetail, PackageItemBag } from "../entity/item/package_detail.entity";
 import { PackageHistoryStatus, PurchasePackageHistory } from "../entity/item/purchase_package_history.entity";
 import { WebUserDetail } from "../entity/seal_member/web_user_detail.entity";
@@ -125,7 +125,7 @@ export class PackageController {
                 return res.status(400).json({ status: 400, message: 'user not found.' })
             }
 
-            const packageEntity = await ItemDataSource.manager.findOneBy(Package, { packageId: Number(packageId) })
+            const packageEntity = await ItemDataSource.manager.findOneBy(Package, { packageId: Number(packageId), status: PackageStatus.ACTIVE })
             if (packageEntity == null) {
                 return res.status(400).json({ status: 400, message: 'invalid package.' })
             }
@@ -228,6 +228,34 @@ export class PackageController {
                 return res.status(500).json({ status: 500, message: 'internal server error' });
             }
 
+
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ status: 500, message: 'internal server error' });
+        }
+    }
+
+    public getPurchaseHistory = async (req: Request, res: Response) => {
+        try {
+            
+            const currentUser = req.user as AuthenUser; 
+            let response: PackagePurchaseHistoryResponseDTO[] = []
+
+            const historyList = await ItemDataSource.manager.getRepository(PurchasePackageHistory).createQueryBuilder('purchaseHisotry')
+                .select('purchaseHistory').where('purchaseHistory.purchasedByUserId = :userId', { userId: currentUser.gameUserId })
+                .orderBy('purchaseHistory.purchasedTime', 'DESC').getMany();
+            
+            for (let eachHistory of historyList) {
+                const packageEntity = await ItemDataSource.manager.findOneBy(Package, { packageId: eachHistory.packageId })
+                response.push({
+                    packageName: packageEntity!.packageName,
+                    priceTopupCredit: packageEntity!.priceTopupCredit,
+                    status: eachHistory.status,
+                    purchaseTime: eachHistory.purchasedTime
+                })
+            }
+
+            return res.status(200).json({ status: 200, data: response })
 
         } catch (error) {
             console.error(error);

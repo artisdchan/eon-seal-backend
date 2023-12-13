@@ -490,6 +490,7 @@ export default class UserController {
             }
 
             webUser.topupCredit += request.creditAmount
+            webUser.totalTopup += request.creditAmount
             await SealMemberDataSource.manager.getRepository(WebUserDetail).save(webUser)
 
             return res.status(200).json({ status: 200, data: 'success'})

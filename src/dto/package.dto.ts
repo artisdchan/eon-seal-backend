@@ -1,4 +1,5 @@
 import { PackageType } from "../entity/item/package.entity";
+import { PackageHistoryStatus } from "../entity/item/purchase_package_history.entity";
 
 export type PackageResponse = {
     packageId: number;
@@ -18,4 +19,11 @@ export type PackageDetailResponse = {
     itemDescription: string;
     itemAmount: number;
     itemUrl: string;
+}
+
+export type PackagePurchaseHistoryResponseDTO = {
+    packageName: string;
+    priceTopupCredit: number
+    status: PackageHistoryStatus
+    purchaseTime: Date
 }

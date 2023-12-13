@@ -36,7 +36,8 @@ export class Package {
 }
 
 export enum PackageType {
-    PROMOTION = 'PROMOTION'
+    PROMOTION = 'PROMOTION',
+    TOTAL_TOPUP_REWARD = 'TOTAL_TOPUP_REWARD'
 }
 
 export enum PackageStatus {
