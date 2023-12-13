@@ -223,7 +223,7 @@ export class PackageController {
             } catch (error) {
                 console.error(error);
                 historyEntity.status = PackageHistoryStatus.FAIL
-                historyEntity.message = 'internal server error'
+                // historyEntity.message = 'internal server error'
                 await ItemDataSource.manager.save(historyEntity)
                 return res.status(500).json({ status: 500, message: 'internal server error' });
             }

@@ -18,9 +18,6 @@ export class PurchasePackageHistory {
     @Column({ name: 'status' })
     status!: PackageHistoryStatus
 
-    @Column({ name: 'message' })
-    message?: string
-
     @Column({ name: 'purchased_time' })
     purchasedTime!: Date
     
