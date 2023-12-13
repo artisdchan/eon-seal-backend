@@ -16,6 +16,7 @@ import StoreService from "../service/store.service";
 import { startOfToday, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns'
 import { Between, LessThan, MoreThan } from "typeorm";
 import { FusionItemConfig, ItemLevel, ItemType } from "../entity/item/fusion_item.entity";
+import ItemService from "../service/item.service";
 
 export default class CrystalController {
 
@@ -264,11 +265,13 @@ export default class CrystalController {
                 }
             }
 
+            const itemService = new ItemService()
             log = await logService.updateLogItemTransaction("PREPARE_INVENTORY", undefined, log);
             let errMsg = "";
             // add item into store
             if (crystalShop.itemBag == CrystalItemBag.IN_GAME_ITEM_INVENTORY) {
-                errMsg = await this.insertInGameInventory(currentUser.gameUserId, crystalShop.itemId, crystalShop.itemAmount, priceCegel);
+                // errMsg = await this.insertInGameInventory(currentUser.gameUserId, crystalShop.itemId, crystalShop.itemAmount, priceCegel);
+                errMsg = await this.insertInGameInventory(currentUser.gameUserId, crystalShop.itemId, crystalShop.itemAmount, priceCegel, crystalShop.itemEffect, crystalShop.itemRefine);
                 if (errMsg != "") {
                     log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_INVENTORY", errMsg, log);
                     return res.status(400).json({ status: 400, message: errMsg });
@@ -537,7 +540,7 @@ export default class CrystalController {
         }
     }
 
-    private insertInGameInventory = async (userId: string, itemId: number, itemAmount: number, cegelPrice: number): Promise<string> => {
+    private insertInGameInventory = async (userId: string, itemId: number, itemAmount: number, cegelPrice: number, itemEffect: number, itemRefine: number): Promise<string> => {
 
         const storeService = new StoreService();
 
@@ -552,24 +555,71 @@ export default class CrystalController {
 
         storeEntity.segel -= cegelPrice;
 
-        let itemPosition = storeService.findEmptySlotInStorentity(storeEntity);
-        if (itemPosition == undefined) {
-            return 'No available slot.';
+        const emptyPosList = storeService.getAllDuplicatePosition(0, storeEntity);
+        if (emptyPosList == null || emptyPosList.length < itemAmount) {
+            return 'No available slot.'
         }
 
-        let itemAmountPosition = storeService.findEmptySlotAmountInStoreEntity(storeEntity);
-        if (itemAmountPosition == undefined) {
-            return 'No available slot.';
-        }
+        let updateObj = storeEntity
+        for (let i = 0; i < itemAmount; i++) {
 
-        const itemObj = storeService.setValueIntoStoreEntity(itemPosition, itemId);
-        const itemAmountObj = storeService.setValueIntoStoreEntity(itemAmountPosition, itemAmount - 1);
+            // let itemPosition = storeService.findEmptySlotInStorentity(storeEntity);
+            // if (itemPosition == undefined) {
+            //     return 'No available slot.';
+            // }
+    
+            let itemAmountPosition = storeService.findItemAmountPositionFromItemPosition(emptyPosList[i], storeEntity);
+            if (itemAmountPosition == undefined) {
+                return 'No available slot.';
+            }
+    
+            let itemEffectPosition = storeService.findItemEffectPositionInStoreEntity(emptyPosList[i], storeEntity)
+            if (itemEffectPosition == undefined) {
+                return 'No available slot.';
+            }
+    
+            let itemRefinePosition = storeService.findItemRefinePositionInStoreEntity(emptyPosList[i], storeEntity)
+            if (itemRefinePosition == undefined) {
+                return 'No available slot.';
+            }
+    
+            const itemObj = storeService.setValueIntoStoreEntity(emptyPosList[i], itemId);
+            const itemAmountObj = storeService.setValueIntoStoreEntity(itemAmountPosition, 0);
+            const itemEffectObj = storeService.setValueIntoStoreEntity(itemEffectPosition, itemEffect);
+            const itemRefineObj = storeService.setValueIntoStoreEntity(itemRefinePosition, itemRefine)
+   
+            updateObj = {
+                ...updateObj,
+                ...itemObj,
+                ...itemAmountObj,
+                ...itemEffectObj,
+                ...itemRefineObj
+            }
+    
+        }
 
         await GDB0101DataSource.manager.getRepository(store).save({
             ...storeEntity,
-            ...itemObj,
-            ...itemAmountObj
+            ...updateObj,
         })
+        // let itemPosition = storeService.findEmptySlotInStorentity(storeEntity);
+        // if (itemPosition == undefined) {
+        //     return 'No available slot.';
+        // }
+
+        // let itemAmountPosition = storeService.findEmptySlotAmountInStoreEntity(storeEntity);
+        // if (itemAmountPosition == undefined) {
+        //     return 'No available slot.';
+        // }
+
+        // const itemObj = storeService.setValueIntoStoreEntity(itemPosition, itemId);
+        // const itemAmountObj = storeService.setValueIntoStoreEntity(itemAmountPosition, itemAmount - 1);
+
+        // await GDB0101DataSource.manager.getRepository(store).save({
+        //     ...storeEntity,
+        //     ...itemObj,
+        //     ...itemAmountObj
+        // })
 
         return "";
     }

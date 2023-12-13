@@ -30,4 +30,7 @@ export class WebUserDetail {
     @Column({ name: 'user_level' })
     userLevel!: number;
 
+    @Column({ name: 'topup_credit' })
+    topupCredit!: number
+
 }

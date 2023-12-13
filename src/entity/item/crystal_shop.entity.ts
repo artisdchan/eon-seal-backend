@@ -18,6 +18,12 @@ export class CrystalShop {
     @Column({ name: 'item_amount' })
     itemAmount!: number
 
+    @Column({ name: 'item_effect' })
+    itemEffect!: number
+
+    @Column({ name: 'item_refine' })
+    itemRefine!: number
+
     @Column({ name: 'item_type' })
     itemType!: CrystalItemType
 

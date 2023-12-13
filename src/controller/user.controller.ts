@@ -3,7 +3,7 @@ import handlebars from "handlebars";
 import path from "path";
 import { GDB0101DataSource, ItemDataSource, SealMemberDataSource } from "../data-source";
 import { AuthenUser } from "../dto/authen.dto";
-import { CharacterNameResponseDTO, ForgetPasswordRequestDTO, HashPasswordDTO, RegisterRequestDTO, ResetPasswordDTO, TopupCashRequestDTO, UserDetailResponseDTO, UserInfoResponseDTO } from "../dto/user.dto";
+import { AddTopupCreditRequestDTO, CharacterNameResponseDTO, ForgetPasswordRequestDTO, HashPasswordDTO, RegisterRequestDTO, ResetPasswordDTO, TopupCashRequestDTO, UserDetailResponseDTO, UserInfoResponseDTO } from "../dto/user.dto";
 import { idtable1, idtable2, idtable3, idtable4, idtable5 } from "../entity/seal_member/idtable.entity";
 import { pc } from "../entity/gdb0101/pc.entity";
 import { usermsgex } from "../entity/seal_member/usermsgex.entity";
@@ -15,13 +15,10 @@ import { randomString } from "../utils/string.utils";
 import { WebUserDetail } from "../entity/seal_member/web_user_detail.entity";
 import StoreService from "../service/store.service";
 import { store } from "../entity/gdb0101/store.entity";
-import { WebConfig, WebConfigConstant } from "../entity/seal_member/web_config.entity";
-import { StoreEntity2 } from "../dto/store.dto";
-import Store2Service from "../service/store2.service";
 import CashInventoryService from "../service/cash_inventory.service";
 import { CashInventory } from "../entity/gdb0101/cash_inventory.entity";
 import { SealItem } from "../entity/item/seal_item.entity";
-import { MarketWhiteList, WhiteListItemBag, WhiteListItemType } from "../entity/item/market_white_list.entity";
+import { MarketWhiteList, WhiteListItemBag } from "../entity/item/market_white_list.entity";
 import { ItemDetail } from "../dto/market.dto";
 var fs = require('fs');
 
@@ -460,6 +457,39 @@ export default class UserController {
             }
 
             return res.status(200).json({status: 200, data: response })
+
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ status: 500, message: 'internal server error' });
+        }
+    }
+
+    public addTopupCredit = async (req: Request, res: Response) => {
+        try {
+           
+            if (!SealMemberDataSource.isInitialized) {
+                await SealMemberDataSource.initialize();
+            }
+            if (!GDB0101DataSource.isInitialized) {
+                await GDB0101DataSource.initialize();
+            }
+
+            const request = req.body as AddTopupCreditRequestDTO
+            
+            const usermsgexEntity = await SealMemberDataSource.manager.findOneBy(usermsgex, {email: request.email})
+            if (usermsgexEntity == null) {
+                console.error('add topup credit: user not found')
+                return res.status(400).json({status: 400, message: 'user not found' })
+            }
+
+            const webUser = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: usermsgexEntity.userId })
+            if (webUser == null) {
+                console.error('add topup credit: user not found')
+                return res.status(400).json({status: 400, message: 'user not found' }) 
+            }
+
+            webUser.topupCredit += request.creditAmount
+            await SealMemberDataSource.manager.getRepository(WebUserDetail).save(webUser)
 
         } catch (error) {
             console.error(error);

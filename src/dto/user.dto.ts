@@ -45,3 +45,8 @@ export type UserInfoResponseDTO = {
     gameUserId: string
     characterNames: string[]
 }
+
+export type AddTopupCreditRequestDTO = {
+    email: string
+    creditAmount: number
+}

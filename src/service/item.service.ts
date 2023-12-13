@@ -1,5 +1,6 @@
 import { GDB0101DataSource, ItemDataSource } from "../data-source";
 import { store } from "../entity/gdb0101/store.entity";
+import { FusionItemConfig, ItemLevel, ItemType } from "../entity/item/fusion_item.entity";
 import { SealItem } from "../entity/item/seal_item.entity";
 import StoreService from "./store.service";
 
@@ -90,5 +91,17 @@ export default class ItemService {
         return '';
 
     }
+
+    public randomCostume = async (level: ItemLevel): Promise<FusionItemConfig> => {
+        const fusionItemEntityList = await ItemDataSource.manager.findBy(FusionItemConfig, {
+            itemType: ItemType.COSTUME,
+            itemLevel: level
+        });
+
+        const ranNum = Math.floor(Math.random() * (fusionItemEntityList.length - 1 + 1) + 1)
+
+        return fusionItemEntityList[ranNum - 1];
+    }
+
 
 }
