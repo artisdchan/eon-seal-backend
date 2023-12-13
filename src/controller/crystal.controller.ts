@@ -277,7 +277,7 @@ export default class CrystalController {
                     return res.status(400).json({ status: 400, message: errMsg });
                 }
             } else if (crystalShop.itemBag == CrystalItemBag.ACCOUNT_CASH_INVENTORY) {
-                errMsg = await this.insertAccountCashInventory(currentUser.gameUserId, crystalShop.itemId, crystalShop.itemAmount);
+                errMsg = await this.insertAccountCashInventory(currentUser.gameUserId, crystalShop.itemId, crystalShop.itemAmount, crystalShop.itemEffect, crystalShop.itemRefine);
                 if (errMsg != "") {
                     log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_INVENTORY", errMsg, log);
                     return res.status(400).json({ status: 400, message: errMsg });
@@ -290,14 +290,14 @@ export default class CrystalController {
                 // }
             } else if (crystalShop.itemBag == CrystalItemBag.RANDOM_COSTUME_RARE) {
                 const randomItem = await this.randomCostume(ItemLevel.RARE);
-                errMsg = await this.insertAccountCashInventory(currentUser.gameUserId, randomItem.itemId, 1);
+                errMsg = await this.insertAccountCashInventory(currentUser.gameUserId, randomItem.itemId, 1, 0, 0);
                 if (errMsg != "") {
                     log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_INVENTORY", errMsg, log);
                     return res.status(400).json({ status: 400, message: errMsg });
                 }
             } else if (crystalShop.itemBag == CrystalItemBag.RANDOM_COSTUME_EPIC) {
                 const randomItem = await this.randomCostume(ItemLevel.EPIC);
-                errMsg = await this.insertAccountCashInventory(currentUser.gameUserId, randomItem.itemId, 1);
+                errMsg = await this.insertAccountCashInventory(currentUser.gameUserId, randomItem.itemId, 1, 0, 0);
                 if (errMsg != "") {
                     log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_INVENTORY", errMsg, log);
                     return res.status(400).json({ status: 400, message: errMsg });
@@ -624,13 +624,13 @@ export default class CrystalController {
         return "";
     }
 
-    private insertAccountCashInventory = async (userId: string, itemId: number, itemAmount: number): Promise<string> => {
+    private insertAccountCashInventory = async (userId: string, itemId: number, itemAmount: number, itemEffect: number, itemRefineOrLimit: number): Promise<string> => {
 
         await ItemDataSource.manager.save(SealItem, {
             itemId: itemId,
             ItemOp1: itemAmount - 1,
-            ItemOp2: 0,
-            ItemLimit: 0,
+            ItemOp2: itemEffect,
+            ItemLimit: itemRefineOrLimit,
             userId: userId,
             OwnerDate: new Date,
             bxaid: 'BUY'
