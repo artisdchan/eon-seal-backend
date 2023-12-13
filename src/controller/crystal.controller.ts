@@ -364,7 +364,7 @@ export default class CrystalController {
 
             const query = await ItemDataSource.manager.getRepository(CrystalShop).createQueryBuilder('crystalShop').where('crystalShop.status = :status', { status: 'ACTIVE' }).andWhere('crystalShop.shopType = :type', { type: String(type).toUpperCase() });
             if (itemType) {
-                query.andWhere('crystalShop.item_type = :itemType', { itemType });
+                query.andWhere('crystalShop.item_type = :itemType', { itemType: itemType });
             }
 
             if (itemName) {
