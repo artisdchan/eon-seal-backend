@@ -578,6 +578,13 @@ export default class UserController {
                         }
                     }
 
+                    await ItemDataSource.manager.create(PurchasePackageHistory, {
+                        packageId: eachPack.packageId,
+                        purchasedByUserId: webUser.user_id,
+                        purchasedByEmail: usermsgexEntity.email,
+                        purchasedTime: new Date
+                    })
+
                 }
             }
 
