@@ -48,7 +48,7 @@ export default class ItemService {
         }
 
         const itemObj = storeService.setValueIntoStoreEntity(itemPosition, itemId);
-        const itemAmountObj = storeService.setValueIntoStoreEntity(itemAmountPosition, 0);
+        const itemAmountObj = storeService.setValueIntoStoreEntity(itemAmountPosition, itemAmount - 1);
         updateObj = {
             ...updateObj,
             ...itemObj,
