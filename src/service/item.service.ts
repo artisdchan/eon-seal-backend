@@ -27,6 +27,42 @@ export default class ItemService {
         return "";
     }
 
+    public insertStackItem = async (userId: string, itemId: number, itemAmount: number, itemEffect: number, itemRefine: number) : Promise<string> => {
+        
+        const storeService = new StoreService();
+
+        const storeEntity = await GDB0101DataSource.manager.findOneBy(store, { user_id: userId });
+        if (storeEntity == null) {
+            return 'Character is not exist.';
+        }
+
+        let updateObj = storeEntity
+        let itemPosition = storeService.findEmptySlotInStorentity(storeEntity);
+        if (itemPosition == undefined) {
+            return 'No available slot.'
+        }
+        
+        let itemAmountPosition = storeService.findItemAmountPositionFromItemPosition(itemPosition, storeEntity)
+        if (itemAmountPosition == undefined) {
+            return 'No available slot.'
+        }
+
+        const itemObj = storeService.setValueIntoStoreEntity(itemPosition, itemId);
+        const itemAmountObj = storeService.setValueIntoStoreEntity(itemAmountPosition, 0);
+        updateObj = {
+            ...updateObj,
+            ...itemObj,
+            ...itemAmountObj,
+        }
+
+        await GDB0101DataSource.manager.getRepository(store).save({
+            ...storeEntity,
+            ...updateObj,
+        })
+
+        return '';
+    }
+
     public insertBackInventory = async (userId: string, itemId: number, itemAmount: number, itemEffect: number, itemRefine: number) : Promise<string> => {
 
         if (!GDB0101DataSource.isInitialized) {

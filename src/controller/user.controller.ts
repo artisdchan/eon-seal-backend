@@ -20,6 +20,12 @@ import { CashInventory } from "../entity/gdb0101/cash_inventory.entity";
 import { SealItem } from "../entity/item/seal_item.entity";
 import { MarketWhiteList, WhiteListItemBag } from "../entity/item/market_white_list.entity";
 import { ItemDetail } from "../dto/market.dto";
+import { PurchasePackageHistory } from "../entity/item/purchase_package_history.entity";
+import { Package, PackageStatus, PackageType } from "../entity/item/package.entity";
+import { PackageDetail, PackageItemBag } from "../entity/item/package_detail.entity";
+import LogService from "../service/log.service";
+import ItemService from "../service/item.service";
+import { ItemLevel } from "../entity/item/fusion_item.entity";
 var fs = require('fs');
 
 export default class UserController {
@@ -211,7 +217,7 @@ export default class UserController {
             if (!SealMemberDataSource.isInitialized) {
                 await SealMemberDataSource.initialize();
             }
-            
+
             const requestApiKey = req.get('API-KEY') as string;
             if (requestApiKey != EONHUB_API_KEY) {
                 console.error('Invalid API-KEY.');
@@ -425,7 +431,7 @@ export default class UserController {
 
     public userInfo = async (req: Request, res: Response) => {
         try {
-           
+
             if (!SealMemberDataSource.isInitialized) {
                 await SealMemberDataSource.initialize();
             }
@@ -445,7 +451,7 @@ export default class UserController {
             if (usr == null) {
                 return res.status(400).json({ status: 400, message: 'Game ID is not found' })
             }
-             
+
             const pcEntity = await GDB0101DataSource.manager.findBy(pc, { user_id: usr?.userId });
             let charNames: string[] = []
             for (let each of pcEntity) {
@@ -457,7 +463,7 @@ export default class UserController {
                 characterNames: charNames
             }
 
-            return res.status(200).json({status: 200, data: response })
+            return res.status(200).json({ status: 200, data: response })
 
         } catch (error) {
             console.error(error);
@@ -467,7 +473,7 @@ export default class UserController {
 
     public addTopupCredit = async (req: Request, res: Response) => {
         try {
-           
+
             if (!SealMemberDataSource.isInitialized) {
                 await SealMemberDataSource.initialize();
             }
@@ -476,24 +482,106 @@ export default class UserController {
             }
 
             const request = req.body as AddTopupCreditRequestDTO
-            
-            const usermsgexEntity = await SealMemberDataSource.manager.findOneBy(usermsgex, {email: request.email})
+
+            const usermsgexEntity = await SealMemberDataSource.manager.findOneBy(usermsgex, { email: request.email })
             if (usermsgexEntity == null) {
                 console.error('add topup credit: user not found')
-                return res.status(400).json({status: 400, message: 'user not found' })
+                return res.status(400).json({ status: 400, message: 'user not found' })
             }
 
             const webUser = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: usermsgexEntity.userId })
             if (webUser == null) {
                 console.error('add topup credit: user not found')
-                return res.status(400).json({status: 400, message: 'user not found' }) 
+                return res.status(400).json({ status: 400, message: 'user not found' })
             }
 
             webUser.topupCredit += request.creditAmount
             webUser.totalTopup += request.creditAmount
             await SealMemberDataSource.manager.getRepository(WebUserDetail).save(webUser)
 
-            return res.status(200).json({ status: 200, data: 'success'})
+            if (webUser.totalTopup >= 300000) {
+
+                const logService = new LogService()
+                const itemService = new ItemService();
+
+                const packageEntity = await ItemDataSource.manager.findBy(Package, { packageType: PackageType.TOTAL_TOPUP_REWARD, status: PackageStatus.INACTIVE })
+                if (packageEntity == null) {
+                    return res.status(400).json({ status: 400, message: 'invalid package.' })
+                }
+
+                for (let eachPack of packageEntity) {
+
+                    // Account purchase limit
+                    const historyCount = await ItemDataSource.manager.countBy(PurchasePackageHistory, { packageId: eachPack.packageId, purchasedByUserId: webUser.user_id })
+                    if (eachPack.purchaseCountCond != 0) {
+                        if (eachPack.purchaseCountCond > historyCount && eachPack.priceTopupCredit <= webUser.totalTopup) {
+                            const packageDetailEntity = await ItemDataSource.manager.findBy(PackageDetail, { packageId: eachPack.packageId })
+
+                            for (let eachItem of packageDetailEntity) {
+                                let log = await logService.insertLogItemTransaction(`TOPUP_CREDIT_SHOP`, "ADD_ITEM", "PREPARE_PROCESS", webUser.user_id, undefined);
+
+                                let errMsg = "";
+                                // add item into store
+                                if (eachItem.itemBag == PackageItemBag.IN_GAME_ITEM_INVENTORY) {
+                                    errMsg = await itemService.insertBackInventory(webUser.user_id, eachItem.itemId, eachItem.itemAmount, eachItem.itemEffect, eachItem.itemRefineOrLimit);
+                                    if (errMsg != "") {
+                                        log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_IN_GAME_INVENTORY", errMsg + `, ItemId: ${eachItem.itemId}`, log);
+                                    }
+                                } else if (eachItem.itemBag == PackageItemBag.ACCOUNT_CASH_INVENTORY) {
+                                    errMsg = await itemService.insertAccountCashInventory(webUser.user_id, eachItem.itemId, eachItem.itemAmount, eachItem.itemEffect, eachItem.itemRefineOrLimit);
+                                    if (errMsg != "") {
+                                        log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_CASH_INVENTORY", errMsg + `, ItemId: ${eachItem.itemId}`, log);
+                                    }
+                                } else if (eachItem.itemBag == PackageItemBag.CHARACTER_CASH_INVENTORY) {
+                                    // errMsg = await this.insertCharacterCashInventory(webUser.user_id, request.characterName, crystalShop.itemId, crystalShop.itemAmount);
+                                    // if (errMsg != "") {
+                                    //     log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_INVENTORY", errMsg, log);
+                                    //     return res.status(400).json({ status: 400, message: errMsg });
+                                    // }
+                                } else if (eachItem.itemBag == PackageItemBag.RANDOM_COSTUME_COMMON) {
+                                    const randomItem = await itemService.randomCostume(ItemLevel.COMMON);
+                                    errMsg = await itemService.insertAccountCashInventory(webUser.user_id, randomItem.itemId, 1, 0, 0);
+                                    if (errMsg != "") {
+                                        log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_INVENTORY", errMsg + `, ItemId: ${eachItem.itemId}`, log);
+                                    }
+                                } else if (eachItem.itemBag == PackageItemBag.RANDOM_COSTUME_UNCOMMON) {
+                                    const randomItem = await itemService.randomCostume(ItemLevel.UNCOMMON);
+                                    errMsg = await itemService.insertAccountCashInventory(webUser.user_id, randomItem.itemId, 1, 0, 0);
+                                    if (errMsg != "") {
+                                        log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_INVENTORY", errMsg + `, ItemId: ${eachItem.itemId}`, log);
+                                    }
+                                } else if (eachItem.itemBag == PackageItemBag.RANDOM_COSTUME_RARE) {
+                                    const randomItem = await itemService.randomCostume(ItemLevel.RARE);
+                                    errMsg = await itemService.insertAccountCashInventory(webUser.user_id, randomItem.itemId, 1, 0, 0);
+                                    if (errMsg != "") {
+                                        log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_INVENTORY", errMsg + `, ItemId: ${eachItem.itemId}`, log);
+                                    }
+                                } else if (eachItem.itemBag == PackageItemBag.RANDOM_COSTUME_EPIC) {
+                                    const randomItem = await itemService.randomCostume(ItemLevel.EPIC);
+                                    errMsg = await itemService.insertAccountCashInventory(webUser.user_id, randomItem.itemId, 1, 0, 0);
+                                    if (errMsg != "") {
+                                        log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_INVENTORY", errMsg + `, ItemId: ${eachItem.itemId}`, log);
+                                    }
+                                } else if (eachItem.itemBag == PackageItemBag.STACK_IN_GAME_ITEM) {
+                                    errMsg = await itemService.insertStackItem(webUser.user_id, eachItem.itemId, eachItem.itemAmount, eachItem.itemEffect, eachItem.itemRefineOrLimit);
+                                    if (errMsg != "") {
+                                        log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_INVENTORY", errMsg + `, ItemId: ${eachItem.itemId}`, log);
+                                    }
+                                } else {
+                                    // DO NOTHING
+                                }
+
+                                log = await logService.updateLogItemTransaction("ADD_ITEM_SUCCESS", `ItemId: ${eachItem.itemId}`, log);
+
+                            }
+
+                        }
+                    }
+
+                }
+            }
+
+            return res.status(200).json({ status: 200, data: 'success' })
 
         } catch (error) {
             console.error(error);
@@ -503,9 +591,9 @@ export default class UserController {
 
     public getUserItem = async (req: Request, res: Response) => {
         try {
-           
+
             const storeService = new StoreService();
-            const  cashInventoryService = new CashInventoryService();
+            const cashInventoryService = new CashInventoryService();
             if (!GDB0101DataSource.isInitialized) {
                 await GDB0101DataSource.initialize();
             }
@@ -527,7 +615,7 @@ export default class UserController {
             if (userMsgExEntity == null) {
                 return res.status(400).json({ status: 400, message: 'Game ID is not found' })
             }
-             
+
             // Find Character name
             const pcEntityList = await GDB0101DataSource.manager.findBy(pc, { user_id: userMsgExEntity.userId });
             if (pcEntityList == null) {
@@ -548,7 +636,7 @@ export default class UserController {
             // if (cashInventoryEntity == null && sealItemEntity == null) {
             //     return res.status(400).json({ status: 400, message: 'Inventory is not exist.' })
             // }
-             
+
             let storeEntity = await GDB0101DataSource.manager.findOneBy(store, { user_id: userMsgExEntity.userId });
             if (storeEntity == null) {
                 return res.status(400).json({ status: 400, message: 'Character is not exist.' })

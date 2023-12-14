@@ -205,6 +205,11 @@ export class PackageController {
                         if (errMsg != "") {
                             log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_INVENTORY", errMsg + `, ItemId: ${eachItem.itemId}`, log);
                         }
+                    } else if (eachItem.itemBag == PackageItemBag.STACK_IN_GAME_ITEM) {
+                        errMsg = await itemService.insertStackItem(currentUser.gameUserId, eachItem.itemId, eachItem.itemAmount, eachItem.itemEffect, eachItem.itemRefineOrLimit);
+                        if (errMsg != "") {
+                            log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_INVENTORY", errMsg + `, ItemId: ${eachItem.itemId}`, log);
+                        } 
                     } else {
                         // DO NOTHING
                     }
