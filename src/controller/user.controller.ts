@@ -418,7 +418,8 @@ export default class UserController {
                 cashPoint: Number(userEntity.gold),
                 userLevel: userDetail.userLevel,
                 userStatus: userStatus,
-                topupCredit: userDetail.topupCredit
+                topupCredit: userDetail.topupCredit,
+                email: userEntity.email!
             }
 
             return res.status(200).json({ status: 200, data: response });

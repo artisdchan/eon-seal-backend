@@ -40,6 +40,7 @@ export type UserDetailResponseDTO = {
     userLevel: number
     userStatus: string
     topupCredit: number
+    email: string
 }
 
 export type UserInfoResponseDTO = {
