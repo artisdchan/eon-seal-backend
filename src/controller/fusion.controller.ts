@@ -220,12 +220,13 @@ export default class FusionController {
             for (let eachRequest of request.characterSelectedItemId) {
                 for (let eachCharacter of cashInventoryEntity) {
 
+                    let updateObj = eachCharacter
                     const toBeRemoveItemPosition = cashInventoryService.getAllDuplicatePosition(eachRequest, eachCharacter);
                     if (toBeRemoveItemPosition.length <= 4) {
                         for (let each of toBeRemoveItemPosition) {
                             const amountPosition = cashInventoryService.findItemAmountPositionFromItemPosition(each, eachCharacter);
-                            cashInventoryEntity = {
-                                ...cashInventoryEntity,
+                            updateObj = {
+                                ...updateObj,
                                 ...cashInventoryService.setValueIntoCashInventoryEntity(each, 0),
                                 ...cashInventoryService.setValueIntoCashInventoryEntity(amountPosition, 0)
                             }
@@ -233,13 +234,17 @@ export default class FusionController {
                     } else {
                         for (let i = 0; i < 4; i++) {
                             const amountPosition = cashInventoryService.findItemAmountPositionFromItemPosition(toBeRemoveItemPosition[i], eachCharacter);
-                            cashInventoryEntity = {
-                                ...cashInventoryEntity,
+                            updateObj = {
+                                ...updateObj,
                                 ...cashInventoryService.setValueIntoCashInventoryEntity(toBeRemoveItemPosition[i], 0),
                                 ...cashInventoryService.setValueIntoCashInventoryEntity(amountPosition, 0)
                             } 
                         }
                     }
+
+                    await GDB0101DataSource.manager.getRepository(CashInventory).save({
+                        ...updateObj
+                    })
 
                 }
             }
