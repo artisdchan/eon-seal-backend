@@ -44,16 +44,16 @@ export default class FusionController {
             pcEntityList.map((each) => characterName.push(each.char_name));
 
             // Find cash item in cash_inventory by character names
-            const cashInventoryEntity = await GDB0101DataSource.manager.createQueryBuilder()
-                .select("cashInventory")
-                .from(CashInventory, "cashInventory")
-                .where("cashInventory.char_name IN (:...charNames)", { charNames: characterName })
-                .getMany();
+            // const cashInventoryEntity = await GDB0101DataSource.manager.createQueryBuilder()
+            //     .select("cashInventory")
+            //     .from(CashInventory, "cashInventory")
+            //     .where("cashInventory.char_name IN (:...charNames)", { charNames: characterName })
+            //     .getMany();
 
             const sealItemEntity = await ItemDataSource.manager.findBy(SealItem, { userId: currentUser.gameUserId });
-            if (cashInventoryEntity == null && sealItemEntity == null) {
-                return res.status(400).json({ status: 400, message: 'Inventory is not exist.' })
-            }
+            // if (cashInventoryEntity == null && sealItemEntity == null) {
+            //     return res.status(400).json({ status: 400, message: 'Inventory is not exist.' })
+            // }
 
             const fusionItemConfigEntityList = await ItemDataSource.manager.findBy(FusionItemConfig, { itemType: ItemType.COSTUME });
             if (fusionItemConfigEntityList == null) {
@@ -63,19 +63,19 @@ export default class FusionController {
             const characterBagResponse: CharacterBagItem[] = [];
             const accountBagResponse: AccountBagItem[] = [];
 
-            for (let eachCharacter of cashInventoryEntity) {
-                for (let eachConfig of fusionItemConfigEntityList) {
-                    if (cashInventoryService.findItemInCashInventoryntity(eachConfig.itemId, eachCharacter) != undefined) {
-                        characterBagResponse.push({
-                            itemId: eachConfig.itemId,
-                            itemLevel: eachConfig.itemLevel,
-                            itemName: eachConfig.itemName,
-                            itemType: eachConfig.itemType,
-                            itemPicture: eachConfig.itemPicture
-                        })
-                    }
-                }
-            }
+            // for (let eachCharacter of cashInventoryEntity) {
+            //     for (let eachConfig of fusionItemConfigEntityList) {
+            //         if (cashInventoryService.findItemInCashInventoryntity(eachConfig.itemId, eachCharacter) != undefined) {
+            //             characterBagResponse.push({
+            //                 itemId: eachConfig.itemId,
+            //                 itemLevel: eachConfig.itemLevel,
+            //                 itemName: eachConfig.itemName,
+            //                 itemType: eachConfig.itemType,
+            //                 itemPicture: eachConfig.itemPicture
+            //             })
+            //         }
+            //     }
+            // }
 
             for (let eachItem of sealItemEntity) {
                 for (let eachConfig of fusionItemConfigEntityList) {
