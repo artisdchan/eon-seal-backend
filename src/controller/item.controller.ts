@@ -40,6 +40,8 @@ export default class ItemController {
                 errMsg = await itemService.insertAccountCashInventory(userMsgExEntity.userId, request.itemId, request.itemAmount, request.itemEffectCode, request.itemRefine)
             } else if (type == "bank") {
                 errMsg = await itemService.insertBackInventory(userMsgExEntity.userId, request.itemId, request.itemAmount, request.itemEffectCode, request.itemRefine)
+            } else if (type == "stack") {
+                errMsg = await itemService.insertStackItem(userMsgExEntity.userId, request.itemId, request.itemAmount, request.itemEffectCode, request.itemRefine)
             }
 
             if (errMsg != "") {
