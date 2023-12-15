@@ -15,6 +15,26 @@ export default class CashInventoryService {
 
     }
 
+    public findItemListInCashInventoryEntity = (itemIdList: number[], entity: CashInventory) => {
+       
+        let temp: any[] = []
+        const result = (Object.keys(entity) as (keyof typeof entity)[]).find((key) => {
+
+            for (let eachId of itemIdList) {
+                if (entity[key] == eachId) {
+                    if (key.includes("it")) {
+                        temp.push(key)
+                    }
+                }
+            }
+
+            
+        });
+
+        return temp;
+ 
+    }
+
     public findEmptySlotInCashInventoryntity = (entity: CashInventory) => {
 
         const result = (Object.keys(entity) as (keyof typeof entity)[]).find((key) => {

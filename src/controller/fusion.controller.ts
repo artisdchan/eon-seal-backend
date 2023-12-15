@@ -217,27 +217,31 @@ export default class FusionController {
             // Remove request item
 
             // Remove from character bag
-            for (let eachRequest of request.characterSelectedItemId) {
-                for (let eachCharacter of cashInventoryEntity) {
+            for (let eachCharacter of cashInventoryEntity) {
+                const toBeDeletePos = cashInventoryService.findItemListInCashInventoryEntity(request.characterSelectedItemId, eachCharacter)
 
-                    let updateObj = eachCharacter
-                    const toBeRemoveItemPosition = cashInventoryService.getAllDuplicatePosition(eachRequest, eachCharacter);
-                    if (toBeRemoveItemPosition.length <= 4) {
-                        for (let each of toBeRemoveItemPosition) {
-                            const amountPosition = cashInventoryService.findItemAmountPositionFromItemPosition(each, eachCharacter);
+                if (toBeDeletePos.length < request.characterSelectedItemId.length) {
+
+                }
+                
+            }
+
+            let toBeDeleteCount = 0
+            for (let eachRequest of request.characterSelectedItemId) {
+                for(let eachCharacter of cashInventoryEntity) {
+
+                    let updateObj: CashInventory = eachCharacter
+                    const toBeDeleteItemPosition = cashInventoryService.getAllDuplicatePosition(eachRequest, eachCharacter)
+                    for (let eachPos of toBeDeleteItemPosition) {
+                        if (toBeDeleteCount < request.characterSelectedItemId.length) {
+                            toBeDeleteCount ++
+                            const amountPosition = cashInventoryService.findItemAmountPositionFromItemPosition(eachPos, eachCharacter);
+                            const updateItem = cashInventoryService.setValueIntoCashInventoryEntity(eachPos, 0)
+                            const updateAmount = cashInventoryService.setValueIntoCashInventoryEntity(amountPosition, 0)
                             updateObj = {
                                 ...updateObj,
-                                ...cashInventoryService.setValueIntoCashInventoryEntity(each, 0),
-                                ...cashInventoryService.setValueIntoCashInventoryEntity(amountPosition, 0)
-                            }
-                        }
-                    } else {
-                        for (let i = 0; i < 4; i++) {
-                            const amountPosition = cashInventoryService.findItemAmountPositionFromItemPosition(toBeRemoveItemPosition[i], eachCharacter);
-                            updateObj = {
-                                ...updateObj,
-                                ...cashInventoryService.setValueIntoCashInventoryEntity(toBeRemoveItemPosition[i], 0),
-                                ...cashInventoryService.setValueIntoCashInventoryEntity(amountPosition, 0)
+                                ...updateItem,
+                                ...updateAmount
                             } 
                         }
                     }
@@ -248,6 +252,39 @@ export default class FusionController {
 
                 }
             }
+            // for (let eachRequest of request.characterSelectedItemId) {
+            //     for (let eachCharacter of cashInventoryEntity) {
+
+            //         let updateObj: CashInventory = eachCharacter
+            //         const toBeRemoveItemPosition = cashInventoryService.getAllDuplicatePosition(eachRequest, eachCharacter);
+            //         if (toBeRemoveItemPosition.length <= 4) {
+            //             for (let each of toBeRemoveItemPosition) {
+            //                 const amountPosition = cashInventoryService.findItemAmountPositionFromItemPosition(each, eachCharacter);
+            //                 const updateItem = cashInventoryService.setValueIntoCashInventoryEntity(each, 0)
+            //                 const updateAmount = cashInventoryService.setValueIntoCashInventoryEntity(amountPosition, 0)
+            //                 updateObj = {
+            //                     ...updateObj,
+            //                     ...updateItem,
+            //                     ...updateAmount
+            //                 }
+            //             }
+            //         } else {
+            //             for (let i = 0; i < 4; i++) {
+            //                 const amountPosition = cashInventoryService.findItemAmountPositionFromItemPosition(toBeRemoveItemPosition[i], eachCharacter);
+            //                 updateObj = {
+            //                     ...updateObj,
+            //                     ...cashInventoryService.setValueIntoCashInventoryEntity(toBeRemoveItemPosition[i], 0),
+            //                     ...cashInventoryService.setValueIntoCashInventoryEntity(amountPosition, 0)
+            //                 } 
+            //             }
+            //         }
+
+            //         await GDB0101DataSource.manager.getRepository(CashInventory).save({
+            //             ...updateObj
+            //         })
+
+            //     }
+            // }
 
             // Remove from account bag
             for (let eachRequest of request.accountSelectedItemId) {
