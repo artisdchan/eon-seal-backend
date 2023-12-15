@@ -15,7 +15,7 @@ export default class ItemService {
         // const cashItem = await ItemDataSource.manager.findOneBy(SealItem, { userId: userId, itemId: itemId });
         await ItemDataSource.manager.save(SealItem, {
             itemId: itemId,
-            ItemOp1: itemAmount - 1,
+            ItemOp1: itemAmount,
             ItemOp2: itemEffect,
             ItemLimit: itemLimit,
             userId: userId,
