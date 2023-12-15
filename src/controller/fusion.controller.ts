@@ -65,14 +65,17 @@ export default class FusionController {
 
             for (let eachCharacter of cashInventoryEntity) {
                 for (let eachConfig of fusionItemConfigEntityList) {
-                    if (cashInventoryService.findItemInCashInventoryntity(eachConfig.itemId, eachCharacter) != undefined) {
-                        characterBagResponse.push({
-                            itemId: eachConfig.itemId,
-                            itemLevel: eachConfig.itemLevel,
-                            itemName: eachConfig.itemName,
-                            itemType: eachConfig.itemType,
-                            itemPicture: eachConfig.itemPicture
-                        })
+                    const itemCount = cashInventoryService.countDuplicateItem(eachConfig.itemId, eachCharacter);
+                    if ( itemCount > 0) {
+                        for (let i = 0; i < itemCount; i++) {
+                            characterBagResponse.push({
+                                itemId: eachConfig.itemId,
+                                itemLevel: eachConfig.itemLevel,
+                                itemName: eachConfig.itemName,
+                                itemType: eachConfig.itemType,
+                                itemPicture: eachConfig.itemPicture
+                            })
+                        }
                     }
                 }
             }
