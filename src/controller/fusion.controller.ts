@@ -184,9 +184,8 @@ export default class FusionController {
             for (let eachRequest of request.characterSelectedItemId) {
                 for (let eachCharacter of cashInventoryEntity) { 
                     // each selected item id must exist in bag
-                    if (cashInventoryService.findItemInCashInventoryntity(eachRequest, eachCharacter) != undefined) {
-                        foundCount ++;
-                    }
+                    const found = cashInventoryService.countDuplicateItem(eachRequest, eachCharacter)
+                    foundCount += found
                 }
             }
 
@@ -214,17 +213,23 @@ export default class FusionController {
             // Remove from character bag
             for (let eachRequest of request.characterSelectedItemId) {
                 for (let eachCharacter of cashInventoryEntity) {
-                    const toBeRemoveItemPosition = cashInventoryService.findItemInCashInventoryntity(eachRequest, eachCharacter);
-                    const toBeRemoveAmountPosition = cashInventoryService.findItemAmountPositionInCashInventoryEntity(eachRequest, eachCharacter);
 
-                    const itemobj = (cashInventoryService.setValueIntoCashInventoryEntity(toBeRemoveItemPosition!, 0));
-                    const amountObj = (cashInventoryService.setValueIntoCashInventoryEntity(toBeRemoveAmountPosition!, 0));
+                    const toBeRemoveItemPosition = cashInventoryService.getAllDuplicatePosition(eachRequest, eachCharacter);
+
+                    let updateObj = eachCharacter
+                    for (let each of toBeRemoveItemPosition) {
+                        const amountPosition = cashInventoryService.findItemAmountPositionFromItemPosition(each, eachCharacter);
+                        updateObj = {
+                            ...updateObj,
+                            ...cashInventoryService.setValueIntoCashInventoryEntity(each, 0),
+                            ...cashInventoryService.setValueIntoCashInventoryEntity(amountPosition, 0)
+                        }
+                    }
 
                     await GDB0101DataSource.manager.getRepository(CashInventory).save({
-                        ...eachCharacter,
-                        ...itemobj,
-                        ...amountObj
+                        ...updateObj
                     })
+                    
                 }
             }
 
