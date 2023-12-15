@@ -168,12 +168,12 @@ export class PackageController {
                     if (eachItem.itemBag == PackageItemBag.IN_GAME_ITEM_INVENTORY) {
                         errMsg = await itemService.insertBackInventory(currentUser.gameUserId, eachItem.itemId, eachItem.itemAmount, eachItem.itemEffect, eachItem.itemRefineOrLimit);
                         if (errMsg != "") {
-                            log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_IN_GAME_INVENTORY", errMsg + `, ItemId: ${eachItem.itemId}`, log);
+                            log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_IN_GAME_INVENTORY", errMsg + `, ItemId: ${eachItem.itemId}, ItemAmount: ${eachItem.itemAmount}`, log);
                         }
                     } else if (eachItem.itemBag == PackageItemBag.ACCOUNT_CASH_INVENTORY) {
                         errMsg = await itemService.insertAccountCashInventory(currentUser.gameUserId, eachItem.itemId, eachItem.itemAmount, eachItem.itemEffect, eachItem.itemRefineOrLimit);
                         if (errMsg != "") {
-                            log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_CASH_INVENTORY", errMsg + `, ItemId: ${eachItem.itemId}`, log);
+                            log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_CASH_INVENTORY", errMsg + `, ItemId: ${eachItem.itemId}, ItemAmount: ${eachItem.itemAmount}`, log);
                         }
                     } else if (eachItem.itemBag == PackageItemBag.CHARACTER_CASH_INVENTORY) {
                         // errMsg = await this.insertCharacterCashInventory(currentUser.gameUserId, request.characterName, crystalShop.itemId, crystalShop.itemAmount);
@@ -185,36 +185,36 @@ export class PackageController {
                         const randomItem = await itemService.randomCostume(ItemLevel.COMMON);
                         errMsg = await itemService.insertAccountCashInventory(currentUser.gameUserId, randomItem.itemId, 1, 0, 0);
                         if (errMsg != "") {
-                            log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_INVENTORY", errMsg + `, ItemId: ${eachItem.itemId}`, log);
+                            log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_INVENTORY", errMsg + `, ItemId: ${eachItem.itemId}, ItemAmount: ${eachItem.itemAmount}`, log);
                         }
                     } else if (eachItem.itemBag == PackageItemBag.RANDOM_COSTUME_UNCOMMON) {
                         const randomItem = await itemService.randomCostume(ItemLevel.UNCOMMON);
                         errMsg = await itemService.insertAccountCashInventory(currentUser.gameUserId, randomItem.itemId, 1, 0, 0);
                         if (errMsg != "") {
-                            log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_INVENTORY", errMsg + `, ItemId: ${eachItem.itemId}`, log);
+                            log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_INVENTORY", errMsg + `, ItemId: ${eachItem.itemId}, ItemAmount: ${eachItem.itemAmount}`, log);
                         }
                     } else if (eachItem.itemBag == PackageItemBag.RANDOM_COSTUME_RARE) {
                         const randomItem = await itemService.randomCostume(ItemLevel.RARE);
                         errMsg = await itemService.insertAccountCashInventory(currentUser.gameUserId, randomItem.itemId, 1, 0, 0);
                         if (errMsg != "") {
-                            log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_INVENTORY", errMsg + `, ItemId: ${eachItem.itemId}`, log);
+                            log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_INVENTORY", errMsg + `, ItemId: ${eachItem.itemId}, ItemAmount: ${eachItem.itemAmount}`, log);
                         }
                     } else if (eachItem.itemBag == PackageItemBag.RANDOM_COSTUME_EPIC) {
                         const randomItem = await itemService.randomCostume(ItemLevel.EPIC);
                         errMsg = await itemService.insertAccountCashInventory(currentUser.gameUserId, randomItem.itemId, 1, 0, 0);
                         if (errMsg != "") {
-                            log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_INVENTORY", errMsg + `, ItemId: ${eachItem.itemId}`, log);
+                            log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_INVENTORY", errMsg + `, ItemId: ${eachItem.itemId}, ItemAmount: ${eachItem.itemAmount}`, log);
                         }
                     } else if (eachItem.itemBag == PackageItemBag.STACK_IN_GAME_ITEM) {
                         errMsg = await itemService.insertStackItem(currentUser.gameUserId, eachItem.itemId, eachItem.itemAmount, eachItem.itemEffect, eachItem.itemRefineOrLimit);
                         if (errMsg != "") {
-                            log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_INVENTORY", errMsg + `, ItemId: ${eachItem.itemId}`, log);
+                            log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_INVENTORY", errMsg + `, ItemId: ${eachItem.itemId}, ItemAmount: ${eachItem.itemAmount}`, log);
                         } 
                     } else {
                         // DO NOTHING
                     }
                     
-                    log = await logService.updateLogItemTransaction("ADD_ITEM_SUCCESS", `ItemId: ${eachItem.itemId}`, log);
+                    log = await logService.updateLogItemTransaction("ADD_ITEM_SUCCESS", `ItemId: ${eachItem.itemId}, ItemAmount: ${eachItem.itemAmount}`, log);
 
                 }
 
