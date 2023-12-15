@@ -139,6 +139,12 @@ export default class FusionController {
                 return res.status(400).json({ status: 400, message: 'Character is not found.' });
             }
 
+            for (let eachPc of pcEntityList) {
+                if (eachPc.play_flag > 0) {
+                    return res.status(400).json({ status: 400, message: 'Please wait 5 minutes after exit game.' })
+                }
+            }
+
             const characterName: string[] = [];
             pcEntityList.map((each) => characterName.push(each.char_name));
 
@@ -229,7 +235,7 @@ export default class FusionController {
                     await GDB0101DataSource.manager.getRepository(CashInventory).save({
                         ...updateObj
                     })
-                    
+
                 }
             }
 
