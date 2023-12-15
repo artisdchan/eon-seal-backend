@@ -66,7 +66,7 @@ export default class FusionController {
             for (let eachCharacter of cashInventoryEntity) {
                 for (let eachConfig of fusionItemConfigEntityList) {
                     const itemCount = cashInventoryService.countDuplicateItem(eachConfig.itemId, eachCharacter);
-                    if ( itemCount > 0) {
+                    if (itemCount > 0) {
                         for (let i = 0; i < itemCount; i++) {
                             characterBagResponse.push({
                                 itemId: eachConfig.itemId,
@@ -149,7 +149,7 @@ export default class FusionController {
             pcEntityList.map((each) => characterName.push(each.char_name));
 
             // Find cash item in cash_inventory by character names
-            const cashInventoryEntity = await GDB0101DataSource.manager.createQueryBuilder()
+            let cashInventoryEntity = await GDB0101DataSource.manager.createQueryBuilder()
                 .select("cashInventory")
                 .from(CashInventory, "cashInventory")
                 .where("cashInventory.char_name IN (:...charNames)", { charNames: characterName })
@@ -188,7 +188,7 @@ export default class FusionController {
             // Check request exists in character bag
             let foundCount = 0;
             for (let eachRequest of request.characterSelectedItemId) {
-                for (let eachCharacter of cashInventoryEntity) { 
+                for (let eachCharacter of cashInventoryEntity) {
                     // each selected item id must exist in bag
                     const found = cashInventoryService.countDuplicateItem(eachRequest, eachCharacter)
                     foundCount += found
@@ -221,20 +221,25 @@ export default class FusionController {
                 for (let eachCharacter of cashInventoryEntity) {
 
                     const toBeRemoveItemPosition = cashInventoryService.getAllDuplicatePosition(eachRequest, eachCharacter);
-
-                    let updateObj = eachCharacter
-                    for (let each of toBeRemoveItemPosition) {
-                        const amountPosition = cashInventoryService.findItemAmountPositionFromItemPosition(each, eachCharacter);
-                        updateObj = {
-                            ...updateObj,
-                            ...cashInventoryService.setValueIntoCashInventoryEntity(each, 0),
-                            ...cashInventoryService.setValueIntoCashInventoryEntity(amountPosition, 0)
+                    if (toBeRemoveItemPosition.length <= 4) {
+                        for (let each of toBeRemoveItemPosition) {
+                            const amountPosition = cashInventoryService.findItemAmountPositionFromItemPosition(each, eachCharacter);
+                            cashInventoryEntity = {
+                                ...cashInventoryEntity,
+                                ...cashInventoryService.setValueIntoCashInventoryEntity(each, 0),
+                                ...cashInventoryService.setValueIntoCashInventoryEntity(amountPosition, 0)
+                            }
+                        }
+                    } else {
+                        for (let i = 0; i < 4; i++) {
+                            const amountPosition = cashInventoryService.findItemAmountPositionFromItemPosition(toBeRemoveItemPosition[i], eachCharacter);
+                            cashInventoryEntity = {
+                                ...cashInventoryEntity,
+                                ...cashInventoryService.setValueIntoCashInventoryEntity(toBeRemoveItemPosition[i], 0),
+                                ...cashInventoryService.setValueIntoCashInventoryEntity(amountPosition, 0)
+                            } 
                         }
                     }
-
-                    await GDB0101DataSource.manager.getRepository(CashInventory).save({
-                        ...updateObj
-                    })
 
                 }
             }
@@ -525,7 +530,7 @@ export default class FusionController {
                 }
 
                 await logService.insertLogItemTransaction("FUSION_ITEM", "RE_ROLL_ITEM", "SUCCESS", currentUser.gameUserId, 'Re-roll fusion item complete.');
-                
+
                 return res.status(200).json({ status: 200, data: response });
 
             } else {
