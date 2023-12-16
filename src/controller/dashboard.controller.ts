@@ -179,10 +179,12 @@ export class DashboardController {
             let sumRc = 0
             const allRcFromInv = await (await this.countItemFromInventory(rcConfig));
             for (let each of allRcFromInv) {
+                console.log(each.amount)
                 sumRc += each.amount
             } 
             const allRcFromStore = await (await this.countItemFromStore(rcConfig));
             for (let each of allRcFromStore) {
+                console.log(each.amount)
                 sumRc += each.amount
             } 
 
