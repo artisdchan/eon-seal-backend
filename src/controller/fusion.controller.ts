@@ -245,12 +245,12 @@ export default class FusionController {
                                 ...updateItem,
                                 ...updateAmount
                             } 
+                            await GDB0101DataSource.manager.getRepository(CashInventory).save({
+                                ...updateObj
+                            })
+        
                         }
                     }
-
-                    await GDB0101DataSource.manager.getRepository(CashInventory).save({
-                        ...updateObj
-                    })
 
                 }
             }
