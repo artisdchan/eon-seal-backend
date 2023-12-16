@@ -42,6 +42,10 @@ export default class ItemController {
                 errMsg = await itemService.insertBackInventory(userMsgExEntity.userId, request.itemId, request.itemAmount, request.itemEffectCode, request.itemRefine)
             } else if (type == "stack") {
                 errMsg = await itemService.insertStackItem(userMsgExEntity.userId, request.itemId, request.itemAmount, request.itemEffectCode, request.itemRefine)
+            } else if (type == 'costume') {
+                // For costume type, itemId is level of costume to be randomed.
+                const costume = await itemService.randomCostume(request.itemId)
+                errMsg = await itemService.insertAccountCashInventory(userMsgExEntity.userId, costume.itemId, 1, 0, 0)
             }
 
             if (errMsg != "") {
