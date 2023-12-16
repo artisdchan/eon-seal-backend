@@ -217,14 +217,14 @@ export default class FusionController {
             // Remove request item
 
             // Remove from character bag
-            for (let eachCharacter of cashInventoryEntity) {
-                const toBeDeletePos = cashInventoryService.findItemListInCashInventoryEntity(request.characterSelectedItemId, eachCharacter)
+            // for (let eachCharacter of cashInventoryEntity) {
+            //     const toBeDeletePos = cashInventoryService.findItemListInCashInventoryEntity(request.characterSelectedItemId, eachCharacter)
 
-                if (toBeDeletePos.length < request.characterSelectedItemId.length) {
+            //     if (toBeDeletePos.length < request.characterSelectedItemId.length) {
 
-                }
+            //     }
                 
-            }
+            // }
 
             let toBeDeleteCount = 0
             for (let eachRequest of request.characterSelectedItemId) {
