@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { SealMemberDataSource } from "../data-source";
 import { AddItemRequestDTO } from "../dto/item.dto";
+import { ItemLevel } from "../entity/item/fusion_item.entity";
 import { usermsgex } from "../entity/seal_member/usermsgex.entity";
 import ItemService from "../service/item.service";
 import StoreService from "../service/store.service";
@@ -44,7 +45,8 @@ export default class ItemController {
                 errMsg = await itemService.insertStackItem(userMsgExEntity.userId, request.itemId, request.itemAmount, request.itemEffectCode, request.itemRefine)
             } else if (type == 'costume') {
                 // For costume type, itemId is level of costume to be randomed.
-                const costume = await itemService.randomCostume(request.itemId)
+                let itemLevel: ItemLevel = request.itemId
+                const costume = await itemService.randomCostume(itemLevel)
                 errMsg = await itemService.insertAccountCashInventory(userMsgExEntity.userId, costume.itemId, 1, 0, 0)
             }
 
