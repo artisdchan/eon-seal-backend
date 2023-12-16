@@ -156,7 +156,7 @@ export class DashboardController {
             const rubyConfig = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.RUBY_ITEM_ID_CONFIG }).getOne())?.configValue));
             let sumRuby = 0
             const allRubyFromInv = await (await this.countItemFromInventory(rubyConfig));
-            for (let each of allCrystalFromStore) {
+            for (let each of allRubyFromInv) {
                 sumRuby += each.amount
             } 
             const allRubyFromStore = await (await this.countItemFromStore(rubyConfig));
