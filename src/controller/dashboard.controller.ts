@@ -183,15 +183,26 @@ export class DashboardController {
 
         const inventoryEntity = await GDB0101DataSource.manager.find(inventory);
         for (let each of inventoryEntity) {
-            const amountPosition = inventoryService.findItemAmountPositionInInventoryEntity(itemId, each);
-            if (amountPosition != undefined) {
-                console.log(each.char_name)
+            const itemPos = inventoryService.getAllDuplicatePosition(itemId, each)
+            for (let eachPos of itemPos) {
+                const amountPos = inventoryService.findItemAmountPositionFromItemPosition(eachPos, each)
+
                 const user = await GDB0101DataSource.manager.findOneBy(pc, { char_name: each.char_name });
                 if (user != null) {
-                    accountItemFromInv.push({ userId: user.user_id, amount: Number(each[amountPosition]) + 1 });
+                    accountItemFromInv.push({ userId: user.user_id, amount: Number(each[amountPos]) + 1 });
                 }
             }
         }
+        // for (let each of inventoryEntity) {
+        //     const amountPosition = inventoryService.findItemAmountPositionInInventoryEntity(itemId, each);
+        //     if (amountPosition != undefined) {
+        //         console.log(each.char_name)
+        //         const user = await GDB0101DataSource.manager.findOneBy(pc, { char_name: each.char_name });
+        //         if (user != null) {
+        //             accountItemFromInv.push({ userId: user.user_id, amount: Number(each[amountPosition]) + 1 });
+        //         }
+        //     }
+        // }
 
         return accountItemFromInv;
 
@@ -204,9 +215,10 @@ export class DashboardController {
 
         const storeEntity = await GDB0101DataSource.manager.find(store);
         for (let each of storeEntity) {
-            const amountPosition = storeService.findItemAmountPositionInStoreEntity(itemId, each);
-            if (amountPosition != undefined) {
-                accountItemFromStore.push({ userId: each.user_id, amount: Number(each[amountPosition]) + 1 });
+            const itemPos = storeService.getAllDuplicatePosition(itemId, each)
+            for (let eachPos of itemPos) {
+                const amountPos = storeService.findItemAmountPositionFromItemPosition(eachPos, each)
+                accountItemFromStore.push({ userId: each.user_id, amount: Number(each[amountPos]) + 1 });
             }
         }
 
