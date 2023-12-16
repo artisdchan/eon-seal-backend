@@ -44,14 +44,11 @@ export default class FusionController {
             pcEntityList.map((each) => characterName.push(each.char_name));
 
             // Find cash item in cash_inventory by character names
-            let cashInventoryEntity: CashInventory[] = []
-            if (characterName == null) {
-                cashInventoryEntity = await GDB0101DataSource.manager.createQueryBuilder()
-                    .select("cashInventory")
-                    .from(CashInventory, "cashInventory")
-                    .where("cashInventory.char_name IN (:...charNames)", { charNames: characterName })
-                    .getMany();
-            }
+            const cashInventoryEntity = await GDB0101DataSource.manager.createQueryBuilder()
+                .select("cashInventory")
+                .from(CashInventory, "cashInventory")
+                .where("cashInventory.char_name IN (:...charNames)", { charNames: characterName })
+                .getMany();
 
             const sealItemEntity = await ItemDataSource.manager.findBy(SealItem, { userId: currentUser.gameUserId });
             if (cashInventoryEntity == null && sealItemEntity == null) {
@@ -231,7 +228,7 @@ export default class FusionController {
                         ...cashInventoryService.setValueIntoCashInventoryEntity(toBeDeleteItemPosition!, 0),
                         ...cashInventoryService.setValueIntoCashInventoryEntity(amountPosition, 0)
                     }
-
+                    
                 }
                 await GDB0101DataSource.manager.getRepository(CashInventory).save({
                     ...updateObj
