@@ -20,8 +20,8 @@ class DashboardRoutes {
     }
 
     intializeRoutes() {
-        this.router.get("/", passport.authenticate('jwt'), checkLimitUserLevel(99), this.cache('6 hour', this.onlyStatus200), this.controller.dashboard);
-        this.router.get('/serverinfo', passport.authenticate('jwt'), checkLimitUserLevel(99), this.cache('6 hour', this.onlyStatus200), this.controller.serverInfo);
+        this.router.get("/", passport.authenticate('jwt'), checkLimitUserLevel(99), this.controller.dashboard);
+        this.router.get('/serverinfo', passport.authenticate('jwt'), checkLimitUserLevel(99), this.controller.serverInfo);
     }
 
 }
