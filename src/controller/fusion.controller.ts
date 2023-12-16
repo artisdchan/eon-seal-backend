@@ -231,13 +231,13 @@ export default class FusionController {
                 for(let eachCharacter of cashInventoryEntity) {
 
                     let updateObj: CashInventory = eachCharacter
-                    const toBeDeleteItemPosition = cashInventoryService.getAllDuplicatePosition(eachRequest, eachCharacter)
+                    const toBeDeleteItemPosition = cashInventoryService.getAllDuplicatePosition(eachRequest, updateObj)
                     for (let eachPos of toBeDeleteItemPosition) {
                         console.log(`to be delete count: ${toBeDeleteCount}`)
                         console.log(request.characterSelectedItemId.length)
                         if (toBeDeleteCount < request.characterSelectedItemId.length) {
                             toBeDeleteCount ++
-                            const amountPosition = cashInventoryService.findItemAmountPositionFromItemPosition(eachPos, eachCharacter);
+                            const amountPosition = cashInventoryService.findItemAmountPositionFromItemPosition(eachPos, updateObj);
                             const updateItem = cashInventoryService.setValueIntoCashInventoryEntity(eachPos, 0)
                             const updateAmount = cashInventoryService.setValueIntoCashInventoryEntity(amountPosition, 0)
                             updateObj = {
