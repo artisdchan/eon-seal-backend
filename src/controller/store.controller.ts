@@ -269,9 +269,10 @@ export default class StoreController {
                     return res.status(400).json({ status: 400, message: 'Configuration is not found.' })
                 }
 
-                if (storeEntity.segel < Number(cegelTaxConfig.configValue)) {
+                const cegelToBeRemove = request.amount * Number(cegelTaxConfig)
+                if (storeEntity.segel < cegelToBeRemove) {
                     log = await logService.updateLogItemTransaction("PREPARE_CALCULATE_CRYSTAL", 'Insufficient cegel.', log);
-                    return res.status(400).json({ status: 400, message: 'Insufficient cegel.' })
+                    return res.status(400).json({ status: 400, message: `Insufficient cegel. Reqired cegel: ${cegelToBeRemove}` })
                 }
 
                 const crystalItemIdQuery = await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config').where('config.config_key = :key', { key: WebConfigConstant.CRYSTAL_ITEM_ID_CONFIG }).getOne();
