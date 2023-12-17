@@ -60,7 +60,26 @@ export class DashboardController {
                     itemId = Number((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.DIAMOND_ITEM_ID_CONFIG }).getOne())?.configValue);
                 } else if (topListType == TopListType.RC) {
                     itemId = Number((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.RC_ITEM_ID_CONFIG }).getOne())?.configValue);
+                } else if (topListType == TopListType.G4) {
+                    itemId = 5362
+                } else if (topListType == TopListType.G5) {
+                    itemId = 5363
+                } else if (topListType == TopListType.G6) {
+                    itemId = 5364
+                } else if (topListType == TopListType.G7) {
+                    itemId = 5365
+                } else if (topListType == TopListType.G8) {
+                    itemId = 5366
+                } else if (topListType == TopListType.G10) {
+                    itemId = 5368
+                } else if (topListType == TopListType.G12) {
+                    itemId = 5370
+                } else if (topListType == TopListType.G13) {
+                    itemId = 5371
+                } else if (topListType == TopListType.G14) {
+                    itemId = 5372
                 }
+                
                 const countItemFromInventory: AccountItemAmountDTO[] = await this.countItemFromInventory(itemId);
                 const countItemFromStore: AccountItemAmountDTO[] = await this.countItemFromStore(itemId);
                 let result: AccountItemAmountDTO[] = [];
@@ -90,32 +109,6 @@ export class DashboardController {
                         amount: value
                     })
                 })
-
-                // if (countItemFromInventory.length != 0) {
-
-                //     for (let eachInv of countItemFromInventory) {
-
-                //         let found = false;
-                //         for (let eachStore of countItemFromStore) {
-                //             if (eachInv.userId == eachStore.userId) {
-                //                 found = true;
-                //                 result.push({ userId: eachInv.userId, amount: eachInv.amount + eachStore.amount });
-                //             }
-                //         }
-
-                //         if (!found) {
-                //             result.push({ userId: eachInv.userId, amount: eachInv.amount });
-                //         }
-
-                //     }
-
-                // } else {
-
-                //     for (let eachStore of countItemFromStore) {
-                //         result.push({ userId: eachStore.userId, amount: eachStore.amount });
-                //     }
-
-                // }
 
                 if (result.length > 0) {
 

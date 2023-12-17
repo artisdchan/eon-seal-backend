@@ -11,7 +11,16 @@ export enum TopListType {
     CEGEL = 'CEGEL',
     DIAMOND = 'DIAMOND',
     RC = 'RC',
-    CASH = 'CASH'
+    CASH = 'CASH',
+    G4 = 'G4',
+    G5 = 'G5',
+    G6 = 'G6',
+    G7 = 'G7',
+    G8 = 'G8',
+    G10 = 'G10',
+    G12 = 'G12',
+    G13 = 'G13',
+    G14 = 'G14'
 }
 
 export type AllMoney = {
