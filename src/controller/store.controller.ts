@@ -352,7 +352,7 @@ export default class StoreController {
                 webUserDetail.crystalPoint += request.amount;
                 await SealMemberDataSource.manager.save(webUserDetail);
 
-                log = await logService.updateLogItemTransaction("CONVERT_CRYSTAL_COMPLETE", `Old Crystal Point: ${webUserDetail.crystalPoint - request.amount}, New Crystal Point: ${webUserDetail.crystalPoint}`, log);
+                log = await logService.updateLogItemTransaction("CONVERT_CRYSTAL_COMPLETE", `Old Crystal Point: ${webUserDetail.crystalPoint - request.amount}, New Crystal Point: ${webUserDetail.crystalPoint}, Remove Cegel Amount: ${cegelToBeRemove}`, log);
 
             } else if (request.convertType == ConvertRCType.CP_TO_CRYSTAL) {
 
