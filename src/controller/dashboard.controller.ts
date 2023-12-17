@@ -49,7 +49,9 @@ export class DashboardController {
                     response.push({ userId: each.userId, amount: each.amount });
                 }
 
-            } else if (topListType == TopListType.CRYSTAL || topListType == TopListType.RUBY || topListType == TopListType.DIAMOND || topListType == TopListType.RC) {
+            } else if (topListType == TopListType.CRYSTAL || topListType == TopListType.RUBY || topListType == TopListType.DIAMOND || topListType == TopListType.RC ||
+                topListType == TopListType.G4 || topListType == TopListType.G5 || topListType == TopListType.G6 || topListType == TopListType.G7 || topListType == TopListType.G8 ||
+                topListType == TopListType.G10 || topListType == TopListType.G12 || topListType == TopListType.G13 || topListType == TopListType.G14) {
 
                 let itemId = 27232;
                 if (topListType == TopListType.CRYSTAL) {
@@ -79,7 +81,7 @@ export class DashboardController {
                 } else if (topListType == TopListType.G14) {
                     itemId = 5372
                 }
-                
+
                 const countItemFromInventory: AccountItemAmountDTO[] = await this.countItemFromInventory(itemId);
                 const countItemFromStore: AccountItemAmountDTO[] = await this.countItemFromStore(itemId);
                 let result: AccountItemAmountDTO[] = [];
