@@ -61,35 +61,61 @@ export class DashboardController {
                 } else if (topListType == TopListType.RC) {
                     itemId = Number((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.RC_ITEM_ID_CONFIG }).getOne())?.configValue);
                 }
-                const countItemFromInventory = await this.countItemFromInventory(itemId);
-                const countItemFromStore = await this.countItemFromStore(itemId);
+                const countItemFromInventory: AccountItemAmountDTO[] = await this.countItemFromInventory(itemId);
+                const countItemFromStore: AccountItemAmountDTO[] = await this.countItemFromStore(itemId);
                 let result: AccountItemAmountDTO[] = [];
 
-                if (countItemFromInventory.length != 0) {
-
-                    for (let eachInv of countItemFromInventory) {
-
-                        let found = false;
-                        for (let eachStore of countItemFromStore) {
-                            if (eachInv.userId == eachStore.userId) {
-                                found = true;
-                                result.push({ userId: eachInv.userId, amount: eachInv.amount + eachStore.amount });
-                            }
-                        }
-
-                        if (!found) {
-                            result.push({ userId: eachInv.userId, amount: eachInv.amount });
-                        }
-
-                    }
-
-                } else {
-
-                    for (let eachStore of countItemFromStore) {
-                        result.push({ userId: eachStore.userId, amount: eachStore.amount });
-                    }
-
+                let storeMap = new Map<string, number>();
+                for (let eachStore of countItemFromStore) {
+                    storeMap.set(eachStore.userId, eachStore.amount)
                 }
+
+                let invMap = new Map<string, number>();
+                for (let eachInv of countItemFromInventory) {
+                    invMap.set(eachInv.userId, eachInv.amount)
+                }
+
+                let resMap = new Map([...storeMap])
+                invMap.forEach((value, key) => { 
+                    if (resMap.has(key)) { 
+                        resMap.set(key, resMap.get(key)! + value); 
+                    } else { 
+                        resMap.set(key, value); 
+                    } 
+                }); 
+
+                resMap.forEach((value, key) => {
+                    result.push({
+                        userId: key,
+                        amount: value
+                    })
+                })
+
+                // if (countItemFromInventory.length != 0) {
+
+                //     for (let eachInv of countItemFromInventory) {
+
+                //         let found = false;
+                //         for (let eachStore of countItemFromStore) {
+                //             if (eachInv.userId == eachStore.userId) {
+                //                 found = true;
+                //                 result.push({ userId: eachInv.userId, amount: eachInv.amount + eachStore.amount });
+                //             }
+                //         }
+
+                //         if (!found) {
+                //             result.push({ userId: eachInv.userId, amount: eachInv.amount });
+                //         }
+
+                //     }
+
+                // } else {
+
+                //     for (let eachStore of countItemFromStore) {
+                //         result.push({ userId: eachStore.userId, amount: eachStore.amount });
+                //     }
+
+                // }
 
                 if (result.length > 0) {
 
@@ -151,29 +177,29 @@ export class DashboardController {
             const allCrystalFromStore = await (await this.countItemFromStore(crystalConfig));
             for (let each of allCrystalFromStore) {
                 sumCrystal += each.amount
-            } 
+            }
             //  Get all Ruby
             const rubyConfig = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.RUBY_ITEM_ID_CONFIG }).getOne())?.configValue));
             let sumRuby = 0
             const allRubyFromInv = await (await this.countItemFromInventory(rubyConfig));
             for (let each of allRubyFromInv) {
                 sumRuby += each.amount
-            } 
+            }
             const allRubyFromStore = await (await this.countItemFromStore(rubyConfig));
             for (let each of allRubyFromStore) {
                 sumRuby += each.amount
-            } 
+            }
             //  Get all Diamond
             const diamondConfig = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.DIAMOND_ITEM_ID_CONFIG }).getOne())?.configValue));
             let sumDiamond = 0
             const allDiamondFromInv = await (await this.countItemFromInventory(diamondConfig));
             for (let each of allDiamondFromInv) {
                 sumDiamond += each.amount
-            } 
+            }
             const allDiamondFromStore = await (await this.countItemFromStore(diamondConfig));
             for (let each of allDiamondFromStore) {
                 sumDiamond += each.amount
-            } 
+            }
             //  Get all RC
             const rcConfig = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.RC_ITEM_ID_CONFIG }).getOne())?.configValue));
             let sumRc = 0
@@ -181,12 +207,12 @@ export class DashboardController {
             for (let each of allRcFromInv) {
                 console.log(each.amount)
                 sumRc += each.amount
-            } 
+            }
             const allRcFromStore = await (await this.countItemFromStore(rcConfig));
             for (let each of allRcFromStore) {
                 console.log(each.amount)
                 sumRc += each.amount
-            } 
+            }
 
             const response: ServerInfoResponseDTO = {
                 allOnlinePlayer: countOnlinePlayer,
