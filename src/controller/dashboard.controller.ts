@@ -159,7 +159,7 @@ export class DashboardController {
             const queryAllCash = await SealMemberDataSource.manager.getRepository(usermsgex).createQueryBuilder('user')
                 .select('SUM(user.gold)', 'amount').getRawOne();
             //  Get all Cegel
-            const queryAllCelgel = await GDB0101DataSource.manager.query('select SUM(p.money + ifnull(0, gs.segel)) as amount from pc p left join guildinfo g on p.char_name = g.mastername left join guildstore gs  on g.name = gs.guildname ') as unknown as AllMoney[];
+            const queryAllCelgel = await GDB0101DataSource.manager.query('select p.user_id, SUM(p.money + ifnull(0, gs.segel) + s.segel) as amount from pc p left join guildinfo g on p.char_name = g.mastername left join guildstore gs  on g.name = gs.guildname LEFT JOIN store s on p.user_id = s.user_id group by p.user_id order by amount desc ') as unknown as AllMoney[];
             // const allCelgelAmount = queryAllCelgel.reduce((sum, each) => sum + each.amount, 0);
             const allCelgelAmount = queryAllCelgel[0].amount
             //  Get all Crystal
