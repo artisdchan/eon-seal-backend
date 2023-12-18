@@ -29,10 +29,12 @@ export default class AuthController {
                 return res.status(404).json({ status: 404, message: 'User ID is not exist.', email: googleResponse.email })
             } else {
 
-                const userWeb = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: userMsgExEntity.userId });
+                const userWeb = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: userMsgExEntity.userId, status: 'ACTIVE' });
                 let userLevel = 0;
                 if (userWeb != null) {
                     userLevel = userWeb.userLevel
+                } else {
+                    return res.status(400).json({ status: 400, message: 'invalid username or password' })
                 }
 
                 const dbUtils = new DBUtils();

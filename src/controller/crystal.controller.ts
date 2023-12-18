@@ -45,7 +45,7 @@ export default class CrystalController {
 
             const request = req.body as PurchaseCrystalShopRequestDTO;
 
-            const webUserDetail = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: currentUser.gameUserId });
+            const webUserDetail = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: currentUser.gameUserId, status: 'ACTIVE' });
             if (webUserDetail == null) {
                 log = await logService.updateLogItemTransaction("FAIL", 'User ID is not exist.', log);
                 return res.status(400).json({ status: 400, message: 'User is not found.' });
@@ -476,7 +476,7 @@ export default class CrystalController {
             const currentUser = req.user as AuthenUser;
             const storeService = new StoreService();
 
-            const webUserDetail = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: currentUser.gameUserId });
+            const webUserDetail = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: currentUser.gameUserId, status: 'ACTIVE' });
             if (webUserDetail == null) {
                 return res.status(400).json({ status: 400, message: 'User is not found.' });
             }

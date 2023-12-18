@@ -345,7 +345,7 @@ export default class StoreController {
                 }
 
                 log = await logService.updateLogItemTransaction("UPDATE_CRYSTAL_POINT", undefined, log);
-                const webUserDetail = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: currentUser.gameUserId });
+                const webUserDetail = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: currentUser.gameUserId, status: 'ACTIVE' });
                 if (webUserDetail == null) {
                     log = await logService.updateLogItemTransaction("UPDATE_CRYSTAL_POINT", 'User is not found.', log);
                     return res.status(400).json({ status: 400, message: 'User is not found.' });
@@ -370,7 +370,7 @@ export default class StoreController {
 
                 log = await logService.updateLogItemTransaction("CP_TO_CRYSTAL", undefined, log);
 
-                const webUserDetail = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: currentUser.gameUserId });
+                const webUserDetail = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: currentUser.gameUserId, status: 'ACTIVE' });
                 if (webUserDetail == null) {
                     log = await logService.updateLogItemTransaction("UPDATE_CRYSTAL_POINT", 'User is not found.', log);
                     return res.status(400).json({ status: 400, message: 'User is not found.' });
@@ -502,7 +502,7 @@ export default class StoreController {
             }
 
             log = await logService.updateLogItemTransaction("UPDATE_CRYSTAL_POINT", undefined, log);
-            const webUserDetail = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: currentUser.gameUserId });
+            const webUserDetail = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: currentUser.gameUserId, status: 'ACTIVE' });
             if (webUserDetail == null) {
                 log = await logService.updateLogItemTransaction("UPDATE_CRYSTAL_POINT", 'User is not found.', log);
                 return res.status(400).json({ status: 400, message: 'User is not found.' });

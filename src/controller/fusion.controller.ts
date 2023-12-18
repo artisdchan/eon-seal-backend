@@ -250,7 +250,7 @@ export default class FusionController {
             } else {
                 tobeAddCostume = await this.randomCostume(currentItemLevel);
                 const webUserDetailEntity = await SealMemberDataSource.manager.findOneBy(WebUserDetail, {
-                    user_id: currentUser.gameUserId
+                    user_id: currentUser.gameUserId, status: 'ACTIVE'
                 });
                 if (webUserDetailEntity == null) {
                     return res.status(400).json({ status: 400, message: 'User is not found.' })
@@ -339,7 +339,7 @@ export default class FusionController {
 
             const condShardAmount = 25;
             const webUserDetailEntity = await SealMemberDataSource.manager.findOneBy(WebUserDetail, {
-                user_id: currentUser.gameUserId
+                user_id: currentUser.gameUserId, status: 'ACTIVE'
             });
             if (webUserDetailEntity == null) {
                 return res.status(400).json({ status: 400, message: 'User is not found.' })

@@ -120,7 +120,7 @@ export class PackageController {
             const { packageId } = req.params;
             const currentUser = req.user as AuthenUser;
 
-            const webUserDetailEntity = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: currentUser.gameUserId })
+            const webUserDetailEntity = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: currentUser.gameUserId, status: 'ACTIVE' })
             if (webUserDetailEntity == null) {
                 return res.status(400).json({ status: 400, message: 'user not found.' })
             }

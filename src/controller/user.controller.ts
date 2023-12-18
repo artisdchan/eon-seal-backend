@@ -392,7 +392,7 @@ export default class UserController {
                 await GDB0101DataSource.initialize();
             }
 
-            const userDetail = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: currentUser.gameUserId });
+            const userDetail = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: currentUser.gameUserId, status: 'ACTIVE' });
             if (userDetail == null) {
                 return res.status(400).json({ status: 400, message: 'User is not found.' })
             }
@@ -459,7 +459,7 @@ export default class UserController {
                 charNames.push(each.char_name)
             }
 
-            const userWeb = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: String(usr.userId) })
+            const userWeb = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: String(usr.userId), status: 'ACTIVE' })
             if (userWeb == null) {
                 return res.status(400).json({ status: 400, message: 'user not found' })
             }
@@ -502,7 +502,7 @@ export default class UserController {
                 return res.status(400).json({ status: 400, message: 'user not found' })
             }
 
-            const webUser = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: usermsgexEntity.userId })
+            const webUser = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: usermsgexEntity.userId, status: 'ACTIVE' })
             if (webUser == null) {
                 console.error('add topup credit: user not found')
                 return res.status(400).json({ status: 400, message: 'user not found' })
