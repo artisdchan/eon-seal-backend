@@ -46,6 +46,8 @@ export type UserDetailResponseDTO = {
 export type UserInfoResponseDTO = {
     gameUserId: string
     characterNames: string[]
+    cpAmount: number
+    cegelAmount: number
 }
 
 export type AddTopupCreditRequestDTO = {
