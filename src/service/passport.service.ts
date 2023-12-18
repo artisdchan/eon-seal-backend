@@ -37,7 +37,7 @@ passport.deserializeUser(async (id: AuthenUser, done) => {
 
         } else {
 
-            const userWeb = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: id.gameUserId });
+            const userWeb = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: id.gameUserId, status: 'ACTIVE' });
             let userLevel = 0;
             if (userWeb != null) {
                 userLevel = userWeb.userLevel
@@ -81,10 +81,12 @@ passport.use('password', new LocalStrategy(
             return done(null, false, { message: 'Invalid username or password.' });
         }
 
-        const userWeb = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: username });
+        const userWeb = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: username, status: 'ACTIVE' });
         let userLevel = 0;
         if (userWeb != null) {
             userLevel = userWeb.userLevel
+        }else {
+            return done(null, false, { message: 'Invalid username or password' })
         }
 
         done(null, {
@@ -115,7 +117,7 @@ passport.use(new JwtStrategy({
                 return done(null, false);
             }
 
-            const userWeb = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: jwtPayload.user.gameUserId });
+            const userWeb = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: jwtPayload.user.gameUserId, status: 'ACTIVE' });
             let userLevel = 0;
             if (userWeb != null) {
                 userLevel = userWeb.userLevel

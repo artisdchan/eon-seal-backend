@@ -36,4 +36,7 @@ export class WebUserDetail {
     @Column({ name: 'total_topup' })
     totalTopup!: number
 
+    @Column({ name: 'status' })
+    status!: string
+    
 }
