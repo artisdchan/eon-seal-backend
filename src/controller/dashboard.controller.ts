@@ -116,7 +116,7 @@ export class DashboardController {
 
                     result.sort((n1, n2) => { return n1.amount < n2.amount ? 1 : -1 });
 
-                    let size = 10;
+                    let size = 50;
                     if (size > result.length) {
                         size = result.length
                     }
