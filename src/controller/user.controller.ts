@@ -41,6 +41,10 @@ export default class UserController {
                 return next(null);
             }
 
+            const reg = /^[a-zA-Z]/
+            if (!reg.test(request.username)) {
+                return res.status(400).json({ status: 400, message: 'invalid username' })
+            }
 
             const dbUtils = new DBUtils();
             if (!SealMemberDataSource.isInitialized) {
