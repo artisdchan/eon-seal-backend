@@ -269,7 +269,7 @@ export default class StoreController {
                     return res.status(400).json({ status: 400, message: 'Configuration is not found.' })
                 }
 
-                const cegelToBeRemove = Number(request.amount * Number(cegelTaxConfig))
+                const cegelToBeRemove = Number(request.amount * Number(cegelTaxConfig.configValue))
                 if (storeEntity.segel < cegelToBeRemove) {
                     log = await logService.updateLogItemTransaction("PREPARE_CALCULATE_CRYSTAL", 'Insufficient cegel.', log);
                     return res.status(400).json({ status: 400, message: `Insufficient cegel. Reqired cegel: ${cegelToBeRemove}` })
