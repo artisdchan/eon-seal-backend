@@ -1,5 +1,6 @@
 import fetch from "node-fetch"
 import { URLSearchParams } from "url"
+import { EONHubResponse } from "../dto/eon.dto"
 import { EONHUB_API_KEY, EONHUB_BACKEND_URL } from "../utils/secret.utils"
 
 export default class EonHubService {
@@ -26,6 +27,24 @@ export default class EonHubService {
             console.error(error);
             return false;
         }
+    }
+
+    public addEonPoint = async (email: string, eonPointAmount: number) : Promise<EONHubResponse> => {
+       
+        const response = await fetch(`${EONHUB_BACKEND_URL}/api/user/addeon`, {
+            method: 'POST',
+            headers: {
+                'API-KEY': EONHUB_API_KEY,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                email: email,
+                eonPointAmount: eonPointAmount
+            })
+        });
+
+        return await response.json() as EONHubResponse
+  
     }
 
 }

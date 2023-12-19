@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { GDB0101DataSource, ItemDataSource, SealMemberDataSource } from "../data-source";
-import { BuyBackCpRequest, ItemDetail, MarketItemResponseDTO } from "../dto/market.dto";
+import { BuyBackCpRequest, ItemDetail, MarketItemResponseDTO, RemoveItemRequest, ValidateItemRequest } from "../dto/market.dto";
 import { CashInventory } from "../entity/gdb0101/cash_inventory.entity";
 import { pc } from "../entity/gdb0101/pc.entity";
 import { store } from "../entity/gdb0101/store.entity";
@@ -151,7 +151,7 @@ export default class MarketController {
                 characterBag: charBag
             }
 
-            return res.status(200).json({ status: 200, data: response})
+            return res.status(200).json({ status: 200, data: response })
 
         } catch (error) {
             console.error(error);
@@ -160,9 +160,9 @@ export default class MarketController {
     }
 
     public buyBackCp = async (req: Request, res: Response) => {
-        
+
         try {
-           
+
             const requestApiKey = req.get('API-KEY') as string;
             if (requestApiKey != EONHUB_API_KEY) {
                 console.error('Invalid API-KEY.');
@@ -172,7 +172,7 @@ export default class MarketController {
             const logService = new LogService()
             const request = req.body as BuyBackCpRequest
 
-            const webUser = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: request.gameUserId})
+            const webUser = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: request.gameUserId, status: 'ACTIVE' })
             if (webUser == null) {
                 return res.status(400).json({ status: 400, message: 'invalid game user' })
             }
@@ -204,7 +204,199 @@ export default class MarketController {
             await logService.updateLogItemTransaction("DONE", `Successfuly swap ${request.cpAmount} CP to EON Point.`, log)
 
             return res.status(200).json({ status: 200, data: null })
- 
+
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ status: 500, message: 'internal server error' });
+        }
+    }
+
+    public validateItem = async (req: Request, res: Response) => {
+        try {
+
+            const requestApiKey = req.get('API-KEY') as string;
+            if (requestApiKey != EONHUB_API_KEY) {
+                console.error('Invalid API-KEY.');
+                return res.status(401).json({ status: 401, message: 'unauthorized' });
+            }
+
+            const request = req.body as ValidateItemRequest
+
+            const whiteListItem = await ItemDataSource.manager.findOneBy(MarketWhiteList, { itemId: request.itemId, itemBag: request.itemBag })
+            if (whiteListItem == null) {
+                return res.status(400).json({ status: 400, message: 'invalid item.' })
+            }
+
+            const userMsgExEntity = await SealMemberDataSource.manager.findOneBy(usermsgex, { email: request.email })
+            if (userMsgExEntity == null) {
+                return res.status(400).json({ status: 400, message: 'invalid user' })
+            }
+
+            // Find Character name
+            const pcEntityList = await GDB0101DataSource.manager.findBy(pc, { user_id: userMsgExEntity.userId });
+            if (pcEntityList == null) {
+                return res.status(400).json({ status: 400, message: 'Character is not found.' });
+            }
+
+            for (let eacPc of pcEntityList) {
+                if (eacPc.play_flag > 0) {
+                    return res.status(400).json({ status: 400, message: 'Please offline and wait 5 minutes before further process.' })
+                }
+            }
+
+            const characterName: string[] = [];
+            pcEntityList.map((each) => characterName.push(each.char_name));
+
+            let response: ItemDetail
+
+            if (request.itemBag == WhiteListItemBag.CHARACTER_CASH_INVENTORY) {
+                const cashInventoryService = new CashInventoryService()
+                // Find cash item in cash_inventory by character names
+                const cashInventoryEntity = await GDB0101DataSource.manager.createQueryBuilder()
+                    .select("cashInventory")
+                    .from(CashInventory, "cashInventory")
+                    .where("cashInventory.char_name IN (:...charNames)", { charNames: characterName })
+                    .getMany();
+
+                for (let eachCashInv of cashInventoryEntity) {
+                    const itemPosition = cashInventoryService.getAllDuplicatePosition(whiteListItem.itemId, eachCashInv);
+                    for (let eachItemPos of itemPosition) {
+                        const itemEffectPos = cashInventoryService.findItemEffectPositionInStoreEntity(eachItemPos, eachCashInv)
+                        const itemRefinePos = cashInventoryService.findItemRefinePositionInStoreEntity(eachItemPos, eachCashInv)
+                        const itemOptionPos = cashInventoryService.findItemAmountPositionFromItemPosition(eachItemPos, eachCashInv)
+
+                        if (Number(eachCashInv[itemEffectPos]) == request.itemEffectCode && Number(eachCashInv[itemRefinePos]) == request.itemRefine && Number(eachCashInv[itemOptionPos]) == request.itemOption) {
+                            response = {
+                                itemId: whiteListItem.itemId,
+                                itemName: whiteListItem.itemName,
+                                refineLevel: Number(eachCashInv[itemRefinePos]),
+                                itemEffectCode: Number(eachCashInv[itemEffectPos]),
+                                // TODO translate effect code
+                                itemEffectMessage: '',
+                                itemOption: Number(eachCashInv[itemOptionPos]),
+                                itemPictureUrl: whiteListItem.itemPictureUrl,
+                                itemBag: whiteListItem.itemBag,
+                                itemType: whiteListItem.itemType,
+                                itemAmount: 1
+                            }
+                            return res.status(200).json({ status: 200, data: response })
+                        }
+                    }
+                }
+
+            } else if (request.itemBag == WhiteListItemBag.ACCOUNT_CASH_INVENTORY) {
+
+                const sealItemEntity = await ItemDataSource.manager.findOneBy(SealItem, { userId: userMsgExEntity.userId, itemId: request.itemId, ItemOp1: request.itemOption, ItemOp2: request.itemEffectCode, ItemLimit: request.itemRefine });
+                if (sealItemEntity != null) {
+                    response = {
+                        itemId: whiteListItem.itemId,
+                        itemName: whiteListItem.itemName,
+                        refineLevel: sealItemEntity.ItemLimit,
+                        itemOption: sealItemEntity.ItemOp1,
+                        itemEffectCode: Number(sealItemEntity.ItemOp2),
+                        itemEffectMessage: '',
+                        itemPictureUrl: whiteListItem.itemPictureUrl,
+                        itemBag: whiteListItem.itemBag,
+                        itemType: whiteListItem.itemType,
+                        itemAmount: sealItemEntity.ItemOp1
+                    }
+                    return res.status(200).json({ status: 200, data: response })
+                }
+            }
+
+            return res.status(400).json({ status: 400, message: 'invalid item' })
+
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ status: 500, message: 'internal server error' });
+        }
+    }
+
+    public removeItem = async (req: Request, res: Response) => {
+        try {
+
+            const requestApiKey = req.get('API-KEY') as string;
+            if (requestApiKey != EONHUB_API_KEY) {
+                console.error('Invalid API-KEY.');
+                return res.status(401).json({ status: 401, message: 'unauthorized' });
+            }
+
+            const request = req.body as RemoveItemRequest
+
+            const whiteListItem = await ItemDataSource.manager.findOneBy(MarketWhiteList, { itemId: request.itemId, itemBag: request.itemBag })
+            if (whiteListItem == null) {
+                return res.status(400).json({ status: 400, message: 'invalid item.' })
+            }
+
+            const userMsgExEntity = await SealMemberDataSource.manager.findOneBy(usermsgex, { email: request.email })
+            if (userMsgExEntity == null) {
+                return res.status(400).json({ status: 400, message: 'invalid user' })
+            }
+
+            // Find Character name
+            const pcEntityList = await GDB0101DataSource.manager.findBy(pc, { user_id: userMsgExEntity.userId });
+            if (pcEntityList == null) {
+                return res.status(400).json({ status: 400, message: 'Character is not found.' });
+            }
+
+            for (let eacPc of pcEntityList) {
+                if (eacPc.play_flag > 0) {
+                    return res.status(400).json({ status: 400, message: 'Please offline and wait 5 minutes before further process.' })
+                }
+            }
+
+            const characterName: string[] = [];
+            pcEntityList.map((each) => characterName.push(each.char_name));
+
+            if (request.itemBag == WhiteListItemBag.CHARACTER_CASH_INVENTORY) {
+                const cashInventoryService = new CashInventoryService()
+                // Find cash item in cash_inventory by character names
+                const cashInventoryEntity = await GDB0101DataSource.manager.createQueryBuilder()
+                    .select("cashInventory")
+                    .from(CashInventory, "cashInventory")
+                    .where("cashInventory.char_name IN (:...charNames)", { charNames: characterName })
+                    .getMany();
+
+                for (let eachCashInv of cashInventoryEntity) {
+                    const itemPosition = cashInventoryService.getAllDuplicatePosition(whiteListItem.itemId, eachCashInv);
+                    for (let eachItemPos of itemPosition) {
+                        const itemEffectPos = cashInventoryService.findItemEffectPositionInStoreEntity(eachItemPos, eachCashInv)
+                        const itemRefinePos = cashInventoryService.findItemRefinePositionInStoreEntity(eachItemPos, eachCashInv)
+                        const itemOptionPos = cashInventoryService.findItemAmountPositionFromItemPosition(eachItemPos, eachCashInv)
+
+                        if (Number(eachCashInv[itemEffectPos]) == request.itemEffectCode && Number(eachCashInv[itemRefinePos]) == request.itemRefine && Number(eachCashInv[itemOptionPos]) == request.itemOption) {
+
+                            const itemObj = cashInventoryService.setValueIntoCashInventoryEntity(eachItemPos, 0)
+                            const itemEffectObj = cashInventoryService.setValueIntoCashInventoryEntity(itemEffectPos, 0)
+                            const itemRefindObj = cashInventoryService.setValueIntoCashInventoryEntity(itemRefinePos, 0)
+                            const itemOptionObj = cashInventoryService.setValueIntoCashInventoryEntity(itemOptionPos, 0)
+
+                            await GDB0101DataSource.manager.getRepository(CashInventory).save({
+                                ...eachCashInv,
+                                ...itemObj,
+                                ...itemEffectObj,
+                                ...itemRefindObj,
+                                ...itemOptionObj,
+                            })
+
+                            return res.status(200).json({ status: 200, data: null })
+                        }
+                    }
+                }
+
+            } else if (request.itemBag == WhiteListItemBag.ACCOUNT_CASH_INVENTORY) {
+
+                const sealItemEntity = await ItemDataSource.manager.findOneBy(SealItem, { userId: userMsgExEntity.userId, itemId: request.itemId, ItemOp1: request.itemOption, ItemOp2: request.itemEffectCode, ItemLimit: request.itemRefine });
+                if (sealItemEntity != null) {
+
+                    await ItemDataSource.manager.getRepository(SealItem).delete(sealItemEntity)
+
+                    return res.status(200).json({ status: 200, data: null })
+                }
+            }
+
+            return res.status(400).json({ status: 400, message: 'invalid item' })
+
         } catch (error) {
             console.error(error);
             return res.status(500).json({ status: 500, message: 'internal server error' });

@@ -13,6 +13,7 @@ class MarketRoutes {
     initializeRoutes() {
         this.router.post('/whitelist', this.controller.getUserWhitListItem);
         this.router.post('/buyback/cp', this.controller.buyBackCp)
+        this.router.post('/validate', this.controller.validateItem)
     }
 }
 

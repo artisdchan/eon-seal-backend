@@ -22,3 +22,21 @@ export type BuyBackCpRequest = {
     gameUserId: string
     cpAmount: number
 }
+
+export type ValidateItemRequest = {
+    email: string,
+    itemId: number,
+    itemOption: number,
+    itemEffectCode: number,
+    itemRefine: number,
+    itemBag: WhiteListItemBag
+}
+
+export type RemoveItemRequest = {
+    email: string,
+    itemId: number,
+    itemOption: number,
+    itemEffectCode: number,
+    itemRefine: number,
+    itemBag: WhiteListItemBag
+}
