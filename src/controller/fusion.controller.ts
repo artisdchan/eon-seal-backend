@@ -221,14 +221,16 @@ export default class FusionController {
                 let updateObj: CashInventory = eachCharacter
                 for (let eachRequest of request.characterSelectedItemId) {
                     const toBeDeleteItemPosition = cashInventoryService.findItemInCashInventoryntity(eachRequest, updateObj)
-                    const amountPosition = cashInventoryService.findItemAmountPositionFromItemPosition(toBeDeleteItemPosition!, updateObj)
+                    if (toBeDeleteItemPosition != undefined) {
+                        const amountPosition = cashInventoryService.findItemAmountPositionFromItemPosition(toBeDeleteItemPosition!, updateObj)
 
-                    updateObj = {
-                        ...updateObj,
-                        ...cashInventoryService.setValueIntoCashInventoryEntity(toBeDeleteItemPosition!, 0),
-                        ...cashInventoryService.setValueIntoCashInventoryEntity(amountPosition, 0)
+                        updateObj = {
+                            ...updateObj,
+                            ...cashInventoryService.setValueIntoCashInventoryEntity(toBeDeleteItemPosition!, 0),
+                            ...cashInventoryService.setValueIntoCashInventoryEntity(amountPosition, 0)
+                        }
                     }
-                    
+
                 }
                 await GDB0101DataSource.manager.getRepository(CashInventory).save({
                     ...updateObj
