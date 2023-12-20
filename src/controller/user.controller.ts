@@ -477,7 +477,8 @@ export default class UserController {
                 gameUserId: usr.userId,
                 characterNames: charNames,
                 cpAmount: userWeb.crystalPoint,
-                cegelAmount: storeEntity.segel
+                cegelAmount: storeEntity.segel,
+                topUpCredit: userWeb.topupCredit
             }
 
             return res.status(200).json({ status: 200, data: response })
