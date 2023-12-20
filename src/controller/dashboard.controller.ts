@@ -34,7 +34,7 @@ export class DashboardController {
 
             if (topListType == TopListType.CEGEL) {
 
-                const allResult = await GDB0101DataSource.manager.query('select p.user_id, SUM(p.money + ifnull(0, gs.segel) + s.segel) as amount from pc p left join guildinfo g on p.char_name = g.mastername left join guildstore gs  on g.name = gs.guildname LEFT JOIN store s on p.user_id = s.user_id group by p.user_id order by amount desc') as unknown as AllMoney[];
+                const allResult = await GDB0101DataSource.manager.query('select s.user_id, SUM(s.segel + c.amount) as amount from store s inner join(select p.user_id,SUM(p.money + ifnull(0, gs.segel)) as amount from pc p left join guildinfo g on p.char_name = g.mastername left join guildstore gs  on g.name = gs.guildname INNER JOIN store s on p.user_id = s.user_id group by p.user_id order by amount desc) c ON s.user_id = c.user_id group by s.user_id order by amount descselect p.user_id, SUM(p.money + ifnull(0, gs.segel) + s.segel) as amount from pc p left join guildinfo g on p.char_name = g.mastername left join guildstore gs  on g.name = gs.guildname LEFT JOIN store s on p.user_id = s.user_id group by p.user_id order by amount desc limit 50') as unknown as AllMoney[];
                 for (let i = 0; i < 50; i++) {
                     response.push({ userId: allResult[i].user_id, amount: allResult[i].amount })
                 }

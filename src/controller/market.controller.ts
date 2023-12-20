@@ -98,23 +98,25 @@ export default class MarketController {
                     if (storeEntity != null) {
                         const itemPosition = storeService.getAllDuplicatePosition(eachWhiteList.itemId, storeEntity);
                         for (let eachItemPos of itemPosition) {
-                            const tmp: keyof store = eachItemPos
-                            const itemEffectPos = storeService.findItemEffectPositionInStoreEntity(tmp, storeEntity);
-                            const itemRefinePos = storeService.findItemRefinePositionInStoreEntity(tmp, storeEntity);
-                            const itemAmountPos = storeService.findItemAmountPositionFromItemPosition(tmp, storeEntity);
-                            accountBag.push({
-                                itemId: eachWhiteList.itemId,
-                                itemName: eachWhiteList.itemName,
-                                refineLevel: Number(storeEntity[itemRefinePos]),
-                                itemEffectCode: Number(storeEntity[itemEffectPos]),
-                                // TODO translate effect code
-                                itemEffectMessage: '',
-                                itemOption: Number(storeEntity[itemAmountPos]),
-                                itemPictureUrl: eachWhiteList.itemPictureUrl,
-                                itemBag: eachWhiteList.itemBag,
-                                itemType: eachWhiteList.itemType,
-                                itemAmount: 1
-                            })
+                            if (eachItemPos != undefined) {
+                                const tmp: keyof store = eachItemPos
+                                const itemEffectPos = storeService.findItemEffectPositionInStoreEntity(tmp, storeEntity);
+                                const itemRefinePos = storeService.findItemRefinePositionInStoreEntity(tmp, storeEntity);
+                                const itemAmountPos = storeService.findItemAmountPositionFromItemPosition(tmp, storeEntity);
+                                accountBag.push({
+                                    itemId: eachWhiteList.itemId,
+                                    itemName: eachWhiteList.itemName,
+                                    refineLevel: Number(storeEntity[itemRefinePos]),
+                                    itemEffectCode: Number(storeEntity[itemEffectPos]),
+                                    // TODO translate effect code
+                                    itemEffectMessage: '',
+                                    itemOption: Number(storeEntity[itemAmountPos]),
+                                    itemPictureUrl: eachWhiteList.itemPictureUrl,
+                                    itemBag: eachWhiteList.itemBag,
+                                    itemType: eachWhiteList.itemType,
+                                    itemAmount: 1
+                                })
+                            }
                         }
                     }
 
@@ -123,22 +125,24 @@ export default class MarketController {
                     for (let eachCashInv of cashInventoryEntity) {
                         const itemPosition = cashInventoryService.getAllDuplicatePosition(eachWhiteList.itemId, eachCashInv);
                         for (let eachItemPos of itemPosition) {
-                            const itemEffectPos = cashInventoryService.findItemEffectPositionInStoreEntity(eachItemPos, eachCashInv)
-                            const itemRefinePos = cashInventoryService.findItemRefinePositionInStoreEntity(eachItemPos, eachCashInv)
-                            const itemOptionPos = cashInventoryService.findItemAmountPositionFromItemPosition(eachItemPos, eachCashInv)
-                            charBag.push({
-                                itemId: eachWhiteList.itemId,
-                                itemName: eachWhiteList.itemName,
-                                refineLevel: Number(eachCashInv[itemRefinePos]),
-                                itemEffectCode: Number(eachCashInv[itemEffectPos]),
-                                // TODO translate effect code
-                                itemEffectMessage: '',
-                                itemOption: Number(eachCashInv[itemOptionPos]),
-                                itemPictureUrl: eachWhiteList.itemPictureUrl,
-                                itemBag: eachWhiteList.itemBag,
-                                itemType: eachWhiteList.itemType,
-                                itemAmount: 1
-                            })
+                            if (eachItemPos != undefined) {
+                                const itemEffectPos = cashInventoryService.findItemEffectPositionInStoreEntity(eachItemPos, eachCashInv)
+                                const itemRefinePos = cashInventoryService.findItemRefinePositionInStoreEntity(eachItemPos, eachCashInv)
+                                const itemOptionPos = cashInventoryService.findItemAmountPositionFromItemPosition(eachItemPos, eachCashInv)
+                                charBag.push({
+                                    itemId: eachWhiteList.itemId,
+                                    itemName: eachWhiteList.itemName,
+                                    refineLevel: Number(eachCashInv[itemRefinePos]),
+                                    itemEffectCode: Number(eachCashInv[itemEffectPos]),
+                                    // TODO translate effect code
+                                    itemEffectMessage: '',
+                                    itemOption: Number(eachCashInv[itemOptionPos]),
+                                    itemPictureUrl: eachWhiteList.itemPictureUrl,
+                                    itemBag: eachWhiteList.itemBag,
+                                    itemType: eachWhiteList.itemType,
+                                    itemAmount: 1
+                                })
+                            }
                         }
                     }
 
@@ -261,25 +265,27 @@ export default class MarketController {
                 for (let eachCashInv of cashInventoryEntity) {
                     const itemPosition = cashInventoryService.getAllDuplicatePosition(whiteListItem.itemId, eachCashInv);
                     for (let eachItemPos of itemPosition) {
-                        const itemEffectPos = cashInventoryService.findItemEffectPositionInStoreEntity(eachItemPos, eachCashInv)
-                        const itemRefinePos = cashInventoryService.findItemRefinePositionInStoreEntity(eachItemPos, eachCashInv)
-                        const itemOptionPos = cashInventoryService.findItemAmountPositionFromItemPosition(eachItemPos, eachCashInv)
+                        if (eachItemPos != undefined) {
+                            const itemEffectPos = cashInventoryService.findItemEffectPositionInStoreEntity(eachItemPos, eachCashInv)
+                            const itemRefinePos = cashInventoryService.findItemRefinePositionInStoreEntity(eachItemPos, eachCashInv)
+                            const itemOptionPos = cashInventoryService.findItemAmountPositionFromItemPosition(eachItemPos, eachCashInv)
 
-                        if (Number(eachCashInv[itemEffectPos]) == request.itemEffectCode && Number(eachCashInv[itemRefinePos]) == request.itemRefine && Number(eachCashInv[itemOptionPos]) == request.itemOption) {
-                            response = {
-                                itemId: whiteListItem.itemId,
-                                itemName: whiteListItem.itemName,
-                                refineLevel: Number(eachCashInv[itemRefinePos]),
-                                itemEffectCode: Number(eachCashInv[itemEffectPos]),
-                                // TODO translate effect code
-                                itemEffectMessage: '',
-                                itemOption: Number(eachCashInv[itemOptionPos]),
-                                itemPictureUrl: whiteListItem.itemPictureUrl,
-                                itemBag: whiteListItem.itemBag,
-                                itemType: whiteListItem.itemType,
-                                itemAmount: 1
+                            if (Number(eachCashInv[itemEffectPos]) == request.itemEffectCode && Number(eachCashInv[itemRefinePos]) == request.itemRefine && Number(eachCashInv[itemOptionPos]) == request.itemOption) {
+                                response = {
+                                    itemId: whiteListItem.itemId,
+                                    itemName: whiteListItem.itemName,
+                                    refineLevel: Number(eachCashInv[itemRefinePos]),
+                                    itemEffectCode: Number(eachCashInv[itemEffectPos]),
+                                    // TODO translate effect code
+                                    itemEffectMessage: '',
+                                    itemOption: Number(eachCashInv[itemOptionPos]),
+                                    itemPictureUrl: whiteListItem.itemPictureUrl,
+                                    itemBag: whiteListItem.itemBag,
+                                    itemType: whiteListItem.itemType,
+                                    itemAmount: 1
+                                }
+                                return res.status(200).json({ status: 200, data: response })
                             }
-                            return res.status(200).json({ status: 200, data: response })
                         }
                     }
                 }
@@ -360,26 +366,28 @@ export default class MarketController {
                 for (let eachCashInv of cashInventoryEntity) {
                     const itemPosition = cashInventoryService.getAllDuplicatePosition(whiteListItem.itemId, eachCashInv);
                     for (let eachItemPos of itemPosition) {
-                        const itemEffectPos = cashInventoryService.findItemEffectPositionInStoreEntity(eachItemPos, eachCashInv)
-                        const itemRefinePos = cashInventoryService.findItemRefinePositionInStoreEntity(eachItemPos, eachCashInv)
-                        const itemOptionPos = cashInventoryService.findItemAmountPositionFromItemPosition(eachItemPos, eachCashInv)
+                        if (eachItemPos != undefined) {
+                            const itemEffectPos = cashInventoryService.findItemEffectPositionInStoreEntity(eachItemPos, eachCashInv)
+                            const itemRefinePos = cashInventoryService.findItemRefinePositionInStoreEntity(eachItemPos, eachCashInv)
+                            const itemOptionPos = cashInventoryService.findItemAmountPositionFromItemPosition(eachItemPos, eachCashInv)
 
-                        if (Number(eachCashInv[itemEffectPos]) == request.itemEffectCode && Number(eachCashInv[itemRefinePos]) == request.itemRefine && Number(eachCashInv[itemOptionPos]) == request.itemOption) {
+                            if (Number(eachCashInv[itemEffectPos]) == request.itemEffectCode && Number(eachCashInv[itemRefinePos]) == request.itemRefine && Number(eachCashInv[itemOptionPos]) == request.itemOption) {
 
-                            const itemObj = cashInventoryService.setValueIntoCashInventoryEntity(eachItemPos, 0)
-                            const itemEffectObj = cashInventoryService.setValueIntoCashInventoryEntity(itemEffectPos, 0)
-                            const itemRefindObj = cashInventoryService.setValueIntoCashInventoryEntity(itemRefinePos, 0)
-                            const itemOptionObj = cashInventoryService.setValueIntoCashInventoryEntity(itemOptionPos, 0)
+                                const itemObj = cashInventoryService.setValueIntoCashInventoryEntity(eachItemPos, 0)
+                                const itemEffectObj = cashInventoryService.setValueIntoCashInventoryEntity(itemEffectPos, 0)
+                                const itemRefindObj = cashInventoryService.setValueIntoCashInventoryEntity(itemRefinePos, 0)
+                                const itemOptionObj = cashInventoryService.setValueIntoCashInventoryEntity(itemOptionPos, 0)
 
-                            await GDB0101DataSource.manager.getRepository(CashInventory).save({
-                                ...eachCashInv,
-                                ...itemObj,
-                                ...itemEffectObj,
-                                ...itemRefindObj,
-                                ...itemOptionObj,
-                            })
+                                await GDB0101DataSource.manager.getRepository(CashInventory).save({
+                                    ...eachCashInv,
+                                    ...itemObj,
+                                    ...itemEffectObj,
+                                    ...itemRefindObj,
+                                    ...itemOptionObj,
+                                })
 
-                            return res.status(200).json({ status: 200, data: null })
+                                return res.status(200).json({ status: 200, data: null })
+                            }
                         }
                     }
                 }
