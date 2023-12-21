@@ -1,10 +1,13 @@
 import { Request, Response } from "express";
 import { ItemDataSource, SealMemberDataSource } from "../data-source";
 import { AuthenUser } from "../dto/authen.dto";
-import { UpReactorRequest } from "../dto/reactor.dto";
+import { ReactorDetailResponse, ReactorListResponse, UpReactorRequest } from "../dto/reactor.dto";
+import { ItemLevel } from "../entity/item/fusion_item.entity";
 import { Reactor } from "../entity/item/reactor.entity";
 import { ReactorDetail } from "../entity/item/reactor_detail.entity";
+import { ReactorHistory } from "../entity/item/reactor_history.entity";
 import { WebUserDetail } from "../entity/seal_member/web_user_detail.entity";
+import ItemService from "../service/item.service";
 
 export default class ReactorController {
 
@@ -51,11 +54,23 @@ export default class ReactorController {
                 webUser.reactorLevel += 1
                 await SealMemberDataSource.manager.getRepository(WebUserDetail).save(webUser)
 
+                await ItemDataSource.manager.save(ReactorHistory, {
+                    reactorLevel: currentReactorLevel,
+                    action: `Successfully update reactor from lv. ${currentReactorLevel}, to lv.${currentReactorLevel + 1}`,
+                    actionByGameUserId: currentUser.gameUserId
+                })
+
                 return res.status(200).json({ status: 200, data: null})
             } else {
                 // fail
                 webUser.reactorLevel = 1
                 await SealMemberDataSource.manager.getRepository(WebUserDetail).save(webUser)
+
+                await ItemDataSource.manager.save(ReactorHistory, {
+                    reactorLevel: currentReactorLevel,
+                    action: `Fail to upgrade reactor at lv.${currentReactorLevel}`,
+                    actionByGameUserId: currentUser.gameUserId
+                })
 
                 return res.status(400).json({ status: 400, message: 'FAIL!' })
             }
@@ -103,6 +118,40 @@ export default class ReactorController {
             for (let eachItem of reactorDetail) {
                 if (itemLevel == eachItem.itemLevel && eachItem.itemChance >= itemChance && eachItem.itemChance < itemChance) {
                     // TODO add item into game account
+                    let errMsg = ''
+                    const itemService = new ItemService()
+                    if (eachItem.itemBag == 'IN_GAME_ITEM_INVENTORY') {
+                        errMsg = await itemService.insertBackInventory(currentUser.gameUserId, eachItem.itemId, eachItem.itemAmount, eachItem.itemOption, eachItem.itemLimit);
+                    } else if (eachItem.itemBag == 'ACCOUNT_CASH_INVENTORY') {
+                        errMsg = await itemService.insertAccountCashInventory(currentUser.gameUserId, eachItem.itemId, eachItem.itemAmount, eachItem.itemOption, eachItem.itemLimit);
+                    } else if (eachItem.itemBag == 'CHARACTER_CASH_INVENTORY') {
+                        // errMsg = await this.insertCharacterCashInventory(currentUser.gameUserId, request.characterName, crystalShop.itemId, crystalShop.itemAmount);
+                        // if (errMsg != "") {
+                        //     log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_INVENTORY", errMsg, log);
+                        //     return res.status(400).json({ status: 400, message: errMsg });
+                        // }
+                    } else if (eachItem.itemBag == 'RANDOM_COSTUME_COMMON') {
+                        const randomItem = await itemService.randomCostume(ItemLevel.COMMON);
+                        errMsg = await itemService.insertAccountCashInventory(currentUser.gameUserId, randomItem.itemId, 1, 0, 0);
+                    } else if (eachItem.itemBag == 'RANDOM_COSTUME_UNCOMMON') {
+                        const randomItem = await itemService.randomCostume(ItemLevel.UNCOMMON);
+                        errMsg = await itemService.insertAccountCashInventory(currentUser.gameUserId, randomItem.itemId, 1, 0, 0);
+                    } else if (eachItem.itemBag == 'RANDOM_COSTUME_RARE') {
+                        const randomItem = await itemService.randomCostume(ItemLevel.RARE);
+                        errMsg = await itemService.insertAccountCashInventory(currentUser.gameUserId, randomItem.itemId, 1, 0, 0);
+                    } else if (eachItem.itemBag == 'RANDOM_COSTUME_EPIC') {
+                        const randomItem = await itemService.randomCostume(ItemLevel.EPIC);
+                        errMsg = await itemService.insertAccountCashInventory(currentUser.gameUserId, randomItem.itemId, 1, 0, 0);
+                    } else if (eachItem.itemBag == 'STACK_IN_GAME_ITEM') {
+                        errMsg = await itemService.insertStackItem(currentUser.gameUserId, eachItem.itemId, eachItem.itemAmount, eachItem.itemOption, eachItem.itemLimit);
+                    } else {
+                        // DO NOTHING
+                    }
+                    await ItemDataSource.manager.save(ReactorHistory, {
+                        reactorLevel: currentReactorLevel,
+                        action: `Claim item from reactor lv.${currentReactorLevel}, ItemId: ${eachItem.itemId}, ItemBag: ${eachItem.itemBag}, Message:${errMsg}`,
+                        actionByGameUserId: currentUser.gameUserId
+                    })
                 }
             }
 
@@ -111,6 +160,46 @@ export default class ReactorController {
 
             return res.status(200).json({ status: 200, data: null})
             
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ status: 500, message: 'internal server error' });
+        }
+    }
+
+    public getReactor = async (req: Request, res: Response) => {
+        try {
+            
+            const currentUser = req.user as AuthenUser
+
+            const reactor = await ItemDataSource.manager.find(Reactor)
+            if (reactor == null) {
+                return res.status(400).json({ status: 400, message: 'Reactor not found.' })
+            }
+
+            let reactorResponseList: ReactorListResponse[] = []
+            for (let eachReactor of reactor) {
+                let reactorDetailResponseList: ReactorDetailResponse[] = []
+                const reactorDetail = await ItemDataSource.manager.findBy(ReactorDetail, { reactorId: eachReactor.id })
+                
+                for (let eachDetail of reactorDetail) {
+                    reactorDetailResponseList.push({
+                        itemName: eachDetail.itemName,
+                        itemBag: eachDetail.itemBag,
+                        itemPictureUrl: eachDetail.itemPictureUrl
+                    })
+                }
+
+                reactorResponseList.push({
+                    reactorName: eachReactor.reactorName,
+                    reactorLevel: eachReactor.reactorLevel,
+                    priceEon: eachReactor.priceEon,
+                    priceCp: eachReactor.priceCp,
+                    reactorDetails: reactorDetailResponseList
+                })
+            }
+
+            return res.status(200).json({ status: 200, data: reactorResponseList })
+
         } catch (error) {
             console.error(error);
             return res.status(500).json({ status: 500, message: 'internal server error' });

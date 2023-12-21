@@ -11,7 +11,6 @@ CREATE TABLE log_item.log_item_transaction (
 )
 ENGINE=InnoDB;
 
-
 CREATE TABLE `log_item`.`crystal_shop_purchase_history` (
 	`id` int NOT NULL AUTO_INCREMENT,
 	`action_user_id` varchar(255) NOT NULL, 
@@ -23,10 +22,21 @@ CREATE TABLE `log_item`.`crystal_shop_purchase_history` (
 	`purchased_time` datetime NOT NULL, 
 	`purchased_crystal_shop_id` int NOT NULL, 
 	PRIMARY KEY (`id`)
-	) ENGINE=InnoDB;
-CREATE TRIGGER test AFTER INSERT ON log_item.log_item
+) 
+ENGINE=InnoDB;
+
+CREATE TRIGGER updateCashSpend AFTER INSERT ON log_item.log_item
 	FOR EACH ROW
     update seal_member.web_user_detail
 	set cash_spend_point = cash_spend_point + new.item_price
 	where user_id = new.user_id
 ;
+
+CREATE TABLE `item`.`market_white_list` (
+  `id` INT NOT NULL,
+  `item_id` INT NOT NULL,
+  `item_name` VARCHAR(255) NOT NULL,
+  `item_picture_url` VARCHAR(255) NOT NULL,
+  `item_type` VARCHAR(255) NOT NULL,
+  `item_bag` VARCHAR(255) NOT NULL,
+  PRIMARY KEY (`id`));
