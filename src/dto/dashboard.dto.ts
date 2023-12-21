@@ -18,7 +18,8 @@ export enum TopListType {
     G10 = 'G10',
     G12 = 'G12',
     G13 = 'G13',
-    G14 = 'G14'
+    G14 = 'G14',
+    CP = 'CP'
 }
 
 export type AllMoney = {

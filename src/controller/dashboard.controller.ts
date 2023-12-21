@@ -40,11 +40,21 @@ export class DashboardController {
                     response.push({ userId: allResult[i].user_id, amount: allResult[i].amount })
                 }
 
+            } else if (topListType == TopListType.CP) {
+
+                const allCrystalPoint = await SealMemberDataSource.manager.getRepository(WebUserDetail)
+                    .createQueryBuilder('webUser').select('webUser.user_id', 'user_id').addSelect('SUM(webUser.crystal_point)', 'amount')
+                    .groupBy('webUser.user_id').orderBy('amount', 'DESC').limit(50).getRawMany();
+
+                for (let each of allCrystalPoint) {
+                    response.push({ userId: each.user_id, amount: each.amount})
+                }
+
             } else if (topListType == TopListType.CASH) {
 
                 const cashTopList = await SealMemberDataSource.manager.getRepository(usermsgex)
                     .createQueryBuilder('usermsgex').select('usermsgex.userId', 'userId').addSelect('SUM(usermsgex.gold)', 'amount')
-                    .groupBy('usermsgex.userId').orderBy('amount', 'DESC').limit(10).getRawMany();
+                    .groupBy('usermsgex.userId').orderBy('amount', 'DESC').limit(50).getRawMany();
 
                 for (let each of cashTopList) {
                     response.push({ userId: each.userId, amount: each.amount });
@@ -98,13 +108,13 @@ export class DashboardController {
                 }
 
                 let resMap = new Map([...storeMap])
-                invMap.forEach((value, key) => { 
-                    if (resMap.has(key)) { 
-                        resMap.set(key, resMap.get(key)! + value); 
-                    } else { 
-                        resMap.set(key, value); 
-                    } 
-                }); 
+                invMap.forEach((value, key) => {
+                    if (resMap.has(key)) {
+                        resMap.set(key, resMap.get(key)! + value);
+                    } else {
+                        resMap.set(key, value);
+                    }
+                });
 
                 resMap.forEach((value, key) => {
                     result.push({
@@ -211,7 +221,7 @@ export class DashboardController {
             }
 
             const allCrystalPoint = await SealMemberDataSource.manager.getRepository(WebUserDetail)
-            .createQueryBuilder('webUser').select('SUM(webUser.crystal_point)', 'amount').getRawOne()
+                .createQueryBuilder('webUser').select('SUM(webUser.crystal_point)', 'amount').getRawOne()
 
             const response: ServerInfoResponseDTO = {
                 allOnlinePlayer: countOnlinePlayer,
