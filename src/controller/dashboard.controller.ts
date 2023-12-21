@@ -12,6 +12,7 @@ import StoreService from "../service/store.service";
 import { WebConfig, WebConfigConstant } from "../entity/seal_member/web_config.entity";
 import { AuthenUser } from "../dto/authen.dto";
 import { MoreThan } from "typeorm";
+import { WebUserDetail } from "../entity/seal_member/web_user_detail.entity";
 
 export class DashboardController {
 
@@ -209,6 +210,9 @@ export class DashboardController {
                 sumRc += each.amount
             }
 
+            const allCrystalPoint = await SealMemberDataSource.manager.getRepository(WebUserDetail)
+            .createQueryBuilder('webUser').select('SUM(webUser.crystal_point)', 'amount').getRawOne()
+
             const response: ServerInfoResponseDTO = {
                 allOnlinePlayer: countOnlinePlayer,
                 allCash: Number(queryAllCash.amount),
@@ -216,7 +220,8 @@ export class DashboardController {
                 allCrystal: sumCrystal,
                 allRuby: sumRuby,
                 allDiamond: sumDiamond,
-                allRc: sumRc
+                allRc: sumRc,
+                allCrystalPoint: allCrystalPoint.amount
             }
 
             return res.status(200).json({ status: 200, data: response })

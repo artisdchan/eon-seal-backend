@@ -45,4 +45,5 @@ export type ServerInfoResponseDTO = {
     allRuby: number
     allDiamond: number
     allRc: number
+    allCrystalPoint: number
 }
