@@ -18,6 +18,9 @@ import { guildstore } from "./entity/gdb0101/guild_store.entity";
 import { Package } from "./entity/item/package.entity";
 import { PackageDetail } from "./entity/item/package_detail.entity";
 import { PurchasePackageHistory } from "./entity/item/purchase_package_history.entity";
+import { Reactor } from "./entity/item/reactor.entity";
+import { ReactorDetail } from "./entity/item/reactor_detail.entity";
+import { ReactorHistory } from "./entity/item/reactor_history.entity";
 
 export const SealMemberDataSource = new DataSource({
     type: "mariadb",
@@ -64,7 +67,8 @@ export const ItemDataSource = new DataSource({
     logging: true,
     entities: [
         SealItem, 
-        FusionItemConfig, CrystalShop, Package, PackageDetail, PurchasePackageHistory
+        FusionItemConfig, CrystalShop, Package, PackageDetail, PurchasePackageHistory,
+        Reactor, ReactorDetail, ReactorHistory
     ],
     connectTimeout: 6000
 })

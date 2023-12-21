@@ -38,5 +38,8 @@ export class WebUserDetail {
 
     @Column({ name: 'status' })
     status!: string
+
+    @Column({ name: 'reactor_level' })
+    reactorLevel!: number
     
 }
