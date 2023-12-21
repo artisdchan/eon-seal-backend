@@ -197,7 +197,7 @@ export default class StoreController {
                 userMsgExEntity.gold! += cashToBeAdd;
                 await SealMemberDataSource.manager.save(userMsgExEntity);
 
-                log = await logService.updateLogItemTransaction("SUCCESS", `Old RC Amount: ${rcAmount}, New RC Amount: ${requestAmount}, Cash Amount: ${cashToBeAdd}`, log);
+                log = await logService.updateLogItemTransaction("SUCCESS", `Old RC Amount: ${rcAmount}, New RC Amount: ${rcAmount-requestAmount}, Cash Amount: ${cashToBeAdd}`, log);
 
             } else if (request.convertType == ConvertRCType.CASH_TO_RC) {
 

@@ -49,6 +49,7 @@ export type UserInfoResponseDTO = {
     cpAmount: number
     cegelAmount: number
     topUpCredit: number
+    highestLevel: number
 }
 
 export type AddTopupCreditRequestDTO = {

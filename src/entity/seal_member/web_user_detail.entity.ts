@@ -41,5 +41,8 @@ export class WebUserDetail {
 
     @Column({ name: 'reactor_level' })
     reactorLevel!: number
+
+    @Column({ name: 'use_reactor_count' })
+    useReactorCount!: number
     
 }

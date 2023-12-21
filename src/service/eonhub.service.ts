@@ -47,4 +47,22 @@ export default class EonHubService {
   
     }
 
+    public minusEonPoint = async (email: string, eonPointAmount: number) : Promise<EONHubResponse> => {
+       
+        const response = await fetch(`${EONHUB_BACKEND_URL}/api/user/minus-eon`, {
+            method: 'POST',
+            headers: {
+                'API-KEY': EONHUB_API_KEY,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                email: email,
+                eonAmount: eonPointAmount
+            })
+        });
+
+        return await response.json() as EONHubResponse
+  
+    }
+
 }

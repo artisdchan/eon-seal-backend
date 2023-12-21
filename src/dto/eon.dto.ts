@@ -3,3 +3,8 @@ export type EONHubResponse = {
     data: any
     message: string | undefined
 }
+
+export type MinusEonPointRequest = {
+    email: string
+    eonPoint: number
+}

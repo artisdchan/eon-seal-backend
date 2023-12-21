@@ -6,7 +6,9 @@ import { ItemLevel } from "../entity/item/fusion_item.entity";
 import { Reactor } from "../entity/item/reactor.entity";
 import { ReactorDetail } from "../entity/item/reactor_detail.entity";
 import { ReactorHistory } from "../entity/item/reactor_history.entity";
+import { usermsgex } from "../entity/seal_member/usermsgex.entity";
 import { WebUserDetail } from "../entity/seal_member/web_user_detail.entity";
+import EonHubService from "../service/eonhub.service";
 import ItemService from "../service/item.service";
 
 export default class ReactorController {
@@ -41,10 +43,26 @@ export default class ReactorController {
 
             if (currentReactorLevel == 1) {
                 if (request.priceType = 'CP') {
+
+                    if (webUser.crystalPoint < reactor.priceCp) {
+                        return res.status(400).json({ status: 400, message: 'Insufficient CP.' })
+                    }
                     webUser.crystalPoint -= reactor.priceCp
                     webUser = await SealMemberDataSource.manager.getRepository(WebUserDetail).save(webUser)
+
                 } else if (request.priceType = 'EON') {
+
                     // request to minus EON Point
+                    const userMsgExEntity = await SealMemberDataSource.manager.findOneBy(usermsgex, { userId: webUser.user_id })
+                    if (userMsgExEntity == null) {
+                        return res.status(400).json({ status: 400, message: 'Invalid user.' })
+                    }
+                    const eonHubService = new EonHubService()
+                    const eonHubResponse = await eonHubService.minusEonPoint(userMsgExEntity.email!, reactor.priceEon)
+                    if (eonHubResponse.status != 200) {
+                        return res.status(eonHubResponse.status).json(eonHubResponse)
+                    }
+
                 }
             }
 
@@ -52,11 +70,12 @@ export default class ReactorController {
             if (randomChance  < reactor.successRate) {
                 // success
                 webUser.reactorLevel += 1
+                webUser.useReactorCount += 1
                 await SealMemberDataSource.manager.getRepository(WebUserDetail).save(webUser)
 
                 await ItemDataSource.manager.save(ReactorHistory, {
                     reactorLevel: currentReactorLevel,
-                    action: `Successfully update reactor from lv. ${currentReactorLevel}, to lv.${currentReactorLevel + 1}`,
+                    action: `Successfully upgrade reactor from lv. ${currentReactorLevel}, to lv.${currentReactorLevel + 1}`,
                     actionByGameUserId: currentUser.gameUserId
                 })
 
@@ -64,6 +83,7 @@ export default class ReactorController {
             } else {
                 // fail
                 webUser.reactorLevel = 1
+                webUser.useReactorCount += 1
                 await SealMemberDataSource.manager.getRepository(WebUserDetail).save(webUser)
 
                 await ItemDataSource.manager.save(ReactorHistory, {

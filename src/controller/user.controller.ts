@@ -459,8 +459,12 @@ export default class UserController {
 
             const pcEntity = await GDB0101DataSource.manager.findBy(pc, { user_id: usr?.userId });
             let charNames: string[] = []
+            let highestLevel: number = 0
             for (let each of pcEntity) {
                 charNames.push(each.char_name)
+                if (each.level > highestLevel) {
+                    highestLevel = each.level
+                }
             }
 
             const userWeb = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: String(usr.userId), status: 'ACTIVE' })
@@ -478,7 +482,8 @@ export default class UserController {
                 characterNames: charNames,
                 cpAmount: userWeb.crystalPoint,
                 cegelAmount: storeEntity.segel,
-                topUpCredit: userWeb.topupCredit
+                topUpCredit: userWeb.topupCredit,
+                highestLevel: highestLevel
             }
 
             return res.status(200).json({ status: 200, data: response })
