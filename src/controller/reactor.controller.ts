@@ -49,7 +49,7 @@ export default class ReactorController {
             }
 
             if (currentReactorLevel == 1) {
-                if (request.priceType = 'CP') {
+                if (request.priceType == 'CP') {
 
                     if (webUser.crystalPoint < reactor.priceCp) {
                         return res.status(400).json({ status: 400, message: 'Insufficient CP.' })
@@ -57,7 +57,7 @@ export default class ReactorController {
                     webUser.crystalPoint -= reactor.priceCp
                     webUser = await SealMemberDataSource.manager.getRepository(WebUserDetail).save(webUser)
 
-                } else if (request.priceType = 'EON') {
+                } else if (request.priceType == 'EON') {
 
                     const eonHubService = new EonHubService()
                     const eonHubResponse = await eonHubService.minusEonPoint(currentUser.email, reactor.priceEon)
