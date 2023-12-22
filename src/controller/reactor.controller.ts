@@ -185,7 +185,7 @@ export default class ReactorController {
                         itemName: eachItem.itemName,
                         itemPictureUrl: eachItem.itemPictureUrl
                     }
-                    await ItemDataSource.manager.save(ReactorHistory, {
+                    await ItemDataSource.manager.create(ReactorHistory, {
                         reactorLevel: currentReactorLevel,
                         action: `Claim item from reactor lv.${currentReactorLevel}, ItemId: ${eachItem.itemId}, ItemBag: ${eachItem.itemBag}, Message:${errMsg}`,
                         actionByGameUserId: currentUser.gameUserId,
