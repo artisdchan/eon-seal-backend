@@ -48,7 +48,7 @@ export default class ReactorController {
                 return res.status(400).json({ status: 400, message: 'Invalid reactor level.' })
             }
 
-            if (currentReactorLevel == 1) {
+            if (currentReactorLevel == 0) {
                 if (request.priceType == 'CP') {
 
                     if (webUser.crystalPoint < reactor.priceCp) {
@@ -91,7 +91,8 @@ export default class ReactorController {
                 await ItemDataSource.manager.save(ReactorHistory, {
                     reactorLevel: currentReactorLevel,
                     action: `Fail to upgrade reactor at lv.${currentReactorLevel}`,
-                    actionByGameUserId: currentUser.gameUserId
+                    actionByGameUserId: currentUser.gameUserId,
+                    actionTime: new Date
                 })
 
                 return res.status(400).json({ status: 400, message: 'FAIL!' })
@@ -187,7 +188,8 @@ export default class ReactorController {
                     await ItemDataSource.manager.save(ReactorHistory, {
                         reactorLevel: currentReactorLevel,
                         action: `Claim item from reactor lv.${currentReactorLevel}, ItemId: ${eachItem.itemId}, ItemBag: ${eachItem.itemBag}, Message:${errMsg}`,
-                        actionByGameUserId: currentUser.gameUserId
+                        actionByGameUserId: currentUser.gameUserId,
+                        actionTime: new Date
                     })
                 }
             }
