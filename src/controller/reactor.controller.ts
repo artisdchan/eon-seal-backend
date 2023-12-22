@@ -140,7 +140,7 @@ export default class ReactorController {
             let response
             const itemChance = Number(Math.random() * 100)
             for (let eachItem of reactorDetail) {
-                if (itemLevel == eachItem.itemLevel && eachItem.itemChance >= itemChance && eachItem.itemChance < itemChance) {
+                if (itemLevel == eachItem.itemLevel && eachItem.itemChance >= itemChance) {
                     // TODO add item into game account
                     let errMsg = ''
                     const itemService = new ItemService()
