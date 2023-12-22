@@ -1,4 +1,6 @@
+import { endOfDay, endOfWeek, startOfToday, startOfWeek } from "date-fns";
 import { Request, Response } from "express";
+import { Between } from "typeorm";
 import { GDB0101DataSource, ItemDataSource, LogItemDataSource, SealMemberDataSource } from "../data-source";
 import { AuthenUser } from "../dto/authen.dto";
 import { PackageDetailResponse, PackagePurchaseHistoryResponseDTO, PackageResponse } from "../dto/package.dto";
@@ -140,7 +142,17 @@ export class PackageController {
             }
 
             // Account purchase limit
-            const historyCount = await ItemDataSource.manager.countBy(PurchasePackageHistory, { packageId: packageEntity.packageId, purchasedByUserId: currentUser.gameUserId })
+            let historyCount = 0;
+            let dateFrom: Date = new Date
+            let dateTo: Date = new Date
+            if (packageEntity.packageReset == 'DAILY') {
+                dateFrom = startOfToday();
+                dateTo = endOfDay(new Date);
+            } else if (packageEntity.packageReset == 'WEEKLY') {
+                dateFrom = startOfWeek(new Date, { weekStartsOn: 1 })
+                dateTo = endOfWeek(new Date, { weekStartsOn: 1 })
+            }
+            historyCount = await ItemDataSource.manager.countBy(PurchasePackageHistory, { packageId: packageEntity.packageId, purchasedByUserId: currentUser.gameUserId, purchasedTime: Between(dateFrom, dateTo) })
             if (packageEntity.purchaseCountCond != 0) {
                 if (packageEntity.purchaseCountCond <= historyCount) {
                     return res.status(400).json({ status: 400, message: 'Account purchase count has reached limit.' })

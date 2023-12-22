@@ -33,6 +33,9 @@ export class Package {
     @Column({ name: 'status' })
     status!: PackageStatus;
 
+    @Column({ name : 'package_reset' })
+    packageReset!: string
+
 }
 
 export enum PackageType {
