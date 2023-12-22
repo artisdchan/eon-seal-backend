@@ -8,6 +8,7 @@ import itemRoutes from "./item.routes";
 import marketRoutes from "./market.routes";
 import packageRoutes from "./package.routes";
 import rankingRoutes from "./ranking.routes";
+import reactorRoutes from "./reactor.routes";
 import storeRoutes from "./store.routes";
 import userRoutes from "./user.routes";
 
@@ -24,5 +25,6 @@ export default class Routes {
       app.use('/api/item', itemRoutes)
       app.use('/api/credit', packageRoutes)
       app.use('/api/market', marketRoutes)
+      app.use('/api/reactor', reactorRoutes)
     }
   }

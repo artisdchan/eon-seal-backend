@@ -17,7 +17,14 @@ export default class ReactorController {
         try {
 
             const currentUser = req.user as AuthenUser
-            
+
+            let webUser = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: currentUser.gameUserId })
+            if (webUser == null) {
+                return res.status(400).json({ status: 400, message: 'Invalid user.' })
+            }
+
+            return res.status(200).json({ status: 200, data: webUser.reactorLevel })
+
         } catch (error) {
             console.error(error);
             return res.status(500).json({ status: 500, message: 'internal server error' });
@@ -52,13 +59,8 @@ export default class ReactorController {
 
                 } else if (request.priceType = 'EON') {
 
-                    // request to minus EON Point
-                    const userMsgExEntity = await SealMemberDataSource.manager.findOneBy(usermsgex, { userId: webUser.user_id })
-                    if (userMsgExEntity == null) {
-                        return res.status(400).json({ status: 400, message: 'Invalid user.' })
-                    }
                     const eonHubService = new EonHubService()
-                    const eonHubResponse = await eonHubService.minusEonPoint(userMsgExEntity.email!, reactor.priceEon)
+                    const eonHubResponse = await eonHubService.minusEonPoint(currentUser.email, reactor.priceEon)
                     if (eonHubResponse.status != 200) {
                         return res.status(eonHubResponse.status).json(eonHubResponse)
                     }
@@ -67,7 +69,7 @@ export default class ReactorController {
             }
 
             const randomChance = Number(Math.random() * 100)
-            if (randomChance  < reactor.successRate) {
+            if (randomChance < reactor.successRate) {
                 // success
                 webUser.reactorLevel += 1
                 webUser.useReactorCount += 1
@@ -79,7 +81,7 @@ export default class ReactorController {
                     actionByGameUserId: currentUser.gameUserId
                 })
 
-                return res.status(200).json({ status: 200, data: null})
+                return res.status(200).json({ status: 200, data: null })
             } else {
                 // fail
                 webUser.reactorLevel = 1
@@ -94,7 +96,7 @@ export default class ReactorController {
 
                 return res.status(400).json({ status: 400, message: 'FAIL!' })
             }
-            
+
         } catch (error) {
             console.error(error);
             return res.status(500).json({ status: 500, message: 'internal server error' });
@@ -124,13 +126,13 @@ export default class ReactorController {
 
             const itemLevelChance = Number(Math.random() * 100)
             let itemLevel = 1
-            if (itemLevelChance >= 0 && itemLevelChance < 25) {
+            if (itemLevelChance >= 0 && itemLevelChance < 50) {
                 itemLevel = 1
-            } else if (itemLevelChance >= 25 && itemLevelChance < 50) {
+            } else if (itemLevelChance >= 50 && itemLevelChance < 75) {
                 itemLevel = 2
-            } else if (itemLevelChance > 50 && itemLevelChance < 75) {
+            } else if (itemLevelChance > 75 && itemLevelChance < 95) {
                 itemLevel = 3
-            } else if (itemLevelChance >= 75 && itemLevelChance < 100) {
+            } else if (itemLevelChance >= 95 && itemLevelChance < 100) {
                 itemLevel = 4
             }
 
@@ -141,9 +143,13 @@ export default class ReactorController {
                     let errMsg = ''
                     const itemService = new ItemService()
                     if (eachItem.itemBag == 'IN_GAME_ITEM_INVENTORY') {
-                        errMsg = await itemService.insertBackInventory(currentUser.gameUserId, eachItem.itemId, eachItem.itemAmount, eachItem.itemOption, eachItem.itemLimit);
+                        for (let i = 0; i < eachItem.itemAmount; i++) {
+                            errMsg = await itemService.insertBackInventory(currentUser.gameUserId, eachItem.itemId, 1, eachItem.itemOption, eachItem.itemLimit);
+                        }
                     } else if (eachItem.itemBag == 'ACCOUNT_CASH_INVENTORY') {
-                        errMsg = await itemService.insertAccountCashInventory(currentUser.gameUserId, eachItem.itemId, eachItem.itemAmount, eachItem.itemOption, eachItem.itemLimit);
+                        for (let i = 0; i < eachItem.itemAmount; i++) {
+                            errMsg = await itemService.insertAccountCashInventory(currentUser.gameUserId, eachItem.itemId, eachItem.itemAmount, eachItem.itemOption, eachItem.itemLimit);
+                        }
                     } else if (eachItem.itemBag == 'CHARACTER_CASH_INVENTORY') {
                         // errMsg = await this.insertCharacterCashInventory(currentUser.gameUserId, request.characterName, crystalShop.itemId, crystalShop.itemAmount);
                         // if (errMsg != "") {
@@ -164,6 +170,12 @@ export default class ReactorController {
                         errMsg = await itemService.insertAccountCashInventory(currentUser.gameUserId, randomItem.itemId, 1, 0, 0);
                     } else if (eachItem.itemBag == 'STACK_IN_GAME_ITEM') {
                         errMsg = await itemService.insertStackItem(currentUser.gameUserId, eachItem.itemId, eachItem.itemAmount, eachItem.itemOption, eachItem.itemLimit);
+                    } else if (eachItem.itemBag == 'EON_POINT') {
+                        const eonHubService = new EonHubService()
+                        const eonHubResponse = await eonHubService.minusEonPoint(currentUser.email, reactor.priceEon)
+                        if (eonHubResponse.status != 200) {
+                            return res.status(eonHubResponse.status).json(eonHubResponse)
+                        }
                     } else {
                         // DO NOTHING
                     }
@@ -178,8 +190,8 @@ export default class ReactorController {
             webUser.reactorLevel = 1
             await SealMemberDataSource.manager.getRepository(WebUserDetail).save(webUser)
 
-            return res.status(200).json({ status: 200, data: null})
-            
+            return res.status(200).json({ status: 200, data: null })
+
         } catch (error) {
             console.error(error);
             return res.status(500).json({ status: 500, message: 'internal server error' });
@@ -188,7 +200,7 @@ export default class ReactorController {
 
     public getReactor = async (req: Request, res: Response) => {
         try {
-            
+
             const currentUser = req.user as AuthenUser
 
             const reactor = await ItemDataSource.manager.find(Reactor)
@@ -200,7 +212,7 @@ export default class ReactorController {
             for (let eachReactor of reactor) {
                 let reactorDetailResponseList: ReactorDetailResponse[] = []
                 const reactorDetail = await ItemDataSource.manager.findBy(ReactorDetail, { reactorId: eachReactor.id })
-                
+
                 for (let eachDetail of reactorDetail) {
                     reactorDetailResponseList.push({
                         itemName: eachDetail.itemName,

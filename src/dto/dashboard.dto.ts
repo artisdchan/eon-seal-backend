@@ -48,3 +48,14 @@ export type ServerInfoResponseDTO = {
     allRc: number
     allCrystalPoint: number
 }
+
+export type BotServerInfoResponse = {
+    allOnlinePlayer: number
+    allCash: number
+    allCegel: number
+    allCrystal: number
+    allRuby: number
+    allDiamond: number
+    allRc: number
+    allCrystalPoint: number
+}
