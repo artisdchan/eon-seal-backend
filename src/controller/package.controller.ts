@@ -56,7 +56,17 @@ export class PackageController {
                 }
 
                 // Account purchase limit
-                const historyCount = await ItemDataSource.manager.countBy(PurchasePackageHistory, { packageId: eachPackage.packageId, purchasedByUserId: currentUser.gameUserId })
+                let historyCount = 0;
+                let dateFrom: Date = new Date
+                let dateTo: Date = new Date
+                if (eachPackage.packageReset == 'DAILY') {
+                    dateFrom = startOfToday();
+                    dateTo = endOfDay(new Date);
+                } else if (eachPackage.packageReset == 'WEEKLY') {
+                    dateFrom = startOfWeek(new Date, { weekStartsOn: 1 })
+                    dateTo = endOfWeek(new Date, { weekStartsOn: 1 })
+                }
+                historyCount = await ItemDataSource.manager.countBy(PurchasePackageHistory, { packageId: eachPackage.packageId, purchasedByUserId: currentUser.gameUserId, purchasedTime: Between(dateFrom, dateTo) })
                 if (eachPackage.purchaseCountCond != 0) {
                     if (eachPackage.purchaseCountCond <= historyCount) {
                         isPurchaseable = false;
@@ -174,7 +184,7 @@ export class PackageController {
 
                 for (let eachItem of packageDetails) {
                     let log = await logService.insertLogItemTransaction(`TOPUP_CREDIT_SHOP`, "ADD_ITEM", "PREPARE_PROCESS", currentUser.gameUserId, undefined);
-    
+
                     let errMsg = "";
                     // add item into store
                     if (eachItem.itemBag == PackageItemBag.IN_GAME_ITEM_INVENTORY) {
@@ -221,11 +231,11 @@ export class PackageController {
                         errMsg = await itemService.insertStackItem(currentUser.gameUserId, eachItem.itemId, eachItem.itemAmount, eachItem.itemEffect, eachItem.itemRefineOrLimit);
                         if (errMsg != "") {
                             log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_INVENTORY", errMsg + `, ItemId: ${eachItem.itemId}, ItemAmount: ${eachItem.itemAmount}`, log);
-                        } 
+                        }
                     } else {
                         // DO NOTHING
                     }
-                    
+
                     log = await logService.updateLogItemTransaction("ADD_ITEM_SUCCESS", `ItemId: ${eachItem.itemId}, ItemAmount: ${eachItem.itemAmount}`, log);
 
                 }
@@ -256,15 +266,15 @@ export class PackageController {
 
     public getPurchaseHistory = async (req: Request, res: Response) => {
         try {
-            
-            const currentUser = req.user as AuthenUser; 
+
+            const currentUser = req.user as AuthenUser;
             let response: PackagePurchaseHistoryResponseDTO[] = []
 
             const historyList = await ItemDataSource.getRepository(PurchasePackageHistory).createQueryBuilder()
                 .select()
                 .where('purchased_by_user_id = :userId', { userId: currentUser.gameUserId })
                 .orderBy('purchased_time', 'DESC').getMany();
-            
+
             for (let eachHistory of historyList) {
                 const packageEntity = await ItemDataSource.manager.findOneBy(Package, { packageId: eachHistory.packageId })
                 response.push({
