@@ -136,6 +136,7 @@ export default class ReactorController {
                 itemLevel = 4
             }
 
+            let response
             const itemChance = Number(Math.random() * 100)
             for (let eachItem of reactorDetail) {
                 if (itemLevel == eachItem.itemLevel && eachItem.itemChance >= itemChance && eachItem.itemChance < itemChance) {
@@ -179,6 +180,10 @@ export default class ReactorController {
                     } else {
                         // DO NOTHING
                     }
+                    response = {
+                        itemName: eachItem.itemName,
+                        itemPictureUrl: eachItem.itemPictureUrl
+                    }
                     await ItemDataSource.manager.save(ReactorHistory, {
                         reactorLevel: currentReactorLevel,
                         action: `Claim item from reactor lv.${currentReactorLevel}, ItemId: ${eachItem.itemId}, ItemBag: ${eachItem.itemBag}, Message:${errMsg}`,
@@ -190,7 +195,7 @@ export default class ReactorController {
             webUser.reactorLevel = 1
             await SealMemberDataSource.manager.getRepository(WebUserDetail).save(webUser)
 
-            return res.status(200).json({ status: 200, data: null })
+            return res.status(200).json({ status: 200, data: response })
 
         } catch (error) {
             console.error(error);
