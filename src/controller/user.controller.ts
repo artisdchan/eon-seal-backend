@@ -134,6 +134,10 @@ export default class UserController {
                     // DO NOTHING
                 }
 
+                if (request.storePass.toString().length < 4) {
+                    return res.status(400).json({ status: 400, message: 'Invalid store password.' })
+                }
+
                 let storePass = request.storePass
                 if (storePass < 0) {
                     storePass = 123456
