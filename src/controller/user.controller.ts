@@ -59,9 +59,9 @@ export default class UserController {
                 return res.status(400).json({ message: 'User is duplicate.' });
             }
 
-            if (request.storePass.toString().length < 4) {
-                return res.status(400).json({ status: 400, message: 'Invalid store password.' })
-            }
+            // if (request.storePass.toString().length < 4) {
+            //     return res.status(400).json({ status: 400, message: 'Invalid store password.' })
+            // }
 
             const idtableValue = {
                 id: request.username,
