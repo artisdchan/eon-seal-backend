@@ -59,6 +59,10 @@ export default class UserController {
                 return res.status(400).json({ message: 'User is duplicate.' });
             }
 
+            if (request.storePass.toString().length < 4) {
+                return res.status(400).json({ status: 400, message: 'Invalid store password.' })
+            }
+
             const idtableValue = {
                 id: request.username,
                 passwd: () => `OLD_PASSWORD('${request.password}')`,
@@ -132,10 +136,6 @@ export default class UserController {
                     await queryRunner.manager.createQueryBuilder().insert().into(idtable5).values(idtableValue).execute();
                 } else {
                     // DO NOTHING
-                }
-
-                if (request.storePass.toString().length < 4) {
-                    return res.status(400).json({ status: 400, message: 'Invalid store password.' })
                 }
 
                 let storePass = request.storePass
