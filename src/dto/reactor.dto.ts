@@ -1,5 +1,6 @@
 export type UpReactorRequest = {
     priceType: string
+    walletToken: string | undefined
 }
 
 export type ReactorListResponse = {

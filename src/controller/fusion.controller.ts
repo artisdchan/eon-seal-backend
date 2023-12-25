@@ -44,11 +44,14 @@ export default class FusionController {
             pcEntityList.map((each) => characterName.push(each.char_name));
 
             // Find cash item in cash_inventory by character names
-            const cashInventoryEntity = await GDB0101DataSource.manager.createQueryBuilder()
+            let cashInventoryEntity: CashInventory[] = [] 
+            if (characterName.length > 0) {
+                cashInventoryEntity = await GDB0101DataSource.manager.createQueryBuilder()
                 .select("cashInventory")
                 .from(CashInventory, "cashInventory")
                 .where("cashInventory.char_name IN (:...charNames)", { charNames: characterName })
                 .getMany();
+            }
 
             const sealItemEntity = await ItemDataSource.manager.findBy(SealItem, { userId: currentUser.gameUserId });
             if (cashInventoryEntity == null && sealItemEntity == null) {
@@ -149,11 +152,14 @@ export default class FusionController {
             pcEntityList.map((each) => characterName.push(each.char_name));
 
             // Find cash item in cash_inventory by character names
-            let cashInventoryEntity = await GDB0101DataSource.manager.createQueryBuilder()
+            let cashInventoryEntity: CashInventory[] = []
+            if (characterName.length > 0) {
+                cashInventoryEntity = await GDB0101DataSource.manager.createQueryBuilder()
                 .select("cashInventory")
                 .from(CashInventory, "cashInventory")
                 .where("cashInventory.char_name IN (:...charNames)", { charNames: characterName })
                 .getMany();
+            }
 
             // Find cash item in seal_item by user_id
             const sealItemEntity = await ItemDataSource.manager.findBy(SealItem, { userId: currentUser.gameUserId });
@@ -478,7 +484,7 @@ export default class FusionController {
             } else if (request.characterSelectedItemId != undefined) {
 
                 // Find cash item in cash_inventory by character names
-                const cashInventoryEntity = await GDB0101DataSource.manager.createQueryBuilder()
+                let cashInventoryEntity = await GDB0101DataSource.manager.createQueryBuilder()
                     .select("cashInventory")
                     .from(CashInventory, "cashInventory")
                     .where("cashInventory.char_name = (:charNames)", { charNames: request.characterName })

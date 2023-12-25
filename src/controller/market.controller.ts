@@ -60,11 +60,14 @@ export default class MarketController {
             const storeEntity = await GDB0101DataSource.manager.findOneBy(store, { user_id: userMsgExEntity.userId });
 
             // Find cash item in cash_inventory by character names
-            const cashInventoryEntity = await GDB0101DataSource.manager.createQueryBuilder()
-                .select("cashInventory")
-                .from(CashInventory, "cashInventory")
-                .where("cashInventory.char_name IN (:...charNames)", { charNames: characterName })
-                .getMany();
+            let cashInventoryEntity: CashInventory[] = []
+            if (characterName.length > 0) {
+                cashInventoryEntity = await GDB0101DataSource.manager.createQueryBuilder()
+                    .select("cashInventory")
+                    .from(CashInventory, "cashInventory")
+                    .where("cashInventory.char_name IN (:...charNames)", { charNames: characterName })
+                    .getMany();
+            }
 
             let charBag: ItemDetail[] = []
             let accountBag: ItemDetail[] = []
@@ -255,12 +258,16 @@ export default class MarketController {
 
             if (request.itemBag == WhiteListItemBag.CHARACTER_CASH_INVENTORY) {
                 const cashInventoryService = new CashInventoryService()
+
                 // Find cash item in cash_inventory by character names
-                const cashInventoryEntity = await GDB0101DataSource.manager.createQueryBuilder()
-                    .select("cashInventory")
-                    .from(CashInventory, "cashInventory")
-                    .where("cashInventory.char_name IN (:...charNames)", { charNames: characterName })
-                    .getMany();
+                let cashInventoryEntity: CashInventory[] = []
+                if (characterName.length > 0) {
+                    cashInventoryEntity = await GDB0101DataSource.manager.createQueryBuilder()
+                        .select("cashInventory")
+                        .from(CashInventory, "cashInventory")
+                        .where("cashInventory.char_name IN (:...charNames)", { charNames: characterName })
+                        .getMany();
+                }
 
                 for (let eachCashInv of cashInventoryEntity) {
                     const itemPosition = cashInventoryService.getAllDuplicatePosition(whiteListItem.itemId, eachCashInv);
@@ -356,12 +363,16 @@ export default class MarketController {
 
             if (request.itemBag == WhiteListItemBag.CHARACTER_CASH_INVENTORY) {
                 const cashInventoryService = new CashInventoryService()
+
                 // Find cash item in cash_inventory by character names
-                const cashInventoryEntity = await GDB0101DataSource.manager.createQueryBuilder()
-                    .select("cashInventory")
-                    .from(CashInventory, "cashInventory")
-                    .where("cashInventory.char_name IN (:...charNames)", { charNames: characterName })
-                    .getMany();
+                let cashInventoryEntity: CashInventory[] = []
+                if (characterName.length > 0) {
+                    cashInventoryEntity = await GDB0101DataSource.manager.createQueryBuilder()
+                        .select("cashInventory")
+                        .from(CashInventory, "cashInventory")
+                        .where("cashInventory.char_name IN (:...charNames)", { charNames: characterName })
+                        .getMany();
+                }
 
                 for (let eachCashInv of cashInventoryEntity) {
                     const itemPosition = cashInventoryService.getAllDuplicatePosition(whiteListItem.itemId, eachCashInv);

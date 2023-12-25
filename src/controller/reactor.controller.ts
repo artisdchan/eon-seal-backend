@@ -59,6 +59,11 @@ export default class ReactorController {
 
                 } else if (request.priceType == 'EON') {
 
+                    if (request.walletToken == undefined) {
+                        return res.status(400).json({ status: 400, message: 'Invalid wallet' })
+                    }
+
+                    // TODO call eonhub to check wallet address
                     const eonHubService = new EonHubService()
                     const eonHubResponse = await eonHubService.minusEonPoint(currentUser.email, reactor.priceEon)
                     if (eonHubResponse.status != 200) {

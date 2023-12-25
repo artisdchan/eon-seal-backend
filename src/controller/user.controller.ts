@@ -150,18 +150,18 @@ export default class UserController {
             } catch (error) {
                 console.error(error);
                 await queryRunner.rollbackTransaction()
-                res.status(500).send({ status: 500, message: `internal server error.` });
+                return res.status(500).send({ status: 500, message: `internal server error.` });
             } finally {
                 await queryRunner.release()
             }
 
-            res.sendStatus(201);
-            return next();
+            return res.sendStatus(201);
+            // return next();
 
         } catch (error) {
             console.error(error);
-            res.status(500).send({ status: 500, message: `internal server error.` });
-            return next(null)
+            return res.status(500).send({ status: 500, message: `internal server error.` });
+            // return next(null)
         }
     }
 
