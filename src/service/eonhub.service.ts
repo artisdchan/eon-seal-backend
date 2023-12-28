@@ -65,4 +65,22 @@ export default class EonHubService {
   
     }
 
+    public validateWallet = async (email: string, walletToken: number) : Promise<EONHubResponse> => {
+       
+        const response = await fetch(`${EONHUB_BACKEND_URL}/api/user/wallet`, {
+            method: 'POST',
+            headers: {
+                'API-KEY': EONHUB_API_KEY,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                email: email,
+                walletToken: walletToken
+            })
+        });
+
+        return await response.json() as EONHubResponse
+  
+    }
+
 }

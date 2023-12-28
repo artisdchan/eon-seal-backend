@@ -65,6 +65,10 @@ export default class ReactorController {
 
                     // TODO call eonhub to check wallet address
                     const eonHubService = new EonHubService()
+                    const validateWalletResponse = await eonHubService.validateWallet(currentUser.email, reactor.priceEon)
+                    if (validateWalletResponse.status != 200) {
+                        return res.status(validateWalletResponse.status).json(validateWalletResponse)
+                    }
                     const eonHubResponse = await eonHubService.minusEonPoint(currentUser.email, reactor.priceEon)
                     if (eonHubResponse.status != 200) {
                         return res.status(eonHubResponse.status).json(eonHubResponse)
@@ -211,7 +215,7 @@ export default class ReactorController {
                 itemName: reactorDetail.itemName,
                 itemPictureUrl: reactorDetail.itemPictureUrl
             }
-            
+
             await ItemDataSource.manager.create(ReactorHistory, {
                 reactorLevel: currentReactorLevel,
                 action: `Claim item from reactor lv.${currentReactorLevel}, ItemId: ${reactorDetail.itemId}, ItemBag: ${reactorDetail.itemBag}, Message:${errMsg}`,
