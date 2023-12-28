@@ -74,7 +74,7 @@ export default class ReactorController {
             }
 
             const randomChance = Number(Math.random() * 100)
-            if (randomChance < reactor.successRate) {
+            if (randomChance >= reactor.successRateFrom && randomChance <= reactor.successRateTo) {
                 // success
                 webUser.reactorLevel += 1
                 webUser.useReactorCount += 1
@@ -86,7 +86,42 @@ export default class ReactorController {
                     actionByGameUserId: currentUser.gameUserId
                 })
 
-                return res.status(200).json({ status: 200, data: null })
+                const reactor = await ItemDataSource.manager.findOneBy(Reactor, { reactorLevel: webUser.reactorLevel })
+                if (reactor == null) {
+                    return res.status(400).json({ status: 400, message: 'Invalid reactor level.' })
+                }
+
+                const reactorDetail = await ItemDataSource.manager.findBy(ReactorDetail, { reactorId: reactor.id })
+                if (reactorDetail == null) {
+                    return res.status(400).json({ status: 400, message: 'Invalid reactor level' })
+                }
+
+                const itemLevelChance = Number(Math.random() * 100)
+                let itemLevel = 1
+                if (itemLevelChance >= 0 && itemLevelChance < 50) {
+                    itemLevel = 1
+                } else if (itemLevelChance >= 50 && itemLevelChance < 75) {
+                    itemLevel = 2
+                } else if (itemLevelChance > 75 && itemLevelChance < 95) {
+                    itemLevel = 3
+                } else if (itemLevelChance >= 95 && itemLevelChance < 100) {
+                    itemLevel = 4
+                }
+
+                let response
+                const itemChance = Number(Math.random() * 100)
+                for (let eachItem of reactorDetail) {
+                    if (itemLevel == eachItem.itemLevel && itemChance >= eachItem.itemChanceFrom && itemChance <= eachItem.itemChanceTo) {
+                        response = {
+                            id: eachItem.reactorDetailId,
+                            itemName: eachItem.itemName,
+                            itemPictureUrl: eachItem.itemPictureUrl
+                        }
+                    }
+                }
+
+                return res.status(200).json({ status: 200, data: response })
+
             } else {
                 // fail
                 webUser.reactorLevel = 0
@@ -113,6 +148,7 @@ export default class ReactorController {
         try {
 
             const currentUser = req.user as AuthenUser
+            const { id } = req.body
 
             let webUser = await SealMemberDataSource.manager.findOneBy(WebUserDetail, { user_id: currentUser.gameUserId })
             if (webUser == null) {
@@ -125,79 +161,63 @@ export default class ReactorController {
                 return res.status(400).json({ status: 400, message: 'Invalid reactor level.' })
             }
 
-            const reactorDetail = await ItemDataSource.manager.findBy(ReactorDetail, { reactorId: reactor.id })
+            const reactorDetail = await ItemDataSource.manager.findOneBy(ReactorDetail, { reactorId: reactor.id, reactorDetailId: Number(id) })
             if (reactorDetail == null) {
                 return res.status(400).json({ status: 400, message: 'Invalid reactor level' })
             }
 
-            const itemLevelChance = Number(Math.random() * 100)
-            let itemLevel = 1
-            if (itemLevelChance >= 0 && itemLevelChance < 50) {
-                itemLevel = 1
-            } else if (itemLevelChance >= 50 && itemLevelChance < 75) {
-                itemLevel = 2
-            } else if (itemLevelChance > 75 && itemLevelChance < 95) {
-                itemLevel = 3
-            } else if (itemLevelChance >= 95 && itemLevelChance < 100) {
-                itemLevel = 4
+            let response
+            let errMsg = ''
+            const itemService = new ItemService()
+            if (reactorDetail.itemBag == 'IN_GAME_ITEM_INVENTORY') {
+                for (let i = 0; i < reactorDetail.itemAmount; i++) {
+                    errMsg = await itemService.insertBackInventory(currentUser.gameUserId, reactorDetail.itemId, 1, reactorDetail.itemOption, reactorDetail.itemLimit);
+                }
+            } else if (reactorDetail.itemBag == 'ACCOUNT_CASH_INVENTORY') {
+                for (let i = 0; i < reactorDetail.itemAmount; i++) {
+                    errMsg = await itemService.insertAccountCashInventory(currentUser.gameUserId, reactorDetail.itemId, reactorDetail.itemAmount, reactorDetail.itemOption, reactorDetail.itemLimit);
+                }
+            } else if (reactorDetail.itemBag == 'CHARACTER_CASH_INVENTORY') {
+                // errMsg = await this.insertCharacterCashInventory(currentUser.gameUserId, request.characterName, crystalShop.itemId, crystalShop.itemAmount);
+                // if (errMsg != "") {
+                //     log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_INVENTORY", errMsg, log);
+                //     return res.status(400).json({ status: 400, message: errMsg });
+                // }
+            } else if (reactorDetail.itemBag == 'RANDOM_COSTUME_COMMON') {
+                const randomItem = await itemService.randomCostume(ItemLevel.COMMON);
+                errMsg = await itemService.insertAccountCashInventory(currentUser.gameUserId, randomItem.itemId, 1, 0, 0);
+            } else if (reactorDetail.itemBag == 'RANDOM_COSTUME_UNCOMMON') {
+                const randomItem = await itemService.randomCostume(ItemLevel.UNCOMMON);
+                errMsg = await itemService.insertAccountCashInventory(currentUser.gameUserId, randomItem.itemId, 1, 0, 0);
+            } else if (reactorDetail.itemBag == 'RANDOM_COSTUME_RARE') {
+                const randomItem = await itemService.randomCostume(ItemLevel.RARE);
+                errMsg = await itemService.insertAccountCashInventory(currentUser.gameUserId, randomItem.itemId, 1, 0, 0);
+            } else if (reactorDetail.itemBag == 'RANDOM_COSTUME_EPIC') {
+                const randomItem = await itemService.randomCostume(ItemLevel.EPIC);
+                errMsg = await itemService.insertAccountCashInventory(currentUser.gameUserId, randomItem.itemId, 1, 0, 0);
+            } else if (reactorDetail.itemBag == 'STACK_IN_GAME_ITEM') {
+                errMsg = await itemService.insertStackItem(currentUser.gameUserId, reactorDetail.itemId, reactorDetail.itemAmount, reactorDetail.itemOption, reactorDetail.itemLimit);
+            } else if (reactorDetail.itemBag == 'EON_POINT') {
+                const eonHubService = new EonHubService()
+                const eonHubResponse = await eonHubService.minusEonPoint(currentUser.email, reactor.priceEon)
+                if (eonHubResponse.status != 200) {
+                    return res.status(eonHubResponse.status).json(eonHubResponse)
+                }
+            } else {
+                // DO NOTHING
             }
 
-            let response
-            const itemChance = Number(Math.random() * 100)
-            for (let eachItem of reactorDetail) {
-                if (itemLevel == eachItem.itemLevel && eachItem.itemChance >= itemChance) {
-                    // TODO add item into game account
-                    let errMsg = ''
-                    const itemService = new ItemService()
-                    if (eachItem.itemBag == 'IN_GAME_ITEM_INVENTORY') {
-                        for (let i = 0; i < eachItem.itemAmount; i++) {
-                            errMsg = await itemService.insertBackInventory(currentUser.gameUserId, eachItem.itemId, 1, eachItem.itemOption, eachItem.itemLimit);
-                        }
-                    } else if (eachItem.itemBag == 'ACCOUNT_CASH_INVENTORY') {
-                        for (let i = 0; i < eachItem.itemAmount; i++) {
-                            errMsg = await itemService.insertAccountCashInventory(currentUser.gameUserId, eachItem.itemId, eachItem.itemAmount, eachItem.itemOption, eachItem.itemLimit);
-                        }
-                    } else if (eachItem.itemBag == 'CHARACTER_CASH_INVENTORY') {
-                        // errMsg = await this.insertCharacterCashInventory(currentUser.gameUserId, request.characterName, crystalShop.itemId, crystalShop.itemAmount);
-                        // if (errMsg != "") {
-                        //     log = await logService.updateLogItemTransaction("FAIL_TO_UPDATE_INVENTORY", errMsg, log);
-                        //     return res.status(400).json({ status: 400, message: errMsg });
-                        // }
-                    } else if (eachItem.itemBag == 'RANDOM_COSTUME_COMMON') {
-                        const randomItem = await itemService.randomCostume(ItemLevel.COMMON);
-                        errMsg = await itemService.insertAccountCashInventory(currentUser.gameUserId, randomItem.itemId, 1, 0, 0);
-                    } else if (eachItem.itemBag == 'RANDOM_COSTUME_UNCOMMON') {
-                        const randomItem = await itemService.randomCostume(ItemLevel.UNCOMMON);
-                        errMsg = await itemService.insertAccountCashInventory(currentUser.gameUserId, randomItem.itemId, 1, 0, 0);
-                    } else if (eachItem.itemBag == 'RANDOM_COSTUME_RARE') {
-                        const randomItem = await itemService.randomCostume(ItemLevel.RARE);
-                        errMsg = await itemService.insertAccountCashInventory(currentUser.gameUserId, randomItem.itemId, 1, 0, 0);
-                    } else if (eachItem.itemBag == 'RANDOM_COSTUME_EPIC') {
-                        const randomItem = await itemService.randomCostume(ItemLevel.EPIC);
-                        errMsg = await itemService.insertAccountCashInventory(currentUser.gameUserId, randomItem.itemId, 1, 0, 0);
-                    } else if (eachItem.itemBag == 'STACK_IN_GAME_ITEM') {
-                        errMsg = await itemService.insertStackItem(currentUser.gameUserId, eachItem.itemId, eachItem.itemAmount, eachItem.itemOption, eachItem.itemLimit);
-                    } else if (eachItem.itemBag == 'EON_POINT') {
-                        const eonHubService = new EonHubService()
-                        const eonHubResponse = await eonHubService.minusEonPoint(currentUser.email, reactor.priceEon)
-                        if (eonHubResponse.status != 200) {
-                            return res.status(eonHubResponse.status).json(eonHubResponse)
-                        }
-                    } else {
-                        // DO NOTHING
-                    }
-                    response = {
-                        itemName: eachItem.itemName,
-                        itemPictureUrl: eachItem.itemPictureUrl
-                    }
-                    await ItemDataSource.manager.create(ReactorHistory, {
-                        reactorLevel: currentReactorLevel,
-                        action: `Claim item from reactor lv.${currentReactorLevel}, ItemId: ${eachItem.itemId}, ItemBag: ${eachItem.itemBag}, Message:${errMsg}`,
-                        actionByGameUserId: currentUser.gameUserId,
-                        actionTime: new Date
-                    })
-                }
+            response = {
+                itemName: reactorDetail.itemName,
+                itemPictureUrl: reactorDetail.itemPictureUrl
             }
+            
+            await ItemDataSource.manager.create(ReactorHistory, {
+                reactorLevel: currentReactorLevel,
+                action: `Claim item from reactor lv.${currentReactorLevel}, ItemId: ${reactorDetail.itemId}, ItemBag: ${reactorDetail.itemBag}, Message:${errMsg}`,
+                actionByGameUserId: currentUser.gameUserId,
+                actionTime: new Date
+            })
 
             webUser.reactorLevel = 0
             await SealMemberDataSource.manager.getRepository(WebUserDetail).save(webUser)

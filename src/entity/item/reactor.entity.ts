@@ -12,8 +12,11 @@ export class Reactor {
     @Column({ name: 'reactor_level' })
     reactorLevel!: number
 
-    @Column({ name: 'success_rate' })
-    successRate!: number
+    @Column({ name: 'success_rate_to' })
+    successRateTo!: number
+
+    @Column({ name: 'success_rate_from' })
+    successRateFrom!: number
 
     @Column({ name: 'price_eon' })
     priceEon!: number

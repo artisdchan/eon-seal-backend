@@ -33,7 +33,10 @@ export class ReactorDetail {
     @Column({ name: 'item_picture_url' })
     itemPictureUrl!: string
 
-    @Column({ name: 'item_chance' })
-    itemChance!: number
+    @Column({ name: 'item_chance_to' })
+    itemChanceTo!: number
+
+    @Column({ name: 'item_chance_from' })
+    itemChanceFrom!: number
 
 }
