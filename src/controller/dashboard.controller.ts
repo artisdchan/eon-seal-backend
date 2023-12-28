@@ -374,7 +374,7 @@ export class DashboardController {
             if (topListType == TopListType.CEGEL) {
 
                 const allResult = await GDB0101DataSource.manager.query('select s.user_id, SUM(s.segel + c.amount) as amount from store s inner join(select p.user_id,SUM(p.money + ifnull(0, gs.segel)) as amount from pc p left join guildinfo g on p.char_name = g.mastername left join guildstore gs  on g.name = gs.guildname INNER JOIN store s on p.user_id = s.user_id group by p.user_id order by amount desc) c ON s.user_id = c.user_id group by s.user_id order by amount desc limit 50;') as unknown as AllMoney[];
-                for (let i = 0; i < 50; i++) {
+                for (let i = 0; i < 20; i++) {
                     response.push({ userId: allResult[i].user_id, amount: allResult[i].amount })
                 }
 
@@ -382,7 +382,7 @@ export class DashboardController {
 
                 const allCrystalPoint = await SealMemberDataSource.manager.getRepository(WebUserDetail)
                     .createQueryBuilder('webUser').select('webUser.user_id', 'user_id').addSelect('SUM(webUser.crystal_point)', 'amount')
-                    .groupBy('webUser.user_id').orderBy('amount', 'DESC').limit(50).getRawMany();
+                    .groupBy('webUser.user_id').orderBy('amount', 'DESC').limit(20).getRawMany();
 
                 for (let each of allCrystalPoint) {
                     response.push({ userId: each.user_id, amount: each.amount})
@@ -392,7 +392,7 @@ export class DashboardController {
 
                 const cashTopList = await SealMemberDataSource.manager.getRepository(usermsgex)
                     .createQueryBuilder('usermsgex').select('usermsgex.userId', 'userId').addSelect('SUM(usermsgex.gold)', 'amount')
-                    .groupBy('usermsgex.userId').orderBy('amount', 'DESC').limit(50).getRawMany();
+                    .groupBy('usermsgex.userId').orderBy('amount', 'DESC').limit(20).getRawMany();
 
                 for (let each of cashTopList) {
                     response.push({ userId: each.userId, amount: each.amount });
@@ -465,7 +465,7 @@ export class DashboardController {
 
                     result.sort((n1, n2) => { return n1.amount < n2.amount ? 1 : -1 });
 
-                    let size = 50;
+                    let size = 20;
                     if (size > result.length) {
                         size = result.length
                     }
