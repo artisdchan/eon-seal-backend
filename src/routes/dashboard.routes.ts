@@ -23,6 +23,7 @@ class DashboardRoutes {
         this.router.get("/", passport.authenticate('jwt'), checkLimitUserLevel(99), this.controller.dashboard);
         this.router.get('/serverinfo', passport.authenticate('jwt'), checkLimitUserLevel(99), this.controller.serverInfo);
         this.router.get('/bot/serverinfo', this.controller.serverInfoBot)
+        this.router.get('/bot/dashboardinfo', this.controller.dashboardBot)
     }
 
 }

@@ -354,6 +354,139 @@ export class DashboardController {
         }
     }
 
+    public dashboardBot = async (req: Request, res: Response) => {
+
+        if (!GDB0101DataSource.isInitialized) {
+            await GDB0101DataSource.initialize();
+        }
+        if (!SealMemberDataSource.isInitialized) {
+            await SealMemberDataSource.initialize();
+        }
+        if (!ItemDataSource.isInitialized) {
+            await ItemDataSource.initialize();
+        }
+
+        try {
+
+            const { topListType } = req.query;
+            let response: DashBoardResponseDTO[] = [];
+
+            if (topListType == TopListType.CEGEL) {
+
+                const allResult = await GDB0101DataSource.manager.query('select s.user_id, SUM(s.segel + c.amount) as amount from store s inner join(select p.user_id,SUM(p.money + ifnull(0, gs.segel)) as amount from pc p left join guildinfo g on p.char_name = g.mastername left join guildstore gs  on g.name = gs.guildname INNER JOIN store s on p.user_id = s.user_id group by p.user_id order by amount desc) c ON s.user_id = c.user_id group by s.user_id order by amount desc limit 50;') as unknown as AllMoney[];
+                for (let i = 0; i < 50; i++) {
+                    response.push({ userId: allResult[i].user_id, amount: allResult[i].amount })
+                }
+
+            } else if (topListType == TopListType.CP) {
+
+                const allCrystalPoint = await SealMemberDataSource.manager.getRepository(WebUserDetail)
+                    .createQueryBuilder('webUser').select('webUser.user_id', 'user_id').addSelect('SUM(webUser.crystal_point)', 'amount')
+                    .groupBy('webUser.user_id').orderBy('amount', 'DESC').limit(50).getRawMany();
+
+                for (let each of allCrystalPoint) {
+                    response.push({ userId: each.user_id, amount: each.amount})
+                }
+
+            } else if (topListType == TopListType.CASH) {
+
+                const cashTopList = await SealMemberDataSource.manager.getRepository(usermsgex)
+                    .createQueryBuilder('usermsgex').select('usermsgex.userId', 'userId').addSelect('SUM(usermsgex.gold)', 'amount')
+                    .groupBy('usermsgex.userId').orderBy('amount', 'DESC').limit(50).getRawMany();
+
+                for (let each of cashTopList) {
+                    response.push({ userId: each.userId, amount: each.amount });
+                }
+
+            } else if (topListType == TopListType.CRYSTAL || topListType == TopListType.RUBY || topListType == TopListType.DIAMOND || topListType == TopListType.RC ||
+                topListType == TopListType.G4 || topListType == TopListType.G5 || topListType == TopListType.G6 || topListType == TopListType.G7 || topListType == TopListType.G8 ||
+                topListType == TopListType.G10 || topListType == TopListType.G12 || topListType == TopListType.G13 || topListType == TopListType.G14) {
+
+                let itemId = 27232;
+                if (topListType == TopListType.CRYSTAL) {
+                    itemId = Number((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.CRYSTAL_ITEM_ID_CONFIG }).getOne())?.configValue)
+                } else if (topListType == TopListType.RUBY) {
+                    itemId = Number((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.RUBY_ITEM_ID_CONFIG }).getOne())?.configValue);
+                } else if (topListType == TopListType.DIAMOND) {
+                    itemId = Number((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.DIAMOND_ITEM_ID_CONFIG }).getOne())?.configValue);
+                } else if (topListType == TopListType.RC) {
+                    itemId = Number((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.RC_ITEM_ID_CONFIG }).getOne())?.configValue);
+                } else if (topListType == TopListType.G4) {
+                    itemId = 5362
+                } else if (topListType == TopListType.G5) {
+                    itemId = 5363
+                } else if (topListType == TopListType.G6) {
+                    itemId = 5364
+                } else if (topListType == TopListType.G7) {
+                    itemId = 5365
+                } else if (topListType == TopListType.G8) {
+                    itemId = 5366
+                } else if (topListType == TopListType.G10) {
+                    itemId = 5368
+                } else if (topListType == TopListType.G12) {
+                    itemId = 5370
+                } else if (topListType == TopListType.G13) {
+                    itemId = 5371
+                } else if (topListType == TopListType.G14) {
+                    itemId = 5372
+                }
+
+                const countItemFromInventory: AccountItemAmountDTO[] = await this.countItemFromInventory(itemId);
+                const countItemFromStore: AccountItemAmountDTO[] = await this.countItemFromStore(itemId);
+                let result: AccountItemAmountDTO[] = [];
+
+                let storeMap = new Map<string, number>();
+                for (let eachStore of countItemFromStore) {
+                    storeMap.set(eachStore.userId, eachStore.amount)
+                }
+
+                let invMap = new Map<string, number>();
+                for (let eachInv of countItemFromInventory) {
+                    invMap.set(eachInv.userId, eachInv.amount)
+                }
+
+                let resMap = new Map([...storeMap])
+                invMap.forEach((value, key) => {
+                    if (resMap.has(key)) {
+                        resMap.set(key, resMap.get(key)! + value);
+                    } else {
+                        resMap.set(key, value);
+                    }
+                });
+
+                resMap.forEach((value, key) => {
+                    result.push({
+                        userId: key,
+                        amount: value
+                    })
+                })
+
+                if (result.length > 0) {
+
+                    result.sort((n1, n2) => { return n1.amount < n2.amount ? 1 : -1 });
+
+                    let size = 50;
+                    if (size > result.length) {
+                        size = result.length
+                    }
+                    for (let i = 0; i < size; i++) {
+                        response.push({ userId: result[i].userId, amount: result[i].amount })
+                    }
+
+                }
+
+            } else {
+                // DO NOTHING
+            }
+
+            return res.status(200).json({ status: 200, data: response });
+
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ status: 500, message: 'internal server error' });
+        }
+    }
+
     private countItemFromStore = async (itemId: number) => {
 
         const storeService = new StoreService();
