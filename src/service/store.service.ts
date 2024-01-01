@@ -130,7 +130,7 @@ export default class StoreService {
         let temp: any[] = []
         const result = (Object.keys(entity) as (keyof typeof entity)[]).find((key) => {
 
-            if (entity[key] >= itemId) {
+            if (Number(entity[key]) >= itemId) {
                 if (key.includes("it")) {
                     temp.push(key)
                 }
