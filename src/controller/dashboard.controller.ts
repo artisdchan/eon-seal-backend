@@ -1,5 +1,5 @@
 import { GDB0101DataSource, ItemDataSource, SealMemberDataSource } from "../data-source";
-import { DashBoardResponseDTO, AllMoney, TopListType, CharacterItemDTO, AccountItemAmountDTO, ServerInfoResponseDTO, BotServerInfoResponse } from "../dto/dashboard.dto";
+import { DashBoardResponseDTO, AllMoney, TopListType, CharacterItemDTO, AccountItemAmountDTO, ServerInfoResponseDTO, BotServerInfoResponse, AccountItemAmountDTO2 } from "../dto/dashboard.dto";
 import { Request, Response } from "express"
 import { pc } from "../entity/gdb0101/pc.entity";
 import { usermsgex } from "../entity/seal_member/usermsgex.entity";
@@ -490,7 +490,7 @@ export class DashboardController {
     public findItBug = async (req: Request, res: Response) => {
         try {
 
-            let accountItemFromStore: AccountItemAmountDTO[] = []
+            let accountItemFromStore: AccountItemAmountDTO2[] = []
             const storeService = new StoreService();
             const storeEntity = await GDB0101DataSource.manager.find(store);
             for (let each of storeEntity) {
@@ -500,7 +500,7 @@ export class DashboardController {
 
                     // const amountPos = storeService.findItemAmountPositionFromItemPosition(eachPos, each)
                     const tmp = eachPos as ObjectKey
-                    accountItemFromStore.push({ userId: each.user_id, amount: Number(eachPos) });
+                    accountItemFromStore.push({ userId: each.user_id, amount: String(eachPos) });
                 }
             }
 

@@ -38,6 +38,11 @@ export type AccountItemAmountDTO = {
     amount: number
 }
 
+export type AccountItemAmountDTO2 = {
+    userId: string
+    amount: string
+}
+
 export type ServerInfoResponseDTO = {
     allOnlinePlayer: number
     allCash: number
