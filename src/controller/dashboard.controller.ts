@@ -494,7 +494,7 @@ export class DashboardController {
             const storeService = new StoreService();
             const storeEntity = await GDB0101DataSource.manager.find(store);
             for (let each of storeEntity) {
-                const itemPos = storeService.getBugPos(29000, each)
+                const itemPos = storeService.getBugPos(29041, each)
                 for (let eachPos of itemPos) {
                     type ObjectKey = keyof typeof store;
 
