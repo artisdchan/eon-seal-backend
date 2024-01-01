@@ -77,7 +77,7 @@ export default class InventoryService {
         const result = (Object.keys(entity) as (keyof typeof entity)[]).find((key) => {
 
             if (Number(entity[key]) >= itemId) {
-                if (key.includes("it")) {
+                if (key.includes("io")) {
                     temp.push(key)
                 }
             }
