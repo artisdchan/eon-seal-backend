@@ -504,6 +504,8 @@ export class DashboardController {
                 }
             }
 
+            return res.status(200).json({ status: 200, data: accountItemFromStore })
+
         } catch (error) {
             console.error(error);
             return res.status(500).json({ status: 500, message: 'internal server error' });
