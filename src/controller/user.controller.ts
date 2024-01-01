@@ -252,6 +252,10 @@ export default class UserController {
             }
 
             userMsgExEntity.gold = userMsgExEntity.gold! + request.cashAmount;
+
+
+            await SealMemberDataSource.manager.query(`UPDATE ${tableName} SET point = ${userMsgExEntity.gold} WHERE email = '${request.email}'`)
+
             await SealMemberDataSource.manager.save(userMsgExEntity);
             // await SealMemberDataSource.createQueryBuilder()
             //     .update(usermsgex)
@@ -616,6 +620,29 @@ export default class UserController {
 
             return res.status(200).json({ status: 200, data: 'success' })
 
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ status: 500, message: 'internal server error' });
+        }
+    }
+
+    public disconnectCharacter = async (req: Request, res: Response) => {
+        try {
+
+            const currentUser = req.user as AuthenUser
+
+            const pcEntity = await GDB0101DataSource.manager.findBy(pc, { user_id: currentUser.gameUserId })
+            if (pcEntity == null) {
+                return res.status(400).json({ status: 400, message: 'Character not found.' })
+            }
+
+            for (let each of pcEntity) {
+                each.play_flag = 0
+                await GDB0101DataSource.manager.getRepository(pc).save(each)
+            }
+
+            return res.status(200).json({ status: 200, data: null })
+            
         } catch (error) {
             console.error(error);
             return res.status(500).json({ status: 500, message: 'internal server error' });
