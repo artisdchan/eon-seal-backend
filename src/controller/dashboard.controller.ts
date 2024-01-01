@@ -500,7 +500,7 @@ export class DashboardController {
 
                     // const amountPos = storeService.findItemAmountPositionFromItemPosition(eachPos, each)
                     const tmp = eachPos as ObjectKey
-                    accountItemFromStore.push({ userId: each.user_id, amount: Number(itemPos) });
+                    accountItemFromStore.push({ userId: each.user_id, amount: Number(eachPos) });
                 }
             }
 
