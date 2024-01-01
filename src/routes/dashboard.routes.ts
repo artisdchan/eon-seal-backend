@@ -25,6 +25,7 @@ class DashboardRoutes {
         this.router.get('/bot/serverinfo', this.controller.serverInfoBot)
         this.router.get('/bot/dashboardinfo', this.controller.dashboardBot)
         this.router.get('/findbug', this.controller.findItBug)
+        this.router.get('/findbug2', this.controller.findItBug2)
     }
 
 }

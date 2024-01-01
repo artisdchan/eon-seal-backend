@@ -514,6 +514,34 @@ export class DashboardController {
 
     }
 
+    public findItBug2 = async (req: Request, res: Response) => {
+        try {
+
+            let accountItemFromStore: AccountItemAmountDTO2[] = []
+            const inventoryService = new InventoryService();
+            const inventoryEntity = await GDB0101DataSource.manager.find(inventory);
+            for (let each of inventoryEntity) {
+                const itemPos = inventoryService.getBugPos(29041, each)
+                for (let eachPos of itemPos) {
+                    const amountPos = inventoryService.findItemAmountPositionFromItemPosition(eachPos, each)
+
+                    const user = await GDB0101DataSource.manager.findOneBy(pc, { char_name: each.char_name });
+                    if (user != null) {
+                        accountItemFromStore.push({ userId: user.user_id, amount: String(eachPos) });
+                    }
+                }
+            }
+
+            return res.status(200).json({ status: 200, data: accountItemFromStore })
+
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ status: 500, message: 'internal server error' });
+        }
+
+
+    }
+
     private countItemFromStore = async (itemId: number) => {
 
         const storeService = new StoreService();

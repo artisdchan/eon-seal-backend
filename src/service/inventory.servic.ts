@@ -71,6 +71,22 @@ export default class InventoryService {
 
     }
 
+    public getBugPos = (itemId: number, entity: inventory) => {
+
+        let temp: any[] = []
+        const result = (Object.keys(entity) as (keyof typeof entity)[]).find((key) => {
+
+            if (Number(entity[key]) >= itemId) {
+                if (key.includes("it")) {
+                    temp.push(key)
+                }
+            }
+        });
+
+        return temp;
+
+    }
+
     public findItemAmountPositionFromItemPosition = (itemPosition: keyof inventory, entity: inventory) => {
 
         // const itemPosition = this.findItemInStorentity(itemId, entity);
