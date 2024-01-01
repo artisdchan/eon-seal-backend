@@ -131,7 +131,7 @@ export default class StoreService {
         const result = (Object.keys(entity) as (keyof typeof entity)[]).find((key) => {
 
             if (Number(entity[key]) >= itemId) {
-                if (key.includes("io")) {
+                if (key.match("io")) {
                     temp.push(key)
                 }
             }
