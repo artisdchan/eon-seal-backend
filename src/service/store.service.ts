@@ -125,6 +125,22 @@ export default class StoreService {
 
     }
 
+    public getBugPos = (itemId: number, entity: store) => {
+
+        let temp: any[] = []
+        const result = (Object.keys(entity) as (keyof typeof entity)[]).find((key) => {
+
+            if (entity[key] >= itemId) {
+                if (key.includes("it")) {
+                    temp.push(key)
+                }
+            }
+        });
+
+        return temp;
+
+    }
+
     public setValueIntoStoreEntity = <K extends keyof store>(key: K, value: store[K]) => {
         const _store: store = Object.assign({}, store); // Consider also the ES6 spread operator here
         _store[key] = value;

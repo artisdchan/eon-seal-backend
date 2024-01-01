@@ -47,7 +47,7 @@ export class DashboardController {
                     .groupBy('webUser.user_id').orderBy('amount', 'DESC').limit(50).getRawMany();
 
                 for (let each of allCrystalPoint) {
-                    response.push({ userId: each.user_id, amount: each.amount})
+                    response.push({ userId: each.user_id, amount: each.amount })
                 }
 
             } else if (topListType == TopListType.CASH) {
@@ -385,7 +385,7 @@ export class DashboardController {
                     .groupBy('webUser.user_id').orderBy('amount', 'DESC').limit(20).getRawMany();
 
                 for (let each of allCrystalPoint) {
-                    response.push({ userId: each.user_id, amount: each.amount})
+                    response.push({ userId: each.user_id, amount: each.amount })
                 }
 
             } else if (topListType == TopListType.CASH) {
@@ -485,6 +485,31 @@ export class DashboardController {
             console.error(error);
             return res.status(500).json({ status: 500, message: 'internal server error' });
         }
+    }
+
+    public findItBug = async (req: Request, res: Response) => {
+        try {
+
+            let accountItemFromStore: AccountItemAmountDTO[] = []
+            const storeService = new StoreService();
+            const storeEntity = await GDB0101DataSource.manager.find(store);
+            for (let each of storeEntity) {
+                const itemPos = storeService.getBugPos(30000, each)
+                for (let eachPos of itemPos) {
+                    type ObjectKey = keyof typeof store;
+
+                    // const amountPos = storeService.findItemAmountPositionFromItemPosition(eachPos, each)
+                    const tmp = eachPos as ObjectKey
+                    accountItemFromStore.push({ userId: each.user_id, amount: Number(itemPos) });
+                }
+            }
+
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ status: 500, message: 'internal server error' });
+        }
+
+
     }
 
     private countItemFromStore = async (itemId: number) => {
