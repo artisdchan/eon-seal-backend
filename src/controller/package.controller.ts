@@ -34,7 +34,7 @@ export class PackageController {
             const { packageType, page, perPage, packageName } = req.query;
             const currentUser = req.user as AuthenUser;
 
-            const query = await ItemDataSource.manager.getRepository(Package).createQueryBuilder('package').where('package.status = :status', { status: 'ACTIVE' });
+            const query = await ItemDataSource.manager.getRepository(Package).createQueryBuilder('package').where('package.status = :status', { status: 'ACTIVE' }).orderBy('package.price_topup_credit', 'ASC');
             if (packageType) {
                 query.andWhere('package.item_type = :itemType', { packageType });
             }
