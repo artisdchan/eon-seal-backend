@@ -255,7 +255,16 @@ export class DashboardController {
 
                 const user = await GDB0101DataSource.manager.findOneBy(pc, { char_name: each.char_name });
                 if (user != null) {
-                    accountItemFromInv.push({ userId: user.user_id, amount: Number(each[amountPos]) + 1 });
+                    let prvAmount = 0
+                    accountItemFromInv.filter((eachItem) => {
+                        if (eachItem.userId == user.user_id) {
+                            prvAmount = eachItem.amount
+                        }
+                    })
+
+                    accountItemFromInv.push({ userId: user.user_id, amount: Number(each[amountPos]) + 1 + prvAmount });
+
+                    // accountItemFromInv.push({ userId: user.user_id, amount: Number(each[amountPos]) + 1 });
                 }
             }
         }
@@ -552,7 +561,15 @@ export class DashboardController {
             const itemPos = storeService.getAllDuplicatePosition(itemId, each)
             for (let eachPos of itemPos) {
                 const amountPos = storeService.findItemAmountPositionFromItemPosition(eachPos, each)
-                accountItemFromStore.push({ userId: each.user_id, amount: Number(each[amountPos]) + 1 });
+                let prvAmount = 0
+                accountItemFromStore.filter((eachItem) => {
+                    if (eachItem.userId == each.user_id) {
+                        prvAmount = eachItem.amount
+                    }
+                })
+
+                accountItemFromStore.push({ userId: each.user_id, amount: Number(each[amountPos]) + 1 + prvAmount });
+
             }
         }
 
