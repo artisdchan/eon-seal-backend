@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { GDB0101DataSource, LogItemDataSource, SealMemberDataSource } from "../data-source";
 import { AuthenUser } from "../dto/authen.dto";
+import { AllMoney } from "../dto/dashboard.dto";
 import { ConvertCrystalRequestDTO, ConvertRCRequestDTO, ConvertRCType } from "../dto/store.dto";
 import { store } from "../entity/gdb0101/store.entity";
 import { usermsgex } from "../entity/seal_member/usermsgex.entity";
@@ -197,7 +198,7 @@ export default class StoreController {
                 userMsgExEntity.gold! += cashToBeAdd;
                 await SealMemberDataSource.manager.save(userMsgExEntity);
 
-                log = await logService.updateLogItemTransaction("SUCCESS", `Old RC Amount: ${rcAmount}, New RC Amount: ${rcAmount-requestAmount}, Cash Amount: ${cashToBeAdd}`, log);
+                log = await logService.updateLogItemTransaction("SUCCESS", `Old RC Amount: ${rcAmount}, New RC Amount: ${rcAmount - requestAmount}, Cash Amount: ${cashToBeAdd}`, log);
 
             } else if (request.convertType == ConvertRCType.CASH_TO_RC) {
 
@@ -271,7 +272,10 @@ export default class StoreController {
                     return res.status(400).json({ status: 400, message: 'Configuration is not found.' })
                 }
 
-                const cegelToBeRemove = Number(requestAmount * Number(cegelTaxConfig.configValue))
+                //  Get all Cegel
+                const queryAllCelgel = await GDB0101DataSource.manager.query('select SUM(s.segel + c.amount) as amount from store s inner join(select p.user_id,SUM(p.money + ifnull(0, gs.segel)) as amount from pc p left join guildinfo g on p.char_name = g.mastername left join guildstore gs  on g.name = gs.guildname INNER JOIN store s on p.user_id = s.user_id group by p.user_id order by amount desc) c ON s.user_id = c.user_id  order by amount desc; ') as unknown as AllMoney[];
+
+                const cegelToBeRemove = Number(requestAmount * Number(cegelTaxConfig.configValue) + (queryAllCelgel[0].amount  / 5000))
                 if (storeEntity.segel < cegelToBeRemove) {
                     log = await logService.updateLogItemTransaction("PREPARE_CALCULATE_CRYSTAL", 'Insufficient cegel.', log);
                     return res.status(400).json({ status: 400, message: `Insufficient cegel. Reqired cegel: ${cegelToBeRemove}` })
