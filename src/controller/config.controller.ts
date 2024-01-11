@@ -9,9 +9,10 @@ export default class ConfigController {
         const { key } = req.query;
         const config = await SealMemberDataSource.manager.findOneBy(WebConfig, { configKey: String(key) });
         if (!config) {
-            res.status(404).json({ status: 404, message: 'Config not found.'})
+            return res.status(404).json({ status: 404, message: 'Config not found.' })
         }
 
-        res.status(200).json({ status: 200, data: config?.configValue })
+        return res.status(200).json({ status: 200, data: config?.configValue })
     }
+
 }

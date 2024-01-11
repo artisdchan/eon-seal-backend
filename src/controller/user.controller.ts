@@ -26,6 +26,8 @@ import { PackageDetail, PackageItemBag } from "../entity/item/package_detail.ent
 import LogService from "../service/log.service";
 import ItemService from "../service/item.service";
 import { ItemLevel } from "../entity/item/fusion_item.entity";
+import { WebConfig, WebConfigConstant } from "../entity/seal_member/web_config.entity";
+import { AllMoney } from "../dto/dashboard.dto";
 var fs = require('fs');
 
 export default class UserController {
@@ -646,6 +648,34 @@ export default class UserController {
         } catch (error) {
             console.error(error);
             return res.status(500).json({ status: 500, message: 'internal server error' });
+        }
+    }
+
+    public getCrytalTax = async (req: Request, res: Response) => {
+        try {
+
+            if (!SealMemberDataSource.isInitialized) {
+                await SealMemberDataSource.initialize();
+            }
+            if (!GDB0101DataSource.isInitialized) {
+                await GDB0101DataSource.initialize();
+            }
+
+            const cegelTaxConfig = await SealMemberDataSource.manager.findOneBy(WebConfig, { configKey: WebConfigConstant.CRYSTAL_CONVERT_TAX });
+            if (cegelTaxConfig == null) {
+                return res.status(400).json({ status: 400, message: 'Configuration is not found.' })
+            }
+
+            //  Get all Cegel
+            const queryAllCelgel = await GDB0101DataSource.manager.query('select SUM(s.segel + c.amount) as amount from store s inner join(select p.user_id,SUM(p.money + ifnull(0, gs.segel)) as amount from pc p left join guildinfo g on p.char_name = g.mastername left join guildstore gs  on g.name = gs.guildname INNER JOIN store s on p.user_id = s.user_id group by p.user_id order by amount desc) c ON s.user_id = c.user_id  order by amount desc; ') as unknown as AllMoney[];
+
+            const tax = Number(Number(cegelTaxConfig.configValue) + (Number((queryAllCelgel[0].amount / 5000).toFixed(0))))
+
+            return res.status(200).json({ status: 200, data: tax })
+            
+        } catch (error) {
+            console.log(error)
+            return res.status(500).json({ status: 500, message: 'Internal server error.' })
         }
     }
 
