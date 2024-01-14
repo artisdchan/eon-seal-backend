@@ -129,7 +129,7 @@ export default class ReactorController {
 
             } else {
                 // fail
-                webUser.reactorLevel = 0
+                webUser.reactorLevel = 1
                 webUser.useReactorCount += 100
                 await SealMemberDataSource.manager.getRepository(WebUserDetail).save(webUser)
 
@@ -224,7 +224,7 @@ export default class ReactorController {
                 actionTime: new Date
             })
 
-            webUser.reactorLevel = 0
+            webUser.reactorLevel = 1
             await SealMemberDataSource.manager.getRepository(WebUserDetail).save(webUser)
 
             return res.status(200).json({ status: 200, data: response })
