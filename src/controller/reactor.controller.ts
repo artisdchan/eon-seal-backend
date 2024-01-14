@@ -41,7 +41,7 @@ export default class ReactorController {
             if (webUser == null) {
                 return res.status(400).json({ status: 400, message: 'Invalid user.' })
             }
-            const currentReactorLevel = webUser.reactorLevel
+            const currentReactorLevel = webUser.reactorLevel + 1
 
             const reactor = await ItemDataSource.manager.findOneBy(Reactor, { reactorLevel: currentReactorLevel })
             if (reactor == null) {
@@ -89,14 +89,14 @@ export default class ReactorController {
 
                 await ItemDataSource.manager.create(ReactorHistory, {
                     reactorLevel: currentReactorLevel,
-                    action: `Successfully upgrade reactor from lv. ${currentReactorLevel}, to lv.${currentReactorLevel + 1}`,
+                    action: `Successfully upgrade reactor from lv. ${currentReactorLevel - 1}, to lv.${currentReactorLevel}`,
                     actionByGameUserId: currentUser.gameUserId
                 })
 
-                const reactor = await ItemDataSource.manager.findOneBy(Reactor, { reactorLevel: webUser.reactorLevel })
-                if (reactor == null) {
-                    return res.status(400).json({ status: 400, message: 'Invalid reactor level.' })
-                }
+                // const reactor = await ItemDataSource.manager.findOneBy(Reactor, { reactorLevel: webUser.reactorLevel })
+                // if (reactor == null) {
+                //     return res.status(400).json({ status: 400, message: 'Invalid reactor level.' })
+                // }
 
                 const reactorDetail = await ItemDataSource.manager.findBy(ReactorDetail, { reactorId: reactor.id })
                 if (reactorDetail == null) {
@@ -129,7 +129,7 @@ export default class ReactorController {
 
             } else {
                 // fail
-                webUser.reactorLevel = 1
+                webUser.reactorLevel = 0
                 webUser.useReactorCount += 100
                 await SealMemberDataSource.manager.getRepository(WebUserDetail).save(webUser)
 
@@ -224,7 +224,7 @@ export default class ReactorController {
                 actionTime: new Date
             })
 
-            webUser.reactorLevel = 1
+            webUser.reactorLevel = 0
             await SealMemberDataSource.manager.getRepository(WebUserDetail).save(webUser)
 
             return res.status(200).json({ status: 200, data: response })
