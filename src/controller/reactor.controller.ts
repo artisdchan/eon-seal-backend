@@ -10,6 +10,7 @@ import { usermsgex } from "../entity/seal_member/usermsgex.entity";
 import { WebUserDetail } from "../entity/seal_member/web_user_detail.entity";
 import EonHubService from "../service/eonhub.service";
 import ItemService from "../service/item.service";
+import Web3Token from "web3-token";
 
 export default class ReactorController {
 
@@ -49,6 +50,9 @@ export default class ReactorController {
             }
 
             if (currentReactorLevel == 0) {
+
+                webUser.useReactorCount += 100
+
                 if (request.priceType == 'CP') {
 
                     if (webUser.crystalPoint < reactor.priceCp) {
@@ -63,25 +67,25 @@ export default class ReactorController {
                         return res.status(400).json({ status: 400, message: 'Invalid wallet' })
                     }
 
-                    // TODO call eonhub to check wallet address
                     const eonHubService = new EonHubService()
-                    const validateWalletResponse = await eonHubService.validateWallet(currentUser.email, reactor.priceEon)
+                    const validateWalletResponse = await eonHubService.validateWallet(currentUser.email, request.walletToken)
                     if (validateWalletResponse.status != 200) {
                         return res.status(validateWalletResponse.status).json(validateWalletResponse)
                     }
+
                     const eonHubResponse = await eonHubService.minusEonPoint(currentUser.email, reactor.priceEon)
                     if (eonHubResponse.status != 200) {
                         return res.status(eonHubResponse.status).json(eonHubResponse)
                     }
 
                 }
+
             }
 
             const randomChance = Number(Math.random() * 100)
             if (randomChance >= reactor.successRateFrom && randomChance <= reactor.successRateTo) {
                 // success
                 webUser.reactorLevel += 1
-                webUser.useReactorCount += 1
                 await SealMemberDataSource.manager.getRepository(WebUserDetail).save(webUser)
 
                 await ItemDataSource.manager.create(ReactorHistory, {
@@ -102,20 +106,18 @@ export default class ReactorController {
 
                 const itemLevelChance = Number(Math.random() * 100)
                 let itemLevel = 1
-                if (itemLevelChance >= 0 && itemLevelChance < 50) {
+                if (itemLevelChance > 0 && itemLevelChance <= 60) {
                     itemLevel = 1
-                } else if (itemLevelChance >= 50 && itemLevelChance < 75) {
+                } else if (itemLevelChance > 60 && itemLevelChance <= 90) {
                     itemLevel = 2
-                } else if (itemLevelChance > 75 && itemLevelChance < 95) {
+                } else if (itemLevelChance > 90 && itemLevelChance <= 100) {
                     itemLevel = 3
-                } else if (itemLevelChance >= 95 && itemLevelChance < 100) {
-                    itemLevel = 4
                 }
 
                 let response
                 const itemChance = Number(Math.random() * 100)
                 for (let eachItem of reactorDetail) {
-                    if (itemLevel == eachItem.itemLevel && itemChance >= eachItem.itemChanceFrom && itemChance <= eachItem.itemChanceTo) {
+                    if (itemLevel == eachItem.itemLevel && itemChance > eachItem.itemChanceFrom && itemChance <= eachItem.itemChanceTo) {
                         response = {
                             id: eachItem.reactorDetailId,
                             itemName: eachItem.itemName,
@@ -129,7 +131,7 @@ export default class ReactorController {
             } else {
                 // fail
                 webUser.reactorLevel = 0
-                webUser.useReactorCount += 1
+                webUser.useReactorCount += 100
                 await SealMemberDataSource.manager.getRepository(WebUserDetail).save(webUser)
 
                 await ItemDataSource.manager.save(ReactorHistory, {
@@ -174,13 +176,13 @@ export default class ReactorController {
             let errMsg = ''
             const itemService = new ItemService()
             if (reactorDetail.itemBag == 'IN_GAME_ITEM_INVENTORY') {
-                for (let i = 0; i < reactorDetail.itemAmount; i++) {
-                    errMsg = await itemService.insertBackInventory(currentUser.gameUserId, reactorDetail.itemId, 1, reactorDetail.itemOption, reactorDetail.itemLimit);
-                }
+                
+                errMsg = await itemService.insertBackInventory(currentUser.gameUserId, reactorDetail.itemId, 1, reactorDetail.itemOption, reactorDetail.itemLimit);
+
             } else if (reactorDetail.itemBag == 'ACCOUNT_CASH_INVENTORY') {
-                for (let i = 0; i < reactorDetail.itemAmount; i++) {
-                    errMsg = await itemService.insertAccountCashInventory(currentUser.gameUserId, reactorDetail.itemId, reactorDetail.itemAmount, reactorDetail.itemOption, reactorDetail.itemLimit);
-                }
+
+                errMsg = await itemService.insertAccountCashInventory(currentUser.gameUserId, reactorDetail.itemId, reactorDetail.itemAmount, reactorDetail.itemOption, reactorDetail.itemLimit);
+
             } else if (reactorDetail.itemBag == 'CHARACTER_CASH_INVENTORY') {
                 // errMsg = await this.insertCharacterCashInventory(currentUser.gameUserId, request.characterName, crystalShop.itemId, crystalShop.itemAmount);
                 // if (errMsg != "") {
