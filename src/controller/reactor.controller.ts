@@ -90,7 +90,8 @@ export default class ReactorController {
                 await ItemDataSource.manager.save(ReactorHistory, {
                     reactorLevel: currentReactorLevel,
                     action: `Successfully upgrade reactor from lv. ${currentReactorLevel - 1}, to lv.${currentReactorLevel}`,
-                    actionByGameUserId: currentUser.gameUserId
+                    actionByGameUserId: currentUser.gameUserId,
+                    actionTime: new Date
                 })
 
                 // const reactor = await ItemDataSource.manager.findOneBy(Reactor, { reactorLevel: webUser.reactorLevel })
