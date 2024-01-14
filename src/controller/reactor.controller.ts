@@ -48,7 +48,7 @@ export default class ReactorController {
                 return res.status(400).json({ status: 400, message: 'Invalid reactor level.' })
             }
 
-            if (currentReactorLevel == 0) {
+            if (currentReactorLevel == 1) {
 
                 webUser.useReactorCount += 100
 
