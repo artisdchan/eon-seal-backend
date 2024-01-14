@@ -10,7 +10,6 @@ import { usermsgex } from "../entity/seal_member/usermsgex.entity";
 import { WebUserDetail } from "../entity/seal_member/web_user_detail.entity";
 import EonHubService from "../service/eonhub.service";
 import ItemService from "../service/item.service";
-import Web3Token from "web3-token";
 
 export default class ReactorController {
 
@@ -176,7 +175,7 @@ export default class ReactorController {
             let errMsg = ''
             const itemService = new ItemService()
             if (reactorDetail.itemBag == 'IN_GAME_ITEM_INVENTORY') {
-                
+
                 errMsg = await itemService.insertBackInventory(currentUser.gameUserId, reactorDetail.itemId, 1, reactorDetail.itemOption, reactorDetail.itemLimit);
 
             } else if (reactorDetail.itemBag == 'ACCOUNT_CASH_INVENTORY') {
