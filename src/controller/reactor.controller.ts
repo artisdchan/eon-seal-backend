@@ -87,7 +87,7 @@ export default class ReactorController {
                 webUser.reactorLevel += 1
                 await SealMemberDataSource.manager.getRepository(WebUserDetail).save(webUser)
 
-                await ItemDataSource.manager.create(ReactorHistory, {
+                await ItemDataSource.manager.save(ReactorHistory, {
                     reactorLevel: currentReactorLevel,
                     action: `Successfully upgrade reactor from lv. ${currentReactorLevel - 1}, to lv.${currentReactorLevel}`,
                     actionByGameUserId: currentUser.gameUserId
