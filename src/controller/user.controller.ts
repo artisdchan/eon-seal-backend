@@ -667,7 +667,7 @@ export default class UserController {
             }
 
             //  Get all Cegel
-            const queryAllCelgel = await GDB0101DataSource.manager.query('select SUM(s.segel + c.amount) as amount from store s inner join(select p.user_id,SUM(p.money + ifnull(0, gs.segel)) as amount from pc p left join guildinfo g on p.char_name = g.mastername left join guildstore gs  on g.name = gs.guildname INNER JOIN store s on p.user_id = s.user_id group by p.user_id order by amount desc) c ON s.user_id = c.user_id  order by amount desc; ') as unknown as AllMoney[];
+            const queryAllCelgel = await GDB0101DataSource.manager.query('select SUM(s.segel + c.amount + IFNULL(0, (s.negel * 100000000))) as amount from gdb0101.store s inner join(select p.user_id,SUM(p.money + ifnull(0, gs.segel) + IFNULL(0, (gs.negel * 100000000)) ) as amount from gdb0101.pc p left join gdb0101.guildinfo g on p.char_name = g.mastername left join gdb0101.guildstore gs  on g.name = gs.guildname INNER JOIN gdb0101.store s on p.user_id = s.user_id group by p.user_id order by amount desc) c ON s.user_id = c.user_id  order by amount desc; ') as unknown as AllMoney[];
 
             const tax = Number(Number(cegelTaxConfig.configValue) + (Number((queryAllCelgel[0].amount / 5000).toFixed(0))))
 
