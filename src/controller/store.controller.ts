@@ -121,6 +121,12 @@ export default class StoreController {
 
                 log = await logService.updateLogItemTransaction("PREPARE_RC_AND_CASH", undefined, log);
 
+                let storeEntity = await GDB0101DataSource.manager.findOneBy(store, { user_id: currentUser.gameUserId });
+                if (storeEntity == null) {
+                    log = await logService.updateLogItemTransaction("PREPARE_CONVERT_RC", 'Character is not exist.', log);
+                    return res.status(400).json({ status: 400, message: 'Character is not exist.' })
+                }
+
                 let rcAmount = 0;
                 const rcItemId = Number(((await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config.configValue').where('config.config_key = :key', { key: WebConfigConstant.RC_ITEM_ID_CONFIG }).getOne())?.configValue));
                 const rcPosition = await storeService.getAllDuplicatePosition(rcItemId, storeEntity);
@@ -223,6 +229,13 @@ export default class StoreController {
                     log = await logService.updateLogItemTransaction("PREPARE_CASH_TO_RC", 'Insufficient Cash Point.', log);
                     return res.status(400).json({ status: 400, message: 'Insufficient Cash Point.' });
                 }
+
+                let storeEntity = await GDB0101DataSource.manager.findOneBy(store, { user_id: currentUser.gameUserId });
+                if (storeEntity == null) {
+                    log = await logService.updateLogItemTransaction("PREPARE_CONVERT_RC", 'Character is not exist.', log);
+                    return res.status(400).json({ status: 400, message: 'Character is not exist.' })
+                }
+
                 let rcPosition = storeService.findEmptySlotInStorentity(storeEntity);
                 let rcAmount = 0;
                 if (rcPosition == undefined) {
@@ -282,12 +295,19 @@ export default class StoreController {
                 //  Get all Cegel
                 const queryAllCelgel = await GDB0101DataSource.manager.query('select SUM(s.segel + c.amount) as amount from store s inner join(select p.user_id,SUM(p.money + ifnull(0, gs.segel)) as amount from pc p left join guildinfo g on p.char_name = g.mastername left join guildstore gs  on g.name = gs.guildname INNER JOIN store s on p.user_id = s.user_id group by p.user_id order by amount desc) c ON s.user_id = c.user_id  order by amount desc; ') as unknown as AllMoney[];
 
-                const cegelToBeRemove = Number(Number(cegelTaxConfig.configValue) + (Number((queryAllCelgel[0].amount  / 5000).toFixed(0)))) * requestAmount
+                let storeEntity = await GDB0101DataSource.manager.findOneBy(store, { user_id: currentUser.gameUserId });
+                if (storeEntity == null) {
+                    log = await logService.updateLogItemTransaction("PREPARE_CALCULATE_CRYSTAL", 'Character is not exist.', log);
+                    return res.status(400).json({ status: 400, message: 'Character is not exist.' })
+                }
+                
+                const cegelToBeRemove = Number(Number(cegelTaxConfig.configValue) + (Number((queryAllCelgel[0].amount / 5000).toFixed(0)))) * requestAmount
                 if (storeEntity.segel < cegelToBeRemove) {
                     log = await logService.updateLogItemTransaction("PREPARE_CALCULATE_CRYSTAL", 'Insufficient cegel.', log);
                     return res.status(400).json({ status: 400, message: `Insufficient cegel. Reqired cegel: ${cegelToBeRemove}` })
                 }
                 console.log(cegelToBeRemove)
+
                 storeEntity.segel = storeEntity.segel - Number(cegelToBeRemove)
                 storeEntity = await GDB0101DataSource.manager.save(storeEntity)
 
