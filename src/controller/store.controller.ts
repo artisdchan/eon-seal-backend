@@ -289,6 +289,7 @@ export default class StoreController {
                 }
                 console.log(cegelToBeRemove)
                 storeEntity.segel = storeEntity.segel - Number(cegelToBeRemove)
+                storeEntity = await GDB0101DataSource.manager.save(storeEntity)
 
                 const crystalItemIdQuery = await SealMemberDataSource.manager.getRepository(WebConfig).createQueryBuilder('config').select('config').where('config.config_key = :key', { key: WebConfigConstant.CRYSTAL_ITEM_ID_CONFIG }).getOne();
                 const crystalItemId = Number(crystalItemIdQuery?.configValue);
