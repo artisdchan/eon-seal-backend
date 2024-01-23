@@ -97,10 +97,10 @@ export default class CrystalController {
             let priceBlueDragon = crystalShop.priceBlueDragon;
 
             if (crystalShop.accountPurchaseLimit != 0 && crystalShop.accountPurchaseLimit <= purchaseCount && crystalShop.enablePurchaseOverLimit) {
-                priceCrystal = Math.ceil(priceCrystal + (priceCrystal * crystalShop.overLimitPricePercent / 100))
-                priceCegel = Math.ceil(priceCegel + (priceCegel * crystalShop.overLimitPricePercent / 100))
-                priceRedDragon = Math.ceil(priceRedDragon + (priceRedDragon * crystalShop.overLimitPricePercent / 100))
-                priceBlueDragon = Math.ceil(priceBlueDragon + (priceBlueDragon * crystalShop.overLimitPricePercent / 100))
+                priceCrystal = Math.ceil(priceCrystal + ((priceCrystal * crystalShop.overLimitPricePercent / 100) * (purchaseCount - crystalShop.accountPurchaseLimit)))
+                priceCegel = Math.ceil(priceCegel + ((priceCegel * crystalShop.overLimitPricePercent / 100) * (purchaseCount - crystalShop.accountPurchaseLimit)))
+                priceRedDragon = Math.ceil(priceRedDragon + ((priceRedDragon * crystalShop.overLimitPricePercent / 100) * (purchaseCount - crystalShop.accountPurchaseLimit)))
+                priceBlueDragon = Math.ceil(priceBlueDragon + ((priceBlueDragon * crystalShop.overLimitPricePercent / 100 * (purchaseCount - crystalShop.accountPurchaseLimit))))
             }
 
             if (priceRedDragon != 0 || priceBlueDragon != 0) {
