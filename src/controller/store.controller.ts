@@ -301,7 +301,7 @@ export default class StoreController {
                     return res.status(400).json({ status: 400, message: 'Character is not exist.' })
                 }
                 
-                const cegelToBeRemove = Number(Number(cegelTaxConfig.configValue) + (Number((queryAllCelgel[0].amount / 5000).toFixed(0)))) * requestAmount
+                const cegelToBeRemove = Number(Number(cegelTaxConfig.configValue) + (Number((queryAllCelgel[0].amount / (5000 / 1.5)).toFixed(0)))) * requestAmount
                 if (storeEntity.segel < cegelToBeRemove) {
                     log = await logService.updateLogItemTransaction("PREPARE_CALCULATE_CRYSTAL", 'Insufficient cegel.', log);
                     return res.status(400).json({ status: 400, message: `Insufficient cegel. Reqired cegel: ${cegelToBeRemove}` })
