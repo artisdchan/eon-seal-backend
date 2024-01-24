@@ -12,6 +12,9 @@ export class WebConfig {
     @Column({ name: 'description' })
     description!: string
 
+    @Column({ name: 'last_update_time', nullable: true })
+    lastUpdateTime!: Date
+
 }
 
 export enum WebConfigConstant {
@@ -24,5 +27,6 @@ export enum WebConfigConstant {
     RED_DRAGON_ITEM_ID_CONFIG = 'RED_DRAGON_ITEM_ID_CONFIG',
     BLUE_DRAGON_ITEM_ID_CONFIG = 'BLUE_DRAGON_ITEM_ID_CONFIG',
     REACTOR_EON_PRICE = 'REACTOR_EON_PRICE',
-    REACTOR_CP_PRICE = 'REACTOR_CP_PRICE'
+    REACTOR_CP_PRICE = 'REACTOR_CP_PRICE',
+    CRYSTAL_TAX = 'CRYSTAL_TAX'
 }
