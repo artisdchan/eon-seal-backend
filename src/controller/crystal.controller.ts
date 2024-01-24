@@ -97,7 +97,7 @@ export default class CrystalController {
             let priceBlueDragon = crystalShop.priceBlueDragon;
 
             if (crystalShop.accountPurchaseLimit != 0 && crystalShop.accountPurchaseLimit <= purchaseCount && crystalShop.enablePurchaseOverLimit) {
-                const tmp = (purchaseCount + 1 / crystalShop.accountPurchaseLimit).toFixed(0);
+                const tmp = (Math.floor(purchaseCount + 1 / crystalShop.accountPurchaseLimit)).toFixed(0);
                 if (purchaseCount + 1 > 9 ) {
                     log = await logService.updateLogItemTransaction("FAIL", 'The item has been reached purchase limit.', log);
                     return res.status(400).json({ status: 400, message: 'The item has been reached purchase limit.' })
@@ -411,7 +411,7 @@ export default class CrystalController {
                         if (!eachCrystalShop.enablePurchaseOverLimit) {
                             isBuyable = false;
                         } else {
-                            const tmp = (purchaseCount + 1 / eachCrystalShop.accountPurchaseLimit).toFixed(0);
+                            const tmp = (Math.floor(purchaseCount + 1 / eachCrystalShop.accountPurchaseLimit)).toFixed(0);
                             if (purchaseCount + 1 > 9) {
                                 isBuyable = false;
                             } else {
