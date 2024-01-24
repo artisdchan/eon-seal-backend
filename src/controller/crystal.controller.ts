@@ -257,10 +257,6 @@ export default class CrystalController {
 
             }
 
-            // reduct crystal point
-            webUserDetail.crystalPoint -= priceCrystal
-            await SealMemberDataSource.manager.save(webUserDetail);
-
             log = await logService.updateLogItemTransaction("PREPARE_UPDATE_CRYSTAL_POINT", undefined, log);
             if (priceCegel != 0) {
                 const storeEntity = await GDB0101DataSource.manager.findOneBy(store, { user_id: currentUser.gameUserId });
@@ -270,6 +266,10 @@ export default class CrystalController {
                     return res.status(400).json({ status: 400, message: 'Insufficient cegel.' })
                 }
             }
+
+            // reduct crystal point
+            webUserDetail.crystalPoint -= priceCrystal
+            await SealMemberDataSource.manager.save(webUserDetail);
 
             const itemService = new ItemService()
             log = await logService.updateLogItemTransaction("PREPARE_INVENTORY", undefined, log);
