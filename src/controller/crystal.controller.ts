@@ -413,7 +413,7 @@ export default class CrystalController {
                             isBuyable = false;
                         } else {
                             // const tmp = (Math.floor(purchaseCount + 1 / eachCrystalShop.accountPurchaseLimit)).toFixed(0);
-                            const tmp = (purchaseCount + 1 / eachCrystalShop.accountPurchaseLimit).toFixed(0);
+                            const tmp = (Math.ceil(purchaseCount + 1 / eachCrystalShop.accountPurchaseLimit)).toFixed(0);
                             if (purchaseCount + 1 > 9) {
                                 isBuyable = false;
                             } else {
