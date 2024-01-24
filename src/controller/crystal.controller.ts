@@ -417,7 +417,7 @@ export default class CrystalController {
                             if (purchaseCount + 1 > 9) {
                                 isBuyable = false;
                             } else {
-                                price = Math.floor(price + ((price * eachCrystalShop.overLimitPricePercent / 100) * (Number(tmp))))
+                                price = Math.floor(price + Math.floor(((price * eachCrystalShop.overLimitPricePercent / 100) * (Number(tmp)))))
                                 priceCegel = Math.ceil(priceCegel + ((priceCegel * eachCrystalShop.overLimitPricePercent / 100) * (Number(tmp))))
                                 priceRedDragon = Math.ceil(priceRedDragon + ((priceRedDragon * eachCrystalShop.overLimitPricePercent / 100) * (Number(tmp))))
                                 priceBlueDragon = Math.ceil(priceBlueDragon + ((priceBlueDragon * eachCrystalShop.overLimitPricePercent / 100 * (Number(tmp)))))
