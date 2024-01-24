@@ -15,11 +15,7 @@ import { randomString } from "../utils/string.utils";
 import { WebUserDetail } from "../entity/seal_member/web_user_detail.entity";
 import StoreService from "../service/store.service";
 import { store } from "../entity/gdb0101/store.entity";
-import CashInventoryService from "../service/cash_inventory.service";
-import { CashInventory } from "../entity/gdb0101/cash_inventory.entity";
-import { SealItem } from "../entity/item/seal_item.entity";
-import { MarketWhiteList, WhiteListItemBag } from "../entity/item/market_white_list.entity";
-import { ItemDetail } from "../dto/market.dto";
+import { startOfWeek, endOfWeek } from 'date-fns'
 import { PurchasePackageHistory } from "../entity/item/purchase_package_history.entity";
 import { Package, PackageStatus, PackageType } from "../entity/item/package.entity";
 import { PackageDetail, PackageItemBag } from "../entity/item/package_detail.entity";
@@ -661,17 +657,33 @@ export default class UserController {
                 await GDB0101DataSource.initialize();
             }
 
-            const cegelTaxConfig = await SealMemberDataSource.manager.findOneBy(WebConfig, { configKey: WebConfigConstant.CRYSTAL_CONVERT_TAX });
-            if (cegelTaxConfig == null) {
+            const cegelTax = await SealMemberDataSource.manager.findOneBy(WebConfig, { configKey: WebConfigConstant.CRYSTAL_TAX });
+            if (cegelTax == null) {
                 return res.status(400).json({ status: 400, message: 'Configuration is not found.' })
             }
 
+            const dateFrom = startOfWeek(new Date, { weekStartsOn: 1 })
+            const dateTo = endOfWeek(new Date, { weekStartsOn: 1 })
+
+            if (Number(cegelTax.configValue) == 0 || cegelTax.lastUpdateTime == null || cegelTax.lastUpdateTime < dateFrom || cegelTax.lastUpdateTime > dateTo) {
+
+                const cegelTaxConfig = await SealMemberDataSource.manager.findOneBy(WebConfig, { configKey: WebConfigConstant.CRYSTAL_CONVERT_TAX });
+                if (cegelTaxConfig == null) {
+                    return res.status(400).json({ status: 400, message: 'Configuration is not found.' })
+                }
+
+                //  Get all Cegel
+                const queryAllCelgel = await GDB0101DataSource.manager.query('select SUM(s.segel + c.amount) as amount from store s inner join(select p.user_id,SUM(p.money + ifnull(0, gs.segel)) as amount from pc p left join guildinfo g on p.char_name = g.mastername left join guildstore gs  on g.name = gs.guildname INNER JOIN store s on p.user_id = s.user_id group by p.user_id order by amount desc) c ON s.user_id = c.user_id  order by amount desc; ') as unknown as AllMoney[];
+
+                cegelTax.configValue = String(Number(cegelTaxConfig.configValue) + (Number((queryAllCelgel[0].amount / (5000 / 1.5)).toFixed(0))))
+                await SealMemberDataSource.manager.save(cegelTax);
+            }
             //  Get all Cegel
-            const queryAllCelgel = await GDB0101DataSource.manager.query('select SUM(s.segel + c.amount + IFNULL(0, (s.negel * 100000000))) as amount from gdb0101.store s inner join(select p.user_id,SUM(p.money + ifnull(0, gs.segel) + IFNULL(0, (gs.negel * 100000000)) ) as amount from gdb0101.pc p left join gdb0101.guildinfo g on p.char_name = g.mastername left join gdb0101.guildstore gs  on g.name = gs.guildname INNER JOIN gdb0101.store s on p.user_id = s.user_id group by p.user_id order by amount desc) c ON s.user_id = c.user_id  order by amount desc; ') as unknown as AllMoney[];
+            // const queryAllCelgel = await GDB0101DataSource.manager.query('select SUM(s.segel + c.amount + IFNULL(0, (s.negel * 100000000))) as amount from gdb0101.store s inner join(select p.user_id,SUM(p.money + ifnull(0, gs.segel) + IFNULL(0, (gs.negel * 100000000)) ) as amount from gdb0101.pc p left join gdb0101.guildinfo g on p.char_name = g.mastername left join gdb0101.guildstore gs  on g.name = gs.guildname INNER JOIN gdb0101.store s on p.user_id = s.user_id group by p.user_id order by amount desc) c ON s.user_id = c.user_id  order by amount desc; ') as unknown as AllMoney[];
 
-            const tax = Number(Number(cegelTaxConfig.configValue) + (Number((queryAllCelgel[0].amount / (5000 / 1.5)).toFixed(0))))
+            // const tax = Number(Number(cegelTaxConfig.configValue) + (Number((queryAllCelgel[0].amount / (5000 / 1.5)).toFixed(0))))
 
-            return res.status(200).json({ status: 200, data: tax })
+            return res.status(200).json({ status: 200, data: Number(cegelTax.configValue) })
             
         } catch (error) {
             console.log(error)

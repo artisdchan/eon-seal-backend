@@ -10,6 +10,7 @@ import { WebUserDetail } from "../entity/seal_member/web_user_detail.entity";
 import LogService from "../service/log.service";
 import StoreService from "../service/store.service";
 import { log_item_transaction } from "../entity/log_item/log.entity";
+import { startOfWeek, endOfWeek } from 'date-fns'
 
 export default class StoreController {
 
@@ -286,14 +287,31 @@ export default class StoreController {
                     await SealMemberDataSource.initialize();
                 }
 
-                const cegelTaxConfig = await SealMemberDataSource.manager.findOneBy(WebConfig, { configKey: WebConfigConstant.CRYSTAL_CONVERT_TAX });
-                if (cegelTaxConfig == null) {
+                const cegelTax = await SealMemberDataSource.manager.findOneBy(WebConfig, { configKey: WebConfigConstant.CRYSTAL_TAX });
+                if (cegelTax == null) {
                     log = await logService.updateLogItemTransaction("PREPARE_CALCULATE_CRYSTAL", 'Configuration is not found', log);
                     return res.status(400).json({ status: 400, message: 'Configuration is not found.' })
                 }
 
-                //  Get all Cegel
-                const queryAllCelgel = await GDB0101DataSource.manager.query('select SUM(s.segel + c.amount) as amount from store s inner join(select p.user_id,SUM(p.money + ifnull(0, gs.segel)) as amount from pc p left join guildinfo g on p.char_name = g.mastername left join guildstore gs  on g.name = gs.guildname INNER JOIN store s on p.user_id = s.user_id group by p.user_id order by amount desc) c ON s.user_id = c.user_id  order by amount desc; ') as unknown as AllMoney[];
+                let cegelToBeRemove = Number(cegelTax.configValue) * requestAmount
+
+                const dateFrom = startOfWeek(new Date, { weekStartsOn: 1 })
+                const dateTo = endOfWeek(new Date, { weekStartsOn: 1 })
+                if (Number(cegelTax.configValue) == 0 || cegelTax.lastUpdateTime == null || cegelTax.lastUpdateTime < dateFrom || cegelTax.lastUpdateTime > dateTo) {
+
+                    const cegelTaxConfig = await SealMemberDataSource.manager.findOneBy(WebConfig, { configKey: WebConfigConstant.CRYSTAL_CONVERT_TAX });
+                    if (cegelTaxConfig == null) {
+                        log = await logService.updateLogItemTransaction("PREPARE_CALCULATE_CRYSTAL", 'Configuration is not found', log);
+                        return res.status(400).json({ status: 400, message: 'Configuration is not found.' })
+                    }
+    
+                    //  Get all Cegel
+                    const queryAllCelgel = await GDB0101DataSource.manager.query('select SUM(s.segel + c.amount) as amount from store s inner join(select p.user_id,SUM(p.money + ifnull(0, gs.segel)) as amount from pc p left join guildinfo g on p.char_name = g.mastername left join guildstore gs  on g.name = gs.guildname INNER JOIN store s on p.user_id = s.user_id group by p.user_id order by amount desc) c ON s.user_id = c.user_id  order by amount desc; ') as unknown as AllMoney[];
+                    cegelToBeRemove = Number(Number(cegelTaxConfig.configValue) + (Number((queryAllCelgel[0].amount / (5000 / 1.5)).toFixed(0)))) * requestAmount
+
+                    cegelTax.configValue = String(Number(cegelTaxConfig.configValue) + (Number((queryAllCelgel[0].amount / (5000 / 1.5)).toFixed(0))))
+                    await SealMemberDataSource.manager.save(cegelTax);
+                }
 
                 let storeEntity = await GDB0101DataSource.manager.findOneBy(store, { user_id: currentUser.gameUserId });
                 if (storeEntity == null) {
@@ -301,12 +319,12 @@ export default class StoreController {
                     return res.status(400).json({ status: 400, message: 'Character is not exist.' })
                 }
                 
-                const cegelToBeRemove = Number(Number(cegelTaxConfig.configValue) + (Number((queryAllCelgel[0].amount / (5000 / 1.5)).toFixed(0)))) * requestAmount
+                
                 if (storeEntity.segel < cegelToBeRemove) {
                     log = await logService.updateLogItemTransaction("PREPARE_CALCULATE_CRYSTAL", 'Insufficient cegel.', log);
                     return res.status(400).json({ status: 400, message: `Insufficient cegel. Reqired cegel: ${cegelToBeRemove}` })
                 }
-                console.log(cegelToBeRemove)
+                // console.log(cegelToBeRemove)
 
                 storeEntity.segel = storeEntity.segel - Number(cegelToBeRemove)
                 storeEntity = await GDB0101DataSource.manager.save(storeEntity)
