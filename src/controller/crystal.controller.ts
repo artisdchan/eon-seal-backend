@@ -97,10 +97,15 @@ export default class CrystalController {
             let priceBlueDragon = crystalShop.priceBlueDragon;
 
             if (crystalShop.accountPurchaseLimit != 0 && crystalShop.accountPurchaseLimit <= purchaseCount && crystalShop.enablePurchaseOverLimit) {
-                priceCrystal = Math.ceil(priceCrystal + ((priceCrystal * crystalShop.overLimitPricePercent / 100) * (purchaseCount - crystalShop.accountPurchaseLimit)))
-                priceCegel = Math.ceil(priceCegel + ((priceCegel * crystalShop.overLimitPricePercent / 100) * (purchaseCount - crystalShop.accountPurchaseLimit)))
-                priceRedDragon = Math.ceil(priceRedDragon + ((priceRedDragon * crystalShop.overLimitPricePercent / 100) * (purchaseCount - crystalShop.accountPurchaseLimit)))
-                priceBlueDragon = Math.ceil(priceBlueDragon + ((priceBlueDragon * crystalShop.overLimitPricePercent / 100 * (purchaseCount - crystalShop.accountPurchaseLimit))))
+                const tmp = (purchaseCount / crystalShop.accountPurchaseLimit).toFixed(0);
+                if (Number(tmp) > crystalShop.accountPurchaseLimit) {
+                    log = await logService.updateLogItemTransaction("FAIL", 'The item has been reached purchase limit.', log);
+                    return res.status(400).json({ status: 400, message: 'The item has been reached purchase limit.' })
+                }
+                priceCrystal = Math.ceil(priceCrystal + ((priceCrystal * crystalShop.overLimitPricePercent / 100) * (Number(tmp))))
+                priceCegel = Math.ceil(priceCegel + ((priceCegel * crystalShop.overLimitPricePercent / 100) * (Number(tmp))))
+                priceRedDragon = Math.ceil(priceRedDragon + ((priceRedDragon * crystalShop.overLimitPricePercent / 100) * (Number(tmp))))
+                priceBlueDragon = Math.ceil(priceBlueDragon + ((priceBlueDragon * crystalShop.overLimitPricePercent / 100 * (Number(tmp)))))
             }
 
             if (priceRedDragon != 0 || priceBlueDragon != 0) {
@@ -406,10 +411,15 @@ export default class CrystalController {
                         if (!eachCrystalShop.enablePurchaseOverLimit) {
                             isBuyable = false;
                         } else {
-                            price = Math.ceil(price + (price * eachCrystalShop.overLimitPricePercent / 100));
-                            priceCegel = Math.ceil(priceCegel + (priceCegel * eachCrystalShop.overLimitPricePercent / 100));
-                            priceRedDragon = Math.ceil(priceRedDragon + (priceRedDragon * eachCrystalShop.overLimitPricePercent / 100));
-                            priceBlueDragon = Math.ceil(priceBlueDragon + (priceBlueDragon * eachCrystalShop.overLimitPricePercent / 100));
+                            const tmp = (purchaseCount / eachCrystalShop.accountPurchaseLimit).toFixed(0);
+                            if (Number(tmp) > eachCrystalShop.accountPurchaseLimit) {
+                                isBuyable = false;
+                            } else {
+                                price = Math.ceil(price + ((price * eachCrystalShop.overLimitPricePercent / 100) * (Number(tmp))))
+                                priceCegel = Math.ceil(priceCegel + ((priceCegel * eachCrystalShop.overLimitPricePercent / 100) * (Number(tmp))))
+                                priceRedDragon = Math.ceil(priceRedDragon + ((priceRedDragon * eachCrystalShop.overLimitPricePercent / 100) * (Number(tmp))))
+                                priceBlueDragon = Math.ceil(priceBlueDragon + ((priceBlueDragon * eachCrystalShop.overLimitPricePercent / 100 * (Number(tmp)))))
+                            }
                         }
                     }
 
@@ -567,27 +577,27 @@ export default class CrystalController {
             // if (itemPosition == undefined) {
             //     return 'No available slot.';
             // }
-    
+
             let itemAmountPosition = storeService.findItemAmountPositionFromItemPosition(emptyPosList[i], storeEntity);
             if (itemAmountPosition == undefined) {
                 return 'No available slot.';
             }
-    
+
             let itemEffectPosition = storeService.findItemEffectPositionInStoreEntity(emptyPosList[i], storeEntity)
             if (itemEffectPosition == undefined) {
                 return 'No available slot.';
             }
-    
+
             let itemRefinePosition = storeService.findItemRefinePositionInStoreEntity(emptyPosList[i], storeEntity)
             if (itemRefinePosition == undefined) {
                 return 'No available slot.';
             }
-    
+
             const itemObj = storeService.setValueIntoStoreEntity(emptyPosList[i], itemId);
             const itemAmountObj = storeService.setValueIntoStoreEntity(itemAmountPosition, 0);
             const itemEffectObj = storeService.setValueIntoStoreEntity(itemEffectPosition, itemEffect);
             const itemRefineObj = storeService.setValueIntoStoreEntity(itemRefinePosition, itemRefine)
-   
+
             updateObj = {
                 ...updateObj,
                 ...itemObj,
@@ -595,7 +605,7 @@ export default class CrystalController {
                 ...itemEffectObj,
                 ...itemRefineObj
             }
-    
+
         }
 
         await GDB0101DataSource.manager.getRepository(store).save({
