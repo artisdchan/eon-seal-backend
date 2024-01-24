@@ -98,7 +98,7 @@ export default class CrystalController {
 
             if (crystalShop.accountPurchaseLimit != 0 && crystalShop.accountPurchaseLimit <= purchaseCount && crystalShop.enablePurchaseOverLimit) {
                 const tmp = (purchaseCount / crystalShop.accountPurchaseLimit).toFixed(0);
-                if (Number(tmp) > crystalShop.accountPurchaseLimit) {
+                if (purchaseCount > (crystalShop.accountPurchaseLimit * crystalShop.accountPurchaseLimit) ) {
                     log = await logService.updateLogItemTransaction("FAIL", 'The item has been reached purchase limit.', log);
                     return res.status(400).json({ status: 400, message: 'The item has been reached purchase limit.' })
                 }
