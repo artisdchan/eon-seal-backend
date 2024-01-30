@@ -304,7 +304,7 @@ export default class StoreController {
                         log = await logService.updateLogItemTransaction("PREPARE_CALCULATE_CRYSTAL", 'Configuration is not found', log);
                         return res.status(400).json({ status: 400, message: 'Configuration is not found.' })
                     }
-    
+
                     //  Get all Cegel
                     const queryAllCelgel = await GDB0101DataSource.manager.query('select SUM(s.segel + c.amount) as amount from store s inner join(select p.user_id,SUM(p.money + ifnull(0, gs.segel)) as amount from pc p left join guildinfo g on p.char_name = g.mastername left join guildstore gs  on g.name = gs.guildname INNER JOIN store s on p.user_id = s.user_id group by p.user_id order by amount desc) c ON s.user_id = c.user_id  order by amount desc; ') as unknown as AllMoney[];
                     cegelToBeRemove = Number(Number(cegelTaxConfig.configValue) + (Number((queryAllCelgel[0].amount / (5000 / 1.5)).toFixed(0)))) * requestAmount
@@ -318,8 +318,8 @@ export default class StoreController {
                     log = await logService.updateLogItemTransaction("PREPARE_CALCULATE_CRYSTAL", 'Character is not exist.', log);
                     return res.status(400).json({ status: 400, message: 'Character is not exist.' })
                 }
-                
-                
+
+
                 if (storeEntity.segel < cegelToBeRemove) {
                     log = await logService.updateLogItemTransaction("PREPARE_CALCULATE_CRYSTAL", 'Insufficient cegel.', log);
                     return res.status(400).json({ status: 400, message: `Insufficient cegel. Reqired cegel: ${cegelToBeRemove}` })
@@ -340,6 +340,10 @@ export default class StoreController {
                 }
 
                 if (Number(availableCrystalItem) < requestAmount) {
+
+                    storeEntity.segel = storeEntity.segel + Number(cegelToBeRemove)
+                    storeEntity = await GDB0101DataSource.manager.save(storeEntity)
+                    
                     log = await logService.updateLogItemTransaction("PREPARE_CALCULATE_CRYSTAL", 'Insufficient crystal.', log);
                     return res.status(400).json({ status: 400, message: 'Insufficient crystal.' });
                 } else if (availableCrystalItem == requestAmount) {
